@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { AdminSessionFooter } from "./AdminSessionFooter";
 
-export type AdminSidebarHighlight = "dashboard" | "usuarios" | "cocina" | "configuracion";
+export type AdminSidebarHighlight = "dashboard" | "usuarios" | "cocina" | "ingresos" | "configuracion";
 
 function Logo() {
   return (
@@ -20,6 +20,7 @@ const ITEMS: { href: string; key: AdminSidebarHighlight; label: string }[] = [
   { href: "/admin", key: "dashboard", label: "Dashboard" },
   { href: "/admin/usuarios", key: "usuarios", label: "Gestión de usuarios" },
   { href: "/admin/cocina", key: "cocina", label: "Reporte de cocina" },
+  { href: "/admin/ingresos", key: "ingresos", label: "Ingresos (QR)" },
   { href: "/admin/configuracion", key: "configuracion", label: "Configuración" },
 ];
 

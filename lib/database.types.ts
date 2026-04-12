@@ -101,6 +101,8 @@ export interface Database {
           rol_smartpool: RolSmartpool | null;
           qr_token: string | null;
           qr_expires_at: string | null;
+          ingresado: boolean;
+          ingreso_at: string | null;
           created_at: string;
         };
         Insert: Omit<
@@ -113,6 +115,8 @@ export interface Database {
           | "smartpool_grupo_vehiculo_lleno"
           | "grupo_cupos_max"
           | "grupo_menus_json"
+          | "ingresado"
+          | "ingreso_at"
         > & {
           smartpool_acepto?: boolean;
           smartpool_pareja_invitado_id?: string | null;
@@ -120,6 +124,8 @@ export interface Database {
           smartpool_grupo_vehiculo_lleno?: boolean;
           grupo_cupos_max?: number;
           grupo_menus_json?: unknown;
+          ingresado?: boolean;
+          ingreso_at?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["invitados"]["Insert"]>;
         Relationships: [];

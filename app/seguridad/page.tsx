@@ -8,6 +8,8 @@ type GuestInfo = {
   dni: string;
   mesa: number | null;
   evento: string;
+  ingresoAt: string | null;
+  primerIngreso: boolean;
 };
 
 type Estado = "scanning" | "valid" | "invalid" | "validating";
@@ -60,6 +62,8 @@ export default function SeguridadPage() {
         dni: data.dni as string,
         mesa: (data.mesa as number | null) ?? null,
         evento: (data.evento as string) || "Evento",
+        ingresoAt: typeof data.ingresoAt === "string" ? data.ingresoAt : null,
+        primerIngreso: data.primerIngreso === true,
       });
       setEstado("valid");
     } catch {
@@ -209,9 +213,38 @@ export default function SeguridadPage() {
             </p>
           </div>
 
-          <p className="mb-8 text-base font-semibold" style={{ color: "#2d5a41" }}>
+          <p className="mb-4 text-base font-semibold" style={{ color: "#2d5a41" }}>
             Corroborá el DNI con el documento.
           </p>
+          {guest.ingresoAt && (
+            <p className="mb-6 max-w-sm text-[13px] leading-relaxed text-[#4b5563]">
+              {guest.primerIngreso ? (
+                <>
+                  <span className="font-semibold text-[#166534]">Ingreso registrado</span> en el sistema (
+                  {new Date(guest.ingresoAt).toLocaleString("es-AR", {
+                    day: "numeric",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                  })}
+                  ).
+                </>
+              ) : (
+                <>
+                  <span className="font-semibold text-[#92400e]">Ya había ingresado antes.</span> Primer registro:{" "}
+                  {new Date(guest.ingresoAt).toLocaleString("es-AR", {
+                    day: "numeric",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                  })}
+                  .
+                </>
+              )}
+            </p>
+          )}
 
           <div className="mb-10 flex h-24 w-24 items-center justify-center rounded-full" style={{ backgroundColor: "#dcfce7" }}>
             <svg

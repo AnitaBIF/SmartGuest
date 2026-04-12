@@ -11,6 +11,10 @@ type ValidarQrResponse = {
   mesa: number | null;
   evento: string;
   verified: string;
+  /** ISO 8601: primer ingreso registrado (no cambia en re-escaneos). */
+  ingresoAt: string | null;
+  /** True si este escaneo fue el que registró el ingreso por primera vez. */
+  primerIngreso: boolean;
 };
 
 function adminClient() {
@@ -85,7 +89,7 @@ export async function POST(req: NextRequest) {
 
   const { data: inv } = await supabase
     .from("invitados")
-    .select("id, evento_id, usuario_id, mesa_id, asistencia")
+    .select("id, evento_id, usuario_id, mesa_id, asistencia, ingresado, ingreso_at")
     .eq("id", verified.invitadoId)
     .single();
 
@@ -127,12 +131,34 @@ export async function POST(req: NextRequest) {
     .eq("id", inv.evento_id)
     .single();
 
+  const hadIngresoPrevio = Boolean(inv.ingreso_at?.trim());
+  const nowIso = new Date().toISOString();
+  const ingresoAtFinal = hadIngresoPrevio ? inv.ingreso_at! : nowIso;
+
+  const { error: upErr } = await supabase
+    .from("invitados")
+    .update({
+      ingresado: true,
+      ingreso_at: ingresoAtFinal,
+    })
+    .eq("id", inv.id);
+
+  if (upErr) {
+    console.warn("[validar-qr] no se pudo registrar ingreso:", upErr.message);
+    return NextResponse.json(
+      { error: "Validación correcta pero no se pudo registrar el ingreso. Reintentá o avisá al administrador." },
+      { status: 500 }
+    );
+  }
+
   const payload: ValidarQrResponse = {
     nombre: `${usuario.nombre} ${usuario.apellido}`.trim(),
     dni: usuario.dni,
     mesa: mesaNumero,
     evento: evento?.nombre ?? "Evento",
     verified: "rolling-hmac",
+    ingresoAt: ingresoAtFinal,
+    primerIngreso: !hadIngresoPrevio,
   };
 
   return NextResponse.json(payload);
