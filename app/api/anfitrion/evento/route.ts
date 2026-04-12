@@ -3,7 +3,12 @@ import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 import type { Database } from "@/lib/database.types";
 import { ensureMesasForEvento } from "@/lib/ensureEventoMesas";
-import { menuOpcionesParaEvento } from "@/lib/grupoFamiliar";
+import {
+  contarMenuPersonaStats,
+  menuOpcionesParaEvento,
+  parseGrupoMenusJson,
+  plazasSmartseatPorInvitado,
+} from "@/lib/grupoFamiliar";
 
 function adminClient() {
   return createClient<Database>(
@@ -59,7 +64,7 @@ export async function GET(req: NextRequest) {
     supabase
       .from("invitados")
       .select(
-        "id, asistencia, restriccion_alimentaria, restriccion_otro, rol_smartpool, mesa_id, usuario_id, created_at",
+        "id, asistencia, restriccion_alimentaria, restriccion_otro, rol_smartpool, mesa_id, usuario_id, created_at, grupo_menus_json, grupo_cupos_max, grupo_personas_confirmadas",
       )
       .eq("evento_id", evento.id),
     supabase.from("mesas").select("id, numero").eq("evento_id", evento.id).order("numero", { ascending: true }),
@@ -74,7 +79,10 @@ export async function GET(req: NextRequest) {
   }
 
   const stats = {
+    /** Personas con asistencia confirmada (suma de grupo familiar). */
     confirmados: 0,
+    /** Filas de invitación confirmadas (titular del grupo). */
+    invitacionesConfirmadas: 0,
     noAsiste: 0,
     pendientes: 0,
     /** Mesas sin ningún confirmado asignado (vacías). */
@@ -99,16 +107,32 @@ export async function GET(req: NextRequest) {
   /** Ocupación física por mesa: confirmados + pendientes con asiento (excluye rechazados). Misma idea que SmartSeat. */
   const ocupacionPorMesa = new Map<string, number>();
   for (const inv of invitados ?? []) {
-    if (inv.asistencia === "confirmado") stats.confirmados++;
-    else if (inv.asistencia === "rechazado") stats.noAsiste++;
+    const plazas = plazasSmartseatPorInvitado({
+      asistencia: inv.asistencia,
+      grupo_cupos_max: inv.grupo_cupos_max,
+      grupo_personas_confirmadas: inv.grupo_personas_confirmadas,
+    });
+
+    if (inv.asistencia === "confirmado") {
+      stats.confirmados += plazas;
+      stats.invitacionesConfirmadas += 1;
+    } else if (inv.asistencia === "rechazado") stats.noAsiste++;
     else stats.pendientes++;
 
     /* Menús y EcoGuest: solo confirmados (pendientes/rechazados no cuentan para cocina ni el pool efectivo). */
     if (inv.asistencia === "confirmado") {
-      const r = inv.restriccion_alimentaria?.toLowerCase() ?? "";
-      if (!r || r === "ninguna" || r === "standard") stats.menuStandard++;
-      else if (r.includes("celiaco") || r.includes("celíaco") || r.includes("tacc")) stats.menuCeliaco++;
-      else stats.menuOtros++;
+      const row = inv as (typeof inv) & { grupo_menus_json?: unknown };
+      const menusGrupo = parseGrupoMenusJson(row.grupo_menus_json);
+      if (menusGrupo.length > 0) {
+        for (const m of menusGrupo) {
+          contarMenuPersonaStats(m, stats);
+        }
+      } else {
+        const r = inv.restriccion_alimentaria?.toLowerCase() ?? "";
+        if (!r || r === "ninguna" || r === "standard") stats.menuStandard++;
+        else if (r.includes("celiaco") || r.includes("celíaco") || r.includes("tacc")) stats.menuCeliaco++;
+        else stats.menuOtros++;
+      }
 
       if (inv.rol_smartpool && inv.rol_smartpool !== "no") stats.ecoSi++;
       else stats.ecoNo++;
@@ -118,8 +142,8 @@ export async function GET(req: NextRequest) {
       inv.mesa_id != null && inv.mesa_id !== ""
         ? String(inv.mesa_id).trim().toLowerCase()
         : "";
-    if (inv.asistencia !== "rechazado" && mesaKey) {
-      ocupacionPorMesa.set(mesaKey, (ocupacionPorMesa.get(mesaKey) ?? 0) + 1);
+    if (inv.asistencia !== "rechazado" && mesaKey && plazas > 0) {
+      ocupacionPorMesa.set(mesaKey, (ocupacionPorMesa.get(mesaKey) ?? 0) + plazas);
     }
   }
 

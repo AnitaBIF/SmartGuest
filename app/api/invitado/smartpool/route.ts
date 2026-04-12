@@ -14,6 +14,7 @@ import { rankPasajerosConIaTucuman } from "@/lib/smartpoolTucumanIa";
 import {
   clampCuposMax,
   ecoGuestPermitidoPorCuposInvitacion,
+  plazasPersonasPasajeroPool,
   plazasSmartpoolPasajeros,
 } from "@/lib/grupoFamiliar";
 
@@ -65,6 +66,9 @@ type InvitadoSugerenciaRow = {
   localidad: string | null;
   direccion: string | null;
   rol_smartpool: string | null;
+  asistencia: string;
+  grupo_cupos_max: number | null;
+  grupo_personas_confirmadas: number | null;
 };
 
 function rowsToPasajerosInput(
@@ -91,6 +95,7 @@ type SugerenciaPasajeroApi = {
   localidad: string | null;
   direccion: string | null;
   distanciaKm: number | null;
+  plazasPersonas: number;
 };
 
 function sugerenciasSoloDatos(
@@ -102,12 +107,20 @@ function sugerenciasSoloDatos(
     const r = byRowId.get(idNorm);
     const dir = r?.direccion?.trim() || null;
     const loc = (r?.localidad ?? s.localidad)?.trim() || null;
+    const plazasPersonas = r
+      ? plazasPersonasPasajeroPool({
+          asistencia: r.asistencia,
+          grupo_cupos_max: r.grupo_cupos_max,
+          grupo_personas_confirmadas: r.grupo_personas_confirmadas,
+        })
+      : 1;
     return {
       invitadoId: idNorm,
       nombre: s.nombre,
       localidad: loc,
       direccion: dir,
       distanciaKm: s.distanciaKm,
+      plazasPersonas,
     };
   });
 }
@@ -126,7 +139,7 @@ async function buildSugerenciasConductor(
 
   let q = supabase
     .from("invitados")
-    .select("id, usuario_id, localidad, direccion, rol_smartpool")
+    .select("id, usuario_id, localidad, direccion, rol_smartpool, asistencia, grupo_cupos_max, grupo_personas_confirmadas")
     .eq("evento_id", me.evento_id)
     .eq("asistencia", "confirmado")
     .or("rol_smartpool.eq.pasajero,rol_smartpool.is.null")
@@ -327,7 +340,9 @@ export async function GET(req: NextRequest) {
   if (rol === "conductor") {
     const { data: pasajerosRows, error: paxErr } = await supabase
       .from("invitados")
-      .select("id, usuario_id, rol_smartpool, telefono, smartpool_acepto, created_at")
+      .select(
+        "id, usuario_id, rol_smartpool, telefono, smartpool_acepto, created_at, asistencia, grupo_cupos_max, grupo_personas_confirmadas"
+      )
       .eq("smartpool_pareja_invitado_id", current.id)
       .order("created_at", { ascending: true });
 
@@ -336,7 +351,17 @@ export async function GET(req: NextRequest) {
     }
 
     const rows = pasajerosRows ?? [];
-    const ocupados = rows.length;
+    const plazasOcupadas = rows.reduce(
+      (acc, r) =>
+        acc +
+        plazasPersonasPasajeroPool({
+          asistencia: String((r as { asistencia?: string }).asistencia ?? ""),
+          grupo_cupos_max: (r as { grupo_cupos_max?: number | null }).grupo_cupos_max,
+          grupo_personas_confirmadas: (r as { grupo_personas_confirmadas?: number | null })
+            .grupo_personas_confirmadas,
+        }),
+      0
+    );
     const userIds = [...new Set(rows.map((r) => r.usuario_id))];
     const { data: usrs } =
       userIds.length > 0
@@ -348,6 +373,12 @@ export async function GET(req: NextRequest) {
       const u = byUser[r.usuario_id];
       const nombre = u ? `${u.nombre} ${u.apellido}`.trim() : "Invitado/a";
       const elAcepto = !!r.smartpool_acepto;
+      const plazasPersonas = plazasPersonasPasajeroPool({
+        asistencia: String((r as { asistencia?: string }).asistencia ?? ""),
+        grupo_cupos_max: (r as { grupo_cupos_max?: number | null }).grupo_cupos_max,
+        grupo_personas_confirmadas: (r as { grupo_personas_confirmadas?: number | null })
+          .grupo_personas_confirmadas,
+      });
       return {
         id: r.id,
         nombre,
@@ -356,10 +387,11 @@ export async function GET(req: NextRequest) {
         elAcepto,
         mutuo: elAcepto,
         telefono: elAcepto ? (r.telefono?.trim() || null) : null,
+        plazasPersonas,
       };
     });
 
-    const hayCupos = ocupados < cuposMax;
+    const hayCupos = plazasOcupadas < cuposMax;
     let sugerencias: Awaited<ReturnType<typeof buildSugerenciasConductor>> = [];
     if (parejaColumnsOk && hayCupos) {
       try {
@@ -377,7 +409,7 @@ export async function GET(req: NextRequest) {
       pareja: null,
       pasajeros,
       cuposMax,
-      cuposOcupados: ocupados,
+      cuposOcupados: plazasOcupadas,
       sugerencias,
     });
   }

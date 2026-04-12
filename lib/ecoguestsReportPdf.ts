@@ -6,6 +6,8 @@ export type EcoGuestPdfRow = {
   grupo: string;
   telefono: string;
   asistencia: string;
+  /** Solo rol pasajero: personas confirmadas del grupo (plazas en pool). */
+  personasGrupo?: number;
 };
 
 const BRAND = { r: 45, g: 90, b: 65 };
@@ -35,7 +37,7 @@ export function downloadEcoGuestsPdf(opts: {
   eventoFecha?: string;
   anfitrionNombre?: string;
   guests: EcoGuestPdfRow[];
-  conteo: { total: number; conductores: number; pasajeros: number };
+  conteo: { total: number; conductores: number; pasajeros: number; pasajerosFilas?: number };
 }): void {
   const { eventoNombre, eventoFecha, anfitrionNombre, guests, conteo } = opts;
 
@@ -86,7 +88,11 @@ export function downloadEcoGuestsPdf(opts: {
   doc.text("Resumen", m + 4, y + 7);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  const sum = `${conteo.total} EcoGuests · ${conteo.conductores} conductor(es) · ${conteo.pasajeros} pasajero(s)`;
+  const invPax =
+    conteo.pasajerosFilas != null && conteo.pasajerosFilas !== conteo.pasajeros
+      ? ` (${conteo.pasajerosFilas} invit.)`
+      : "";
+  const sum = `${conteo.total} EcoGuests · ${conteo.conductores} conductor(es) · ${conteo.pasajeros} plaza(s) pasajero${invPax}`;
   const sumLines = doc.splitTextToSize(sum, contentW - 8);
   doc.text(sumLines, m + 4, y + 13);
   y += 22 + (sumLines.length - 1) * 4;
@@ -165,7 +171,11 @@ export function downloadEcoGuestsPdf(opts: {
     doc.setFont("helvetica", "bold");
     doc.text(g.rol, col.rol + 1, y + 5.5);
     doc.setFont("helvetica", "normal");
-    doc.text(clipOneLine(g.grupo, col.tel - col.grupo - 3), col.grupo + 1, y + 5.5);
+    const grupoTxt =
+      g.personasGrupo != null && g.personasGrupo > 1
+        ? `${g.grupo} (${g.personasGrupo} pers.)`
+        : g.grupo;
+    doc.text(clipOneLine(grupoTxt, col.tel - col.grupo - 3), col.grupo + 1, y + 5.5);
     doc.text(clipOneLine(g.telefono, col.asist - col.tel - 3), col.tel + 1, y + 5.5);
     doc.text(clipOneLine(g.asistencia, 20), col.asist + 1, y + 5.5);
 

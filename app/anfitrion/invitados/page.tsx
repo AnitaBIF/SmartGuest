@@ -49,6 +49,8 @@ interface InvitadoRow {
   grupoCuposMax: number;
   /** Presente en API; usado en EcoGuests. */
   rolSmartpool?: "conductor" | "pasajero" | "no" | null;
+  /** Personas confirmadas del grupo (resumen / pool). */
+  personasGrupo?: number;
 }
 
 /** Texto multilínea legible dentro de celdas de ancho fijo. */

@@ -15,6 +15,8 @@ type ParejaInfo = {
   elAcepto: boolean;
   mutuo: boolean;
   telefono: string | null;
+  /** Personas confirmadas del grupo que ocupan plazas en el pool (invitación completa). */
+  plazasPersonas: number;
 };
 
 type SugerenciaPasajero = {
@@ -22,6 +24,7 @@ type SugerenciaPasajero = {
   nombre: string;
   localidad: string | null;
   direccion: string | null;
+  plazasPersonas: number;
 };
 
 type SmartpoolEstado = {
@@ -113,13 +116,21 @@ export default function SmartpoolPage() {
             const o = x as Record<string, unknown>;
             return typeof o.invitadoId === "string" && typeof o.nombre === "string";
           })
-          .map((x) => ({
-            invitadoId: x.invitadoId as string,
-            nombre: x.nombre as string,
-            localidad: typeof x.localidad === "string" || x.localidad === null ? (x.localidad as string | null) : null,
-            direccion:
-              typeof x.direccion === "string" || x.direccion === null ? (x.direccion as string | null) : null,
-          }))
+          .map((x) => {
+            const rawPlazas = x.plazasPersonas;
+            const plazasPersonas =
+              typeof rawPlazas === "number" && Number.isFinite(rawPlazas)
+                ? Math.max(1, Math.floor(rawPlazas))
+                : 1;
+            return {
+              invitadoId: x.invitadoId as string,
+              nombre: x.nombre as string,
+              localidad: typeof x.localidad === "string" || x.localidad === null ? (x.localidad as string | null) : null,
+              direccion:
+                typeof x.direccion === "string" || x.direccion === null ? (x.direccion as string | null) : null,
+              plazasPersonas,
+            };
+          })
       : [];
     const pasRaw = data.pasajeros;
     const pasajeros: ParejaInfo[] = Array.isArray(pasRaw)
@@ -129,15 +140,23 @@ export default function SmartpoolPage() {
             const o = x as Record<string, unknown>;
             return typeof o.id === "string" && typeof o.nombre === "string";
           })
-          .map((x) => ({
-            id: x.id as string,
-            nombre: x.nombre as string,
-            rol: typeof x.rol === "string" || x.rol === null ? (x.rol as string | null) : null,
-            yoAcepte: x.yoAcepte === true,
-            elAcepto: x.elAcepto === true,
-            mutuo: x.mutuo === true,
-            telefono: typeof x.telefono === "string" || x.telefono === null ? (x.telefono as string | null) : null,
-          }))
+          .map((x) => {
+            const rawPlazas = x.plazasPersonas;
+            const plazasPersonas =
+              typeof rawPlazas === "number" && Number.isFinite(rawPlazas)
+                ? Math.max(1, Math.floor(rawPlazas))
+                : 1;
+            return {
+              id: x.id as string,
+              nombre: x.nombre as string,
+              rol: typeof x.rol === "string" || x.rol === null ? (x.rol as string | null) : null,
+              yoAcepte: x.yoAcepte === true,
+              elAcepto: x.elAcepto === true,
+              mutuo: x.mutuo === true,
+              telefono: typeof x.telefono === "string" || x.telefono === null ? (x.telefono as string | null) : null,
+              plazasPersonas,
+            };
+          })
       : [];
 
     const cuposMax =
@@ -368,7 +387,10 @@ export default function SmartpoolPage() {
     const p = estado.pareja;
     const pasajeros = estado.pasajeros ?? [];
     const cuposMax = estado.cuposMax ?? 0;
-    const cuposOcupados = estado.cuposOcupados ?? pasajeros.length;
+    const cuposOcupados =
+      estado.cuposOcupados ??
+      pasajeros.reduce((acc, p) => acc + (p.plazasPersonas >= 1 ? p.plazasPersonas : 1), 0);
+    const plazasLibres = cuposMax > 0 ? Math.max(0, cuposMax - cuposOcupados) : 0;
     const hayCuposLibres = rol === "conductor" && cuposMax > 0 && cuposOcupados < cuposMax;
     const otroRolLabel = rol === "conductor" ? "pasajero" : "conductor";
 
@@ -397,9 +419,10 @@ export default function SmartpoolPage() {
                         </>
                       ) : (
                         <>
-                          Podés proponer viaje a <strong>hasta {cuposMax} pasajero{cuposMax === 1 ? "" : "s"}</strong> del
-                          pool (según los cupos de tu invitación; hasta 5 personas en total entre tu grupo y el
-                          carpooling). El teléfono se comparte cuando cada pasajero acepta en la app.
+                          Tenés <strong>hasta {cuposMax} plaza{cuposMax === 1 ? "" : "s"}</strong> en el pool para
+                          sumar gente de otras invitaciones (hasta 5 personas en total entre tu grupo y quienes van con
+                          vos). Si una invitación confirmó varias personas, ocupa esa cantidad de plazas. El teléfono se
+                          comparte cuando aceptan en la app.
                         </>
                       )
                     ) : (
@@ -411,16 +434,16 @@ export default function SmartpoolPage() {
                   </p>
                   {rol === "conductor" && (
                     <p className="mb-4 rounded-xl bg-white/90 px-3 py-2 text-left text-[12px] leading-snug text-[#374151] ring-1 ring-[#c5dece]">
-                      <strong className="text-[#2d5a41]">Lugares en el pool:</strong>{" "}
+                      <strong className="text-[#2d5a41]">Plazas en el pool:</strong>{" "}
                       {cuposMax === 0
-                        ? "ninguno (tu invitación ya usa las 5 plazas del modelo de auto)."
-                        : `${cuposOcupados} de ${cuposMax} ocupados.`}
+                        ? "ninguna (tu invitación ya usa las 5 plazas del modelo de auto)."
+                        : `${cuposOcupados} de ${cuposMax} ocupadas · te quedan ${plazasLibres}.`}
                       {cuposMax > 0 &&
                         (hayCuposLibres
-                          ? " Elegí pasajeros de la lista: ves nombre y dirección que cargaron al confirmar; solo quienes ya confirmaron asistencia."
+                          ? " En la lista ves cuántas personas suma cada invitación; solo quienes ya confirmaron asistencia."
                           : cuposOcupados > 0
-                            ? " Llenaste el cupo. Podés quitar un pasajero desde “Ver estado del viaje” para liberar un lugar."
-                            : " Elegí pasajeros desde “Ver estado del viaje”.")}
+                            ? " Llenaste las plazas. Podés quitar una propuesta desde “Ver estado del viaje” para liberar cupo."
+                            : " Elegí desde “Ver estado del viaje”.")}
                     </p>
                   )}
                   {rol === "pasajero" && !p && (
@@ -463,7 +486,7 @@ export default function SmartpoolPage() {
                     {rol === "conductor"
                       ? cuposMax === 0
                         ? "Tu invitación no deja plazas extra en el pool: no vas a ver sugerencias nuevas. Si ya tenés pasajeros vinculados, los ves abajo."
-                        : `Podés llevar hasta ${cuposMax} pasajero${cuposMax === 1 ? "" : "s"} del pool. La lista sugerida va por cercanía aproximada; cada uno acepta en la app para compartir teléfono.`
+                        : `Podés ocupar hasta ${cuposMax} plaza${cuposMax === 1 ? "" : "s"} del pool con otras invitaciones (cada una puede ser más de una persona). La lista va por cercanía aproximada; quien recibe la propuesta acepta en la app para compartir teléfono.`
                       : "Un conductor puede proponerte viaje; cuando lo haga, verás su nombre acá y podrás aceptar. Mantené cargado tu celular."}
                   </p>
 
@@ -477,7 +500,7 @@ export default function SmartpoolPage() {
                       {pasajeros.length > 0 ? (
                         <div className="rounded-2xl bg-white px-5 py-4 text-left ring-1 ring-[#c5dece]">
                           <p className="text-[13px] font-semibold text-[#374151]">
-                            Pasajeros ({cuposOcupados}/{cuposMax === 0 ? "—" : cuposMax})
+                            Propuestas / pasajeros · plazas ocupadas ({cuposOcupados}/{cuposMax === 0 ? "—" : cuposMax})
                           </p>
                           <ul className="mt-3 space-y-4">
                             {pasajeros.map((px) => {
@@ -488,6 +511,11 @@ export default function SmartpoolPage() {
                                   className="rounded-xl border border-[#d1e7d9] bg-[#f7faf8] px-3 py-3"
                                 >
                                   <p className="text-[13px] font-semibold text-[#111827]">{px.nombre}</p>
+                                  {px.plazasPersonas > 1 ? (
+                                    <p className="mt-0.5 text-[11px] font-medium text-[#2d5a41]">
+                                      Ocupa {px.plazasPersonas} plazas (personas confirmadas en su invitación)
+                                    </p>
+                                  ) : null}
                                   {!px.mutuo ? (
                                     <>
                                       <p className="mt-1 text-[12px] text-[#1e40af]">
@@ -553,8 +581,10 @@ export default function SmartpoolPage() {
                         <div className="space-y-4 rounded-2xl bg-white px-5 py-4 text-left ring-1 ring-[#c5dece]">
                           <p className="text-[13px] font-medium text-[#374151]">Sugerencias de pasajeros</p>
                           <p className="text-[12px] text-[#6b7280]">
-                            Solo invitados con <strong>asistencia confirmada</strong>. Debajo ves la dirección que cargaron
-                            al confirmar.
+                            Solo invitados con <strong>asistencia confirmada</strong>. Se indica cuántas plazas ocupa
+                            cada invitación (personas confirmadas del grupo). Te quedan{" "}
+                            <strong>{plazasLibres}</strong> plaza{plazasLibres === 1 ? "" : "s"} libre
+                            {plazasLibres === 1 ? "" : "s"}.
                           </p>
                           {!estado.tieneTelefono && (
                             <p className="text-[12px] text-[#b45309]">
@@ -583,6 +613,16 @@ export default function SmartpoolPage() {
                                   className="rounded-xl border border-[#d1e7d9] bg-[#f7faf8] px-3 py-3"
                                 >
                                   <p className="text-[13px] font-semibold text-[#111827]">{s.nombre}</p>
+                                  <p className="mt-0.5 text-[11px] font-medium text-[#374151]">
+                                    {s.plazasPersonas === 1
+                                      ? "1 plaza en el pool"
+                                      : `${s.plazasPersonas} plazas en el pool (grupo confirmado)`}
+                                    {s.plazasPersonas > plazasLibres ? (
+                                      <span className="ml-1 text-[#b45309]">
+                                        · no alcanza con tus plazas libres ({plazasLibres})
+                                      </span>
+                                    ) : null}
+                                  </p>
                                   <p className="mt-1 text-[12px] leading-snug text-[#374151]">
                                     {s.direccion?.trim() ? s.direccion.trim() : "Sin dirección cargada"}
                                   </p>
@@ -596,7 +636,8 @@ export default function SmartpoolPage() {
                                       elegirLoading !== null ||
                                       aceptarLoading ||
                                       quitarPasajeroLoading !== null ||
-                                      salirLoading
+                                      salirLoading ||
+                                      s.plazasPersonas > plazasLibres
                                     }
                                     onClick={() => void handleElegirPasajero(s.invitadoId)}
                                     className="mt-2 w-full rounded-lg py-2 text-[12px] font-bold text-white disabled:opacity-40"
@@ -604,7 +645,11 @@ export default function SmartpoolPage() {
                                   >
                                     {elegirLoading === s.invitadoId
                                       ? "Enviando…"
-                                      : "Proponer viaje a esta persona"}
+                                      : s.plazasPersonas > plazasLibres
+                                        ? "No alcanzan las plazas"
+                                        : s.plazasPersonas > 1
+                                          ? `Proponer viaje (${s.plazasPersonas} pers.)`
+                                          : "Proponer viaje a esta persona"}
                                   </button>
                                 </li>
                               ))}
@@ -616,7 +661,7 @@ export default function SmartpoolPage() {
                           <p className="text-[13px] text-[#4b5563]">
                             {cuposMax === 0
                               ? "Tu invitación no permite sumar pasajeros del pool; los que figuran arriba son los que ya vinculaste."
-                              : `Tenés el cupo completo (${cuposMax} pasajero${cuposMax === 1 ? "" : "s"}). Quitá a alguien de la lista de arriba para liberar un lugar y ver sugerencias otra vez.`}
+                              : `Tenés todas las plazas del pool ocupadas (${cuposMax} plaza${cuposMax === 1 ? "" : "s"}). Quitá una propuesta de la lista de arriba para liberar cupo y ver sugerencias otra vez.`}
                           </p>
                         </div>
                       ) : cuposMax === 0 ? (

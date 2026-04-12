@@ -120,7 +120,9 @@ type EventoData = {
     diasRestantes: number;
   };
   stats: {
+    /** Personas confirmadas (incluye grupo familiar). */
     confirmados: number;
+    invitacionesConfirmadas: number;
     noAsiste: number;
     pendientes: number;
     mesasPendientes: number;
@@ -199,6 +201,7 @@ export default function AnfitrionDashboard() {
 
   const stats = data?.stats ?? {
     confirmados: 0,
+    invitacionesConfirmadas: 0,
     noAsiste: 0,
     pendientes: 0,
     mesasPendientes: 0,
@@ -274,18 +277,31 @@ export default function AnfitrionDashboard() {
 
           {/* Donut charts grid — valores reales desde Supabase (sin mínimos artificiales) */}
           <section className="grid gap-4 md:grid-cols-2">
-            <Donut
-              label="Invitados"
-              emptyHint="Cuando cargues invitados (Excel, manual o link), verás confirmados, rechazos y pendientes."
-              legend={[
-                { label: "Confirmados", value: stats.confirmados, color: INVITED_COLORS.confirmados },
-                { label: "No asiste", value: stats.noAsiste, color: INVITED_COLORS.noAsiste },
-                { label: "Pendientes", value: stats.pendientes, color: INVITED_COLORS.pendientes },
-              ]}
-            />
+            <div>
+              <Donut
+                label="Invitados"
+                emptyHint="Cuando cargues invitados (Excel, manual o link), verás confirmados, rechazos y pendientes."
+                legend={[
+                  {
+                    label: "Confirmados (personas)",
+                    value: stats.confirmados,
+                    color: INVITED_COLORS.confirmados,
+                  },
+                  { label: "No asiste", value: stats.noAsiste, color: INVITED_COLORS.noAsiste },
+                  { label: "Pendientes", value: stats.pendientes, color: INVITED_COLORS.pendientes },
+                ]}
+              />
+              {stats.invitacionesConfirmadas > 0 && stats.confirmados !== stats.invitacionesConfirmadas && (
+                <p className="mt-2 text-[11px] leading-relaxed text-[#6b7280]">
+                  {stats.invitacionesConfirmadas} invitación
+                  {stats.invitacionesConfirmadas === 1 ? "" : "es"} confirmada
+                  {stats.invitacionesConfirmadas === 1 ? "" : "s"} · {stats.confirmados} personas en total
+                </p>
+              )}
+            </div>
             <Donut
               label="Mesas"
-              emptyHint="Igual que SmartSeat: cupo por mesa = invitados del evento ÷ cantidad de mesas (redondeado hacia arriba). Cuenta confirmados y pendientes con mesa asignada; vacía = nadie en la mesa; incompleta = hay gente pero falta cupo; completa = cupo lleno."
+              emptyHint="Igual que SmartSeat: cupo por mesa = invitados del evento ÷ cantidad de mesas (redondeado hacia arriba). La ocupación cuenta personas (grupo familiar), no solo filas de invitación."
               legend={[
                 { label: "Pendientes", value: stats.mesasPendientes, color: MESAS_COLORS.pendientes },
                 { label: "Incompletas", value: stats.mesasIncompletas, color: MESAS_COLORS.incompletas },
@@ -294,7 +310,7 @@ export default function AnfitrionDashboard() {
             />
             <Donut
               label="Menús"
-              emptyHint="Solo invitados con asistencia confirmada, según la restricción alimentaria que cargaron."
+              emptyHint="Solo confirmados: una fila por persona del grupo si cargaron menú por integrante; si no, se usa la restricción única de la invitación."
               legend={[
                 { label: "Standard", value: stats.menuStandard, color: "#6cc58c" },
                 { label: "Celíaco", value: stats.menuCeliaco, color: "#b0c4de" },

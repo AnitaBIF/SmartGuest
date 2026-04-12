@@ -117,6 +117,52 @@ export function clampPersonasConfirmadas(n: unknown, cuposMax: number): number {
   return Math.min(cuposMax, Math.max(1, v));
 }
 
+/**
+ * Personas que cuentan para SmartSeat, ocupación de mesas y “confirmados” en el resumen del anfitrión.
+ * Confirmado: `grupo_personas_confirmadas` acotado al cupo. Pendiente (sin rechazar): 1 plaza hasta confirmar con N.
+ */
+export function plazasSmartseatPorInvitado(inv: {
+  asistencia: string;
+  grupo_cupos_max?: number | null;
+  grupo_personas_confirmadas?: number | null;
+}): number {
+  if (inv.asistencia === "rechazado") return 0;
+  const cupos = clampCuposMax(inv.grupo_cupos_max, 1);
+  if (inv.asistencia === "confirmado") {
+    return clampPersonasConfirmadas(inv.grupo_personas_confirmadas, cupos);
+  }
+  return 1;
+}
+
+/**
+ * Personas de la invitación que ocupan plazas al ir como pasajero del SmartPool
+ * (misma regla que SmartSeat: confirmados acotados al cupo del grupo).
+ */
+export function plazasPersonasPasajeroPool(inv: {
+  asistencia: string;
+  grupo_cupos_max?: number | null;
+  grupo_personas_confirmadas?: number | null;
+}): number {
+  return plazasSmartseatPorInvitado(inv);
+}
+
+/** Clasifica el menú de una persona del grupo para estadísticas (standard / celíaco / otros). */
+export function contarMenuPersonaStats(
+  m: MenuPersonaPersisted,
+  acc: { menuStandard: number; menuCeliaco: number; menuOtros: number }
+) {
+  const r = String(m.restriccion || "Ninguna").trim().toLowerCase();
+  if (!r || r === "ninguna") acc.menuStandard++;
+  else if (
+    r === "sin tacc (celíaco)" ||
+    r.includes("celiaco") ||
+    r.includes("celíaco") ||
+    r.includes("tacc")
+  ) {
+    acc.menuCeliaco++;
+  } else acc.menuOtros++;
+}
+
 export function menusGrupoValidos(
   menus: unknown,
   esperados: number,

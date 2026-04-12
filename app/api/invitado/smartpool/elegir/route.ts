@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 import type { Database } from "@/lib/database.types";
-import { clampCuposMax, plazasSmartpoolPasajeros } from "@/lib/grupoFamiliar";
+import { clampCuposMax, plazasPersonasPasajeroPool, plazasSmartpoolPasajeros } from "@/lib/grupoFamiliar";
 import { fetchInvitacionPriorizada } from "@/lib/invitacionUsuarioPriorizada";
 
 function adminClient() {
@@ -93,17 +93,28 @@ export async function POST(req: NextRequest) {
   const cuposMax = plazasSmartpoolPasajeros(nInv);
   const { data: ocupRows, error: cntErr } = await supabase
     .from("invitados")
-    .select("id")
+    .select("id, asistencia, grupo_cupos_max, grupo_personas_confirmadas")
     .eq("smartpool_pareja_invitado_id", me.id);
 
   if (cntErr) {
     return NextResponse.json({ error: cntErr.message }, { status: 500 });
   }
-  const ocupados = ocupRows?.length ?? 0;
-  if (ocupados >= cuposMax) {
+  const plazasOcupadas =
+    (ocupRows ?? []).reduce(
+      (acc, row) =>
+        acc +
+        plazasPersonasPasajeroPool({
+          asistencia: String((row as { asistencia?: string }).asistencia ?? ""),
+          grupo_cupos_max: (row as { grupo_cupos_max?: number | null }).grupo_cupos_max,
+          grupo_personas_confirmadas: (row as { grupo_personas_confirmadas?: number | null })
+            .grupo_personas_confirmadas,
+        }),
+      0
+    );
+  if (plazasOcupadas >= cuposMax) {
     return NextResponse.json(
       {
-        error: `Ya alcanzaste el máximo de ${cuposMax} pasajeros para este viaje. Retirá una propuesta o salí del pool para reorganizar.`,
+        error: `Ya no te quedan plazas libres en el pool para este viaje (${plazasOcupadas}/${cuposMax} ocupadas). Retirá una propuesta o salí del pool para reorganizar.`,
       },
       { status: 409 }
     );
@@ -145,6 +156,8 @@ export async function POST(req: NextRequest) {
         rol_smartpool: string | null;
         smartpool_pareja_invitado_id: string | null;
         asistencia?: string;
+        grupo_cupos_max?: number | null;
+        grupo_personas_confirmadas?: number | null;
       }
     | undefined;
 
@@ -190,6 +203,21 @@ export async function POST(req: NextRequest) {
   if (pas.smartpool_pareja_invitado_id) {
     return NextResponse.json(
       { error: "Ese pasajero ya fue elegido por otro conductor. Actualizá la lista de sugerencias." },
+      { status: 409 }
+    );
+  }
+
+  const plazasPax = plazasPersonasPasajeroPool({
+    asistencia: String(pas.asistencia ?? ""),
+    grupo_cupos_max: pas.grupo_cupos_max,
+    grupo_personas_confirmadas: pas.grupo_personas_confirmadas,
+  });
+  const plazasLibres = cuposMax - plazasOcupadas;
+  if (plazasPax > plazasLibres) {
+    return NextResponse.json(
+      {
+        error: `Esa invitación suma ${plazasPax} persona${plazasPax === 1 ? "" : "s"} en el auto y solo te quedan ${plazasLibres} plaza${plazasLibres === 1 ? "" : "s"} libre(s) en el pool. Liberá lugar quitando una propuesta o elegí otro invitado.`,
+      },
       { status: 409 }
     );
   }

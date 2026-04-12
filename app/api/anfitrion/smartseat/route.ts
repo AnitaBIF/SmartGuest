@@ -3,7 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 import type { Database } from "@/lib/database.types";
 import { ensureMesasForEvento } from "@/lib/ensureEventoMesas";
-import { parseGrupoMenusJson } from "@/lib/grupoFamiliar";
+import { parseGrupoMenusJson, plazasSmartseatPorInvitado } from "@/lib/grupoFamiliar";
 
 function adminClient() {
   return createClient<Database>(
@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
   const { data: invitadosRaw } = await supabase
     .from("invitados")
     .select(
-      "id, usuario_id, mesa_id, asistencia, restriccion_alimentaria, restriccion_otro, grupo, rango_etario, grupo_menus_json"
+      "id, usuario_id, mesa_id, asistencia, restriccion_alimentaria, restriccion_otro, grupo, rango_etario, grupo_menus_json, grupo_cupos_max, grupo_personas_confirmadas"
     )
     .eq("evento_id", evento.id);
 
@@ -91,6 +91,11 @@ export async function GET(req: NextRequest) {
   const guests = invitados.map((i) => {
     const row = i as typeof i & { grupo_menus_json?: unknown };
     const grupoMenus = parseGrupoMenusJson(row.grupo_menus_json);
+    const seatCount = plazasSmartseatPorInvitado({
+      asistencia: i.asistencia,
+      grupo_cupos_max: row.grupo_cupos_max,
+      grupo_personas_confirmadas: row.grupo_personas_confirmadas,
+    });
     return {
       id: i.id,
       name: userNames[i.usuario_id] || "Invitado",
@@ -101,6 +106,7 @@ export async function GET(req: NextRequest) {
       grupo: i.grupo || "Sin grupo",
       rangoEtario: i.rango_etario || "Adulto",
       grupoMenus: grupoMenus.length > 0 ? grupoMenus : null,
+      seatCount,
     };
   });
 
@@ -222,7 +228,7 @@ export async function POST(req: NextRequest) {
 
   const { data: invitados } = await supabase
     .from("invitados")
-    .select("id, grupo, rango_etario, asistencia")
+    .select("id, grupo, rango_etario, asistencia, grupo_cupos_max, grupo_personas_confirmadas")
     .eq("evento_id", evento.id)
     .eq("asistencia", "confirmado");
 
@@ -230,61 +236,76 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Sin mesas o invitados" }, { status: 400 });
   }
 
-  // ─── Algoritmo de clustering ───
+  type InvW = { id: string; grupo: string; rangoEtario: string; plazas: number };
+  const weighted: InvW[] = invitados.map((inv) => ({
+    id: inv.id,
+    grupo: inv.grupo || "Sin grupo",
+    rangoEtario: inv.rango_etario || "Adulto",
+    plazas: plazasSmartseatPorInvitado({
+      asistencia: inv.asistencia,
+      grupo_cupos_max: inv.grupo_cupos_max,
+      grupo_personas_confirmadas: inv.grupo_personas_confirmadas,
+    }),
+  }));
+
+  // ─── Algoritmo de clustering (plazas = personas del grupo familiar) ───
   const RANGO_ORDER: Record<string, number> = {
-    "Niño": 0, "Adolescente": 1, "Joven": 2, "Adulto": 3, "Mayor": 4,
+    Niño: 0,
+    Adolescente: 1,
+    Joven: 2,
+    Adulto: 3,
+    Mayor: 4,
   };
 
-  // Agrupar invitados por grupo social
-  const groups: Record<string, typeof invitados> = {};
-  for (const inv of invitados) {
-    const g = inv.grupo || "Sin grupo";
-    if (!groups[g]) groups[g] = [];
-    groups[g].push(inv);
+  const groups: Record<string, InvW[]> = {};
+  for (const w of weighted) {
+    if (w.plazas <= 0) continue;
+    if (!groups[w.grupo]) groups[w.grupo] = [];
+    groups[w.grupo].push(w);
   }
 
-  // Ordenar cada grupo internamente por rango etario
   for (const g of Object.keys(groups)) {
-    groups[g].sort((a, b) =>
-      (RANGO_ORDER[a.rango_etario ?? "Adulto"] ?? 3) -
-      (RANGO_ORDER[b.rango_etario ?? "Adulto"] ?? 3)
+    groups[g].sort(
+      (a, b) =>
+        (RANGO_ORDER[a.rangoEtario] ?? 3) - (RANGO_ORDER[b.rangoEtario] ?? 3)
     );
   }
 
-  // Ordenar los grupos: los más grandes primero para llenar mesas completas
-  const sortedGroups = Object.entries(groups)
-    .sort(([, a], [, b]) => b.length - a.length);
+  const sumPlazas = (arr: InvW[]) => arr.reduce((s, x) => s + x.plazas, 0);
+  const sortedGroups = Object.entries(groups).sort(([, a], [, b]) => sumPlazas(b) - sumPlazas(a));
 
-  // Crear estructura de mesas con capacidad
-  const tableSlots: { mesaId: string; capacity: number; assigned: string[] }[] =
-    mesas.map((m) => ({ mesaId: m.id, capacity: seatsPerTable, assigned: [] }));
+  const tableSlots: { mesaId: string; capacity: number; used: number; assigned: string[] }[] = mesas.map(
+    (m) => ({ mesaId: m.id, capacity: seatsPerTable, used: 0, assigned: [] })
+  );
 
-  // Asignar grupos a mesas
   for (const [, members] of sortedGroups) {
     const remaining = [...members];
-
     while (remaining.length > 0) {
-      // Buscar mesa con más espacio disponible
       const bestTable = tableSlots
-        .filter((t) => t.assigned.length < t.capacity)
-        .sort((a, b) => (b.capacity - b.assigned.length) - (a.capacity - a.assigned.length))[0];
-
+        .filter((t) => t.used < t.capacity)
+        .sort((a, b) => b.capacity - b.used - (a.capacity - a.used))[0];
       if (!bestTable) break;
-
-      const spotsAvailable = bestTable.capacity - bestTable.assigned.length;
-      const toAssign = remaining.splice(0, spotsAvailable);
-      bestTable.assigned.push(...toAssign.map((i) => i.id));
+      let space = bestTable.capacity - bestTable.used;
+      let placed = false;
+      while (remaining.length > 0 && space > 0) {
+        const inv = remaining[0];
+        if (inv.plazas > space) break;
+        remaining.shift();
+        bestTable.used += inv.plazas;
+        bestTable.assigned.push(inv.id);
+        space -= inv.plazas;
+        placed = true;
+      }
+      if (!placed) break;
     }
   }
 
-  // Construir resultado
   const suggestion: Record<string, string | null> = {};
   for (const table of tableSlots) {
     for (const invId of table.assigned) {
       suggestion[invId] = table.mesaId;
     }
   }
-  // Los que no entraron quedan sin mesa
   for (const inv of invitados) {
     if (!(inv.id in suggestion)) {
       suggestion[inv.id] = null;

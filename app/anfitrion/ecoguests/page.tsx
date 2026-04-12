@@ -15,6 +15,8 @@ type InvitadoApi = {
   telefono: string;
   eco: "Sí" | "No";
   rolSmartpool: RolPool;
+  /** Personas confirmadas del grupo (SmartSeat / pool); por defecto 1 si la API no lo envía. */
+  personasGrupo?: number;
 };
 
 function EcoGuestRow({ guest }: { guest: InvitadoApi }) {
@@ -41,6 +43,9 @@ function EcoGuestRow({ guest }: { guest: InvitadoApi }) {
         </div>
         <p className="mt-0.5 truncate text-[12px] text-[#6b7280]" title={guest.grupo}>
           Grupo: {guest.grupo || "—"}
+          {!esConductor && (guest.personasGrupo ?? 1) > 1 ? (
+            <span className="text-[#2d5a41]"> · {guest.personasGrupo} pers. confirmadas (SmartPool)</span>
+          ) : null}
         </p>
       </div>
     </li>
@@ -48,12 +53,13 @@ function EcoGuestRow({ guest }: { guest: InvitadoApi }) {
 }
 
 function downloadCsv(guests: InvitadoApi[]) {
-  const header = "Nombre,Rol,Asistencia,Grupo,Teléfono\n";
+  const header = "Nombre,Rol,Asistencia,Grupo,Personas grupo,Teléfono\n";
   const rows = guests
     .map((g) => {
       const rol = g.rolSmartpool === "conductor" ? "Conductor" : "Pasajero";
       const tel = (g.telefono ?? "").replace(/"/g, '""');
-      return `"${g.nombre.replace(/"/g, '""')}",${rol},${g.asistencia},"${(g.grupo ?? "").replace(/"/g, '""')}","${tel}"`;
+      const pers = g.rolSmartpool === "pasajero" ? String(g.personasGrupo ?? 1) : "";
+      return `"${g.nombre.replace(/"/g, '""')}",${rol},${g.asistencia},"${(g.grupo ?? "").replace(/"/g, '""')}",${pers},"${tel}"`;
     })
     .join("\n");
   const blob = new Blob(["\ufeff" + header + rows], { type: "text/csv;charset=utf-8;" });
@@ -129,12 +135,16 @@ export default function EcoGuestsPage() {
 
   const conteo = useMemo(() => {
     let conductores = 0;
-    let pasajeros = 0;
+    let pasajerosPlazas = 0;
+    let pasajerosFilas = 0;
     for (const g of ecoGuests) {
       if (g.rolSmartpool === "conductor") conductores += 1;
-      else if (g.rolSmartpool === "pasajero") pasajeros += 1;
+      else if (g.rolSmartpool === "pasajero") {
+        pasajerosFilas += 1;
+        pasajerosPlazas += g.personasGrupo ?? 1;
+      }
     }
-    return { conductores, pasajeros, total: ecoGuests.length };
+    return { conductores, pasajeros: pasajerosPlazas, pasajerosFilas, total: ecoGuests.length };
   }, [ecoGuests]);
 
   return (
@@ -160,13 +170,19 @@ export default function EcoGuestsPage() {
                     eventoNombre: eventoNombre || "Mi evento",
                     eventoFecha,
                     anfitrionNombre: userName,
-                    conteo,
+                    conteo: {
+                      total: conteo.total,
+                      conductores: conteo.conductores,
+                      pasajeros: conteo.pasajeros,
+                      pasajerosFilas: conteo.pasajerosFilas,
+                    },
                     guests: ecoGuests.map((g) => ({
                       nombre: g.nombre,
                       rol: g.rolSmartpool === "conductor" ? "Conductor" : "Pasajero",
                       grupo: g.grupo || "—",
                       telefono: g.telefono || "—",
                       asistencia: g.asistencia,
+                      personasGrupo: g.rolSmartpool === "pasajero" ? (g.personasGrupo ?? 1) : undefined,
                     })),
                   })
                 }
@@ -217,7 +233,10 @@ export default function EcoGuestsPage() {
                   {conteo.conductores} {conteo.conductores === 1 ? "conductor" : "conductores"}
                 </span>
                 <span className="rounded-full bg-[#2d5a41]/8 px-3 py-1 font-medium text-[#2d5a41]">
-                  {conteo.pasajeros} {conteo.pasajeros === 1 ? "pasajero" : "pasajeros"}
+                  {conteo.pasajeros} plaza{conteo.pasajeros === 1 ? "" : "s"} pasajero
+                  {conteo.pasajerosFilas !== conteo.pasajeros ? (
+                    <span className="font-normal text-[#4b5563]"> ({conteo.pasajerosFilas} invit.)</span>
+                  ) : null}
                 </span>
               </div>
 

@@ -3,7 +3,12 @@ import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 import type { Database } from "@/lib/database.types";
-import { clampCuposMax, menuOpcionesParaEvento, plazasSmartpoolPasajeros } from "@/lib/grupoFamiliar";
+import {
+  clampCuposMax,
+  menuOpcionesParaEvento,
+  plazasSmartpoolPasajeros,
+  plazasSmartseatPorInvitado,
+} from "@/lib/grupoFamiliar";
 import {
   generateImportDni,
   generateSyntheticEmail,
@@ -234,9 +239,9 @@ export async function GET(req: NextRequest) {
   const eventoId = evento.id;
 
   const selectWithPhone =
-    "id, usuario_id, asistencia, restriccion_alimentaria, restriccion_otro, grupo, rango_etario, telefono, rol_smartpool, grupo_cupos_max" as const;
+    "id, usuario_id, asistencia, restriccion_alimentaria, restriccion_otro, grupo, rango_etario, telefono, rol_smartpool, grupo_cupos_max, grupo_personas_confirmadas" as const;
   const selectNoPhone =
-    "id, usuario_id, asistencia, restriccion_alimentaria, restriccion_otro, grupo, rango_etario, rol_smartpool, grupo_cupos_max" as const;
+    "id, usuario_id, asistencia, restriccion_alimentaria, restriccion_otro, grupo, rango_etario, rol_smartpool, grupo_cupos_max, grupo_personas_confirmadas" as const;
 
   let first = await supabase
     .from("invitados")
@@ -291,6 +296,13 @@ export async function GET(req: NextRequest) {
 
     const eco =
       inv.rol_smartpool && inv.rol_smartpool !== "no" ? ("Sí" as const) : ("No" as const);
+
+    const personasGrupo = plazasSmartseatPorInvitado({
+      asistencia: inv.asistencia ?? "pendiente",
+      grupo_cupos_max: (inv as { grupo_cupos_max?: number | null }).grupo_cupos_max,
+      grupo_personas_confirmadas: (inv as { grupo_personas_confirmadas?: number | null })
+        .grupo_personas_confirmadas,
+    });
     let restriccion = "-";
     let restriccionSelect = "Ninguna";
     let restriccionOtro = "";
@@ -321,6 +333,7 @@ export async function GET(req: NextRequest) {
       eco,
       rolSmartpool: inv.rol_smartpool ?? null,
       grupoCuposMax: clampCuposMax((inv as { grupo_cupos_max?: number }).grupo_cupos_max, 1),
+      personasGrupo,
     };
   });
 

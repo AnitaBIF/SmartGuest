@@ -11,12 +11,24 @@ type Guest = {
   restriction?: string;
   grupo: string;
   rangoEtario: string;
+  /** Personas del grupo familiar (plazas en el plano). */
+  seatCount: number;
 };
 
 type MesaDB = { id: string; numero: number };
 
 type Seat = { index: number; guestId: string | null };
 type TableData = { id: string; numero: number; seats: Seat[] };
+
+function countSeatsForGuest(tables: TableData[], guestId: string): number {
+  let n = 0;
+  for (const t of tables) {
+    for (const s of t.seats) {
+      if (s.guestId === guestId) n++;
+    }
+  }
+  return n;
+}
 
 /** Sillas: solo gris (libre) o verde (ocupada). */
 const SEAT_LIBRE = "#d1d5db";
@@ -43,14 +55,21 @@ export default function SmartSeatPage() {
       const data = await res.json();
 
       setAllGuests(
-        data.guests.map((g: Guest & { restriccion?: string; restriccionOtro?: string }) => ({
-          id: g.id,
-          name: g.name,
-          mesaId: g.mesaId,
-          restriction: g.restriction === "otro" ? g.restriction : g.restriction,
-          grupo: g.grupo,
-          rangoEtario: g.rangoEtario,
-        })),
+        data.guests.map((g: Guest & { restriccion?: string; restriccionOtro?: string; seatCount?: number }) => {
+          const sc =
+            typeof g.seatCount === "number" && Number.isFinite(g.seatCount)
+              ? Math.min(20, Math.max(1, Math.floor(g.seatCount)))
+              : 1;
+          return {
+            id: g.id,
+            name: g.name,
+            mesaId: g.mesaId,
+            restriction: g.restriction === "otro" ? g.restriction : g.restriction,
+            grupo: g.grupo,
+            rangoEtario: g.rangoEtario,
+            seatCount: sc,
+          };
+        }),
       );
 
       const seatsPerTable: number = data.seatsPerTable;
@@ -68,8 +87,18 @@ export default function SmartSeatPage() {
         if (!g.mesaId) continue;
         const table = tableDatas.find((t) => t.id === g.mesaId);
         if (!table) continue;
-        const emptySeat = table.seats.find((s) => s.guestId === null);
-        if (emptySeat) emptySeat.guestId = g.id;
+        const sc =
+          typeof (g as Guest).seatCount === "number" && Number.isFinite((g as Guest).seatCount)
+            ? Math.min(20, Math.max(1, Math.floor((g as Guest).seatCount)))
+            : 1;
+        let placed = 0;
+        for (const seat of table.seats) {
+          if (placed >= sc) break;
+          if (seat.guestId === null) {
+            seat.guestId = g.id;
+            placed++;
+          }
+        }
       }
 
       setTables(tableDatas);
@@ -112,14 +141,15 @@ export default function SmartSeatPage() {
     };
   }, [loadData]);
 
-  const assignedGuestIds = useMemo(
-    () => new Set(tables.flatMap((t) => t.seats.map((s) => s.guestId).filter(Boolean) as string[])),
-    [tables],
-  );
+  const assignedGuestIds = useMemo(() => {
+    return new Set(
+      allGuests.filter((g) => countSeatsForGuest(tables, g.id) >= g.seatCount).map((g) => g.id),
+    );
+  }, [tables, allGuests]);
 
   const unassignedGuests = useMemo(
-    () => allGuests.filter((g) => !assignedGuestIds.has(g.id)),
-    [allGuests, assignedGuestIds],
+    () => allGuests.filter((g) => countSeatsForGuest(tables, g.id) < g.seatCount),
+    [allGuests, tables],
   );
 
   const getGuestById = (id: string | null) => (id ? allGuests.find((g) => g.id === id) : undefined);
@@ -141,20 +171,33 @@ export default function SmartSeatPage() {
     );
   };
 
-  const assignGuestToSeat = (guestId: string, tableId: string, seatIndex: number) => {
-    removeGuestFromSeats(guestId);
-    setTables((prev) =>
-      prev.map((table) =>
-        table.id !== tableId
-          ? table
-          : {
-              ...table,
-              seats: table.seats.map((seat) =>
-                seat.index === seatIndex ? { ...seat, guestId } : seat
-              ),
-            },
-      ),
-    );
+  /** Asigna las `seatCount` plazas del invitado en la mesa (prioriza sillas cerca del índice clickeado). */
+  const assignGuestGroupToTable = (guestId: string, tableId: string, preferSeatIndex?: number) => {
+    const guest = allGuests.find((g) => g.id === guestId);
+    const n = guest?.seatCount ?? 1;
+    markLayoutDirty();
+    setTables((prev) => {
+      const next = structuredClone(prev) as TableData[];
+      for (const table of next) {
+        for (const seat of table.seats) {
+          if (seat.guestId === guestId) seat.guestId = null;
+        }
+      }
+      const table = next.find((t) => t.id === tableId);
+      if (!table) return next;
+      const free = table.seats.filter((s) => s.guestId === null);
+      let indices = free.map((s) => s.index);
+      if (preferSeatIndex != null && indices.length > 0) {
+        indices = [...indices].sort(
+          (a, b) => Math.abs(a - preferSeatIndex) - Math.abs(b - preferSeatIndex),
+        );
+      }
+      for (let i = 0; i < Math.min(n, indices.length); i++) {
+        const seat = table.seats.find((s) => s.index === indices[i]);
+        if (seat) seat.guestId = guestId;
+      }
+      return next;
+    });
   };
 
   const unassignGuest = (guestId: string) => {
@@ -220,17 +263,23 @@ export default function SmartSeatPage() {
       const { suggestion } = await res.json() as { suggestion: Record<string, string | null> };
 
       markLayoutDirty();
+      const guestsSnap = allGuests;
       setTables((prev) => {
         const next = structuredClone(prev) as TableData[];
-        // Limpiar todas las mesas
         for (const t of next) for (const s of t.seats) s.guestId = null;
-        // Asignar según sugerencia
-        for (const [invId, mesaId] of Object.entries(suggestion)) {
+        for (const g of guestsSnap) {
+          const mesaId = suggestion[g.id];
           if (!mesaId) continue;
           const table = next.find((t) => t.id === mesaId);
           if (!table) continue;
-          const emptySeat = table.seats.find((s) => s.guestId === null);
-          if (emptySeat) emptySeat.guestId = invId;
+          let left = g.seatCount;
+          for (const seat of table.seats) {
+            if (left <= 0) break;
+            if (seat.guestId === null) {
+              seat.guestId = g.id;
+              left--;
+            }
+          }
         }
         return next;
       });
@@ -259,8 +308,9 @@ export default function SmartSeatPage() {
             <div>
               <h1 className="text-2xl font-semibold text-brand">SmartSeat</h1>
               <p className="mt-1 max-w-xl text-[12px] text-[#6b7280]">
-                Solo se listan invitados con <strong>asistencia confirmada</strong>. Cuando confirmen desde su invitación,
-                aparecen acá (la página se actualiza sola cada poco si no moviste mesas sin guardar).
+                Invitados con <strong>asistencia confirmada</strong>. Si la invitación es para varias personas, se ocupan{" "}
+                <strong>varias sillas</strong> con el mismo nombre (grupo familiar). La página se actualiza sola cada poco
+                si no moviste mesas sin guardar.
               </p>
             </div>
             <div className="flex gap-2">
@@ -330,7 +380,9 @@ export default function SmartSeatPage() {
                             const payload = e.dataTransfer.getData("application/json");
                             if (!payload) return;
                             const data = JSON.parse(payload) as { type: string; guestId?: string; tableId?: string; seatIndex?: number };
-                            if (data.type === "guest" && data.guestId) assignGuestToSeat(data.guestId, table.id, seat.index);
+                            if (data.type === "guest" && data.guestId) {
+                              assignGuestGroupToTable(data.guestId, table.id, seat.index);
+                            }
                             if (data.type === "seat" && data.tableId != null && data.seatIndex != null) {
                               swapSeats({ tableId: data.tableId, seatIndex: data.seatIndex }, { tableId: table.id, seatIndex: seat.index });
                             }
@@ -350,6 +402,9 @@ export default function SmartSeatPage() {
                           {guest && (
                             <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 scale-90 rounded-lg bg-[#1f2937] px-3 py-2 text-xs text-white opacity-0 shadow-lg transition-all group-hover:scale-100 group-hover:opacity-100">
                               <p className="whitespace-nowrap font-semibold">{guest.name}</p>
+                              {guest.seatCount > 1 && (
+                                <p className="mt-0.5 whitespace-nowrap text-[#93c5fd]">{guest.seatCount} personas (mismo grupo)</p>
+                              )}
                               <p className="mt-0.5 whitespace-nowrap text-[#a7f3d0]">{guest.grupo} · {guest.rangoEtario}</p>
                               {guest.restriction && guest.restriction !== "ninguna" && (
                                 <p className="mt-0.5 whitespace-nowrap text-[#fbbf24]">{guest.restriction}</p>
@@ -396,7 +451,9 @@ export default function SmartSeatPage() {
                     className="cursor-grab rounded-xl border border-[#d1d5db] bg-white px-3 py-2 text-sm font-medium text-[#111827] shadow-sm"
                   >
                     <span>{guest.name}</span>
-                    <span className="ml-2 text-[10px] text-[#6b7280]">{guest.grupo}</span>
+                    <span className="ml-2 text-[10px] text-[#6b7280]">
+                      {guest.seatCount > 1 ? `${guest.seatCount} pers.` : guest.grupo}
+                    </span>
                   </div>
                 ))}
                 {unassignedGuests.length === 0 && allGuests.length > 0 && (
@@ -410,7 +467,8 @@ export default function SmartSeatPage() {
                 )}
               </div>
               <p className="mt-3 text-xs text-[#4b5563]">
-                Arrastrá invitados a una silla. Doble clic para desasignar. Guardá para persistir cambios.
+                Arrastrá a una silla: se llenan todas las plazas del grupo en esa mesa. Doble clic en una silla ocupada
+                desasigna todo el grupo. Guardá para persistir.
               </p>
             </aside>
           </div>
