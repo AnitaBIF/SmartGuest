@@ -283,7 +283,7 @@ export default function AnfitrionDashboard() {
                 emptyHint="Cuando cargues invitados (Excel, manual o link), verás confirmados, rechazos y pendientes."
                 legend={[
                   {
-                    label: "Confirmados (personas)",
+                    label: "Confirmados",
                     value: stats.confirmados,
                     color: INVITED_COLORS.confirmados,
                   },
