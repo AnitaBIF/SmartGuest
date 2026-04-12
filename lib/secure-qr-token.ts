@@ -50,7 +50,9 @@ export type VerifyOk = {
 export type VerifyFail = { ok: false; reason: string };
 
 /**
- * Verifica firma y que la ventana temporal sea aceptable (actual ±1 por desfase de reloj).
+ * Verifica firma y que la ventana temporal sea exactamente la actual.
+ * No aceptamos ventana anterior/siguiente: una captura deja de servir en el próximo tick (~30 s).
+ * Emisión y validación usan el mismo servidor (`Date.now()`), sin tolerancia extra.
  */
 export function verifyRollingQrToken(token: string, now = Date.now()): VerifyOk | VerifyFail {
   const secret = getSecret();
@@ -100,8 +102,11 @@ export function verifyRollingQrToken(token: string, now = Date.now()): VerifyOk 
   }
 
   const cw = currentWindowIndex(now);
-  if (window < cw - 1 || window > cw + 1) {
-    return { ok: false, reason: "Código expirado o relojes muy desincronizados." };
+  if (window !== cw) {
+    return {
+      ok: false,
+      reason: "Código vencido: el QR cambia cada pocos segundos. Pedí que muestren el código en vivo desde la app.",
+    };
   }
 
   return { ok: true, invitadoId, eventoId, window };

@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { LeyendaObligatorios, Req } from "@/components/FormRequired";
 import { AdminSidebar } from "./components/AdminSidebar";
 import { MENUS_ESPECIALES_CATALOGO } from "@/lib/grupoFamiliar";
+import { parseSalonMenuStandardToOpciones } from "@/lib/salonMenuStandardOpciones";
 import { supabase } from "@/lib/supabase";
 import ClockPicker from "./components/ClockPicker";
 import DatePicker  from "./components/DatePicker";
@@ -169,14 +170,120 @@ function Field({
   );
 }
 
+const MENU_STD_TA =
+  "w-full rounded-2xl border border-[#94a3b8] bg-white px-4 py-3 text-sm text-[#0f172a] placeholder:text-[#64748b] shadow-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30";
+
+/** Opciones del menú estándar definidas en la cuenta del salón (texto `salon_menu_standard`). */
+function opcionesMenuStandardDesdeSalon(raw: string): string[] {
+  return parseSalonMenuStandardToOpciones(raw)
+    .map((o) => o.trim())
+    .filter((o) => o.length >= 2);
+}
+
+/**
+ * Una sola opción del menú estándar, o texto libre si el salón no definió lista.
+ * Con `allowCustom`, se puede “Otro” para valores que no están en la lista (eventos viejos).
+ */
+function MenuStandardElegirUno({
+  opciones,
+  value,
+  onChange,
+  allowCustom,
+}: {
+  opciones: string[];
+  value: string;
+  onChange: (v: string) => void;
+  allowCustom: boolean;
+}) {
+  const rid = useId();
+  const radioName = `menu-standard-${rid}`;
+  const listed = opciones.some((o) => o === value);
+
+  if (opciones.length === 0) {
+    return (
+      <textarea
+        rows={3}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={MENU_STD_TA}
+        placeholder="Detalle del menú principal del evento"
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {opciones.map((opt) => (
+        <label
+          key={opt}
+          className={`flex cursor-pointer items-start gap-3 rounded-2xl border px-3 py-2.5 text-sm transition-colors ${
+            value === opt ? "border-brand bg-[#f0f7f2] ring-1 ring-brand/25" : "border-[#e2e8f0] bg-white hover:bg-[#f8fafc]"
+          }`}
+        >
+          <input
+            type="radio"
+            name={radioName}
+            className="mt-0.5 shrink-0"
+            checked={value === opt}
+            onChange={() => onChange(opt)}
+          />
+          <span className="text-[#0f172a] leading-snug">{opt}</span>
+        </label>
+      ))}
+      {allowCustom ? (
+        <label
+          className={`flex cursor-pointer flex-col gap-2 rounded-2xl border px-3 py-2.5 text-sm ${
+            !listed && value.trim()
+              ? "border-brand/40 bg-[#fffbeb] ring-1 ring-amber-200/50"
+              : "border-[#e2e8f0] bg-white"
+          }`}
+        >
+          <span className="flex items-start gap-3">
+            <input
+              type="radio"
+              name={radioName}
+              className="mt-0.5 shrink-0"
+              checked={!listed}
+              onChange={() => {
+                if (listed) onChange("");
+              }}
+            />
+            <span className="font-medium text-[#0f172a]">Otro (texto libre)</span>
+          </span>
+          {!listed ? (
+            <textarea
+              rows={3}
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              className={`${MENU_STD_TA} ml-7`}
+              placeholder="Detalle del menú principal del evento"
+            />
+          ) : null}
+        </label>
+      ) : (
+        <p className="text-[11px] leading-snug text-[#6b7280]">
+          Elegí una opción. Para cambiar la lista, actualizá el menú estándar en Configuración del salón.
+        </p>
+      )}
+    </div>
+  );
+}
+
 /* ─── Modal detalle con edición completa ─── */
 const editInp =
   "w-full rounded-full border border-[#94a3b8] bg-white px-3 py-2 text-sm text-[#0f172a] placeholder:text-[#64748b] shadow-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30";
 
-function EventDetailModal({ event, onClose, onUpdated }: {
+function EventDetailModal({
+  event,
+  onClose,
+  onUpdated,
+  menuStandardOpciones = [],
+}: {
   event: CalendarEvent;
   onClose: () => void;
   onUpdated: () => void;
+  /** Opciones definidas en la cuenta del salón (mismo criterio que el alta de evento). */
+  menuStandardOpciones?: string[];
 }) {
   const isEvento = event.tipo === "evento";
   const [editing, setEditing] = useState(false);
@@ -215,6 +322,10 @@ function EventDetailModal({ event, onClose, onUpdated }: {
   const handleSaveEvento = async () => {
     if (!eSalon.trim() || !eDireccion.trim()) {
       alert("Completá el nombre del salón y la dirección (calle, número y ciudad) para que los invitados vean el mapa.");
+      return;
+    }
+    if (menuStandardOpciones.length > 0 && !eMenu.trim()) {
+      alert("Elegí una opción de menú estándar o escribí el texto en “Otro”.");
       return;
     }
     setSaving(true);
@@ -443,7 +554,12 @@ function EventDetailModal({ event, onClose, onUpdated }: {
               </div>
               <div>
                 <label className="mb-1 block text-[12px] font-semibold text-[#1e293b]">Menú standard</label>
-                <input type="text" value={eMenu} onChange={(e) => setEMenu(e.target.value)} className={editInp} />
+                <MenuStandardElegirUno
+                  opciones={menuStandardOpciones}
+                  value={eMenu}
+                  onChange={setEMenu}
+                  allowCustom={menuStandardOpciones.length > 0}
+                />
               </div>
               <div>
                 <label className="mb-1 block text-[12px] font-semibold text-[#1e293b]">Dress code</label>
@@ -571,6 +687,9 @@ export default function AdminDashboard() {
     menusEspeciales: [] as string[],
     menusOtro: "",
     menuStandard: "",
+    /** Desde Configuración del administrador / salón (`usuarios.salon_*`). */
+    salonNombre: "",
+    salonDireccion: "",
   });
   const toggleMenu = (opcion: string) =>
     setEvento((p) => ({
@@ -607,11 +726,15 @@ export default function AdminDashboard() {
   };
   const openNuevoEventoModal = () => {
     setEventoFormError("");
+    const stdOpts = opcionesMenuStandardDesdeSalon(salonEventoDefaults.menuStandard);
+    const menuStandardInicial = stdOpts.length === 1 ? stdOpts[0]! : "";
     setEvento({
       ...emptyEventoForm(),
       menusEspeciales: [...salonEventoDefaults.menusEspeciales],
       menusOtro: salonEventoDefaults.menusOtro,
-      menuStandard: salonEventoDefaults.menuStandard,
+      menuStandard: menuStandardInicial,
+      salon: salonEventoDefaults.salonNombre,
+      direccionSalon: salonEventoDefaults.salonDireccion,
     });
     setShowMenusDropdown(false);
     setShowEventoModal(true);
@@ -624,6 +747,11 @@ export default function AdminDashboard() {
     const faltante = total - sena;
     return fmtMoney(faltante);
   })();
+
+  const salonMenuStdOpciones = useMemo(
+    () => opcionesMenuStandardDesdeSalon(salonEventoDefaults.menuStandard),
+    [salonEventoDefaults.menuStandard]
+  );
 
   // Cargar perfil del admin y datos
   const fetchData = useCallback(async () => {
@@ -646,6 +774,8 @@ export default function AdminDashboard() {
         menusEspeciales: Array.isArray(c.salonMenusEspeciales) ? c.salonMenusEspeciales : [],
         menusOtro: typeof c.salonMenusEspecialesOtro === "string" ? c.salonMenusEspecialesOtro : "",
         menuStandard: typeof c.salonMenuStandard === "string" ? c.salonMenuStandard : "",
+        salonNombre: typeof c.salonNombre === "string" ? c.salonNombre.trim() : "",
+        salonDireccion: typeof c.salonDireccion === "string" ? c.salonDireccion.trim() : "",
       });
     }
 
@@ -721,6 +851,10 @@ export default function AdminDashboard() {
     setEventoFormError("");
     if (!evento.fecha) {
       setEventoFormError("Elegí una fecha para el evento.");
+      return;
+    }
+    if (salonMenuStdOpciones.length > 0 && !evento.menuStandard.trim()) {
+      setEventoFormError("Elegí una opción de menú estándar.");
       return;
     }
     const salon = evento.salon.trim();
@@ -823,10 +957,9 @@ export default function AdminDashboard() {
           <h1 className="mb-6 text-right text-2xl font-bold text-brand">Dashboard</h1>
 
           {/* Stat cards */}
-          <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
             {[
               { label: "Próximos Eventos",   value: loading ? "..." : String(totalEventos) },
-              { label: "Impacto EcoGuest",   value: "—" },
               { label: "Próximas reuniones", value: loading ? "..." : String(totalReuniones) },
             ].map((card) => (
               <div key={card.label} className="rounded-2xl bg-[linear-gradient(135deg,#2d5a41,#3d7a56)] px-5 py-4 shadow-sm">
@@ -1057,12 +1190,11 @@ export default function AdminDashboard() {
 
                 <div className="col-span-2">
                   <Field label="Menú standard">
-                    <textarea
-                      rows={3}
+                    <MenuStandardElegirUno
+                      opciones={salonMenuStdOpciones}
                       value={evento.menuStandard}
-                      onChange={(e) => setEvento((p) => ({ ...p, menuStandard: e.target.value }))}
-                      className="w-full rounded-2xl border border-[#94a3b8] bg-white px-4 py-3 text-sm text-[#0f172a] placeholder:text-[#64748b] shadow-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
-                      placeholder="Detalle del menú principal del evento"
+                      onChange={(v) => setEvento((p) => ({ ...p, menuStandard: v }))}
+                      allowCustom={false}
                     />
                   </Field>
                 </div>
@@ -1103,6 +1235,7 @@ export default function AdminDashboard() {
           event={selectedEvent}
           onClose={() => setSelectedEvent(null)}
           onUpdated={fetchData}
+          menuStandardOpciones={salonMenuStdOpciones}
         />
       )}
 
