@@ -145,7 +145,6 @@ export default function QRPage() {
                     <p className="text-[10px] font-semibold uppercase tracking-widest text-muted">seg</p>
                   </div>
                 </div>
-                <p className="text-[12px] text-muted">Se actualiza solo antes de que venza</p>
               </div>
             </>
           )}
