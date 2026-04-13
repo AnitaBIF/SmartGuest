@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
+import { MobileNavDrawer, MobileNavOpenButton } from "@/components/MobileNavDrawer";
 import { SidebarUserChip } from "@/components/SidebarUserChip";
 import { logout } from "@/lib/supabase";
 
@@ -41,29 +43,52 @@ export function HostSidebar({
   hostName: string;
   active: HostSidebarHighlight;
 }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const navItems = (closeOnNavigate: boolean) => (
+    <>
+      <Logo />
+      <nav className="mt-6 space-y-2 text-sm md:mt-8">
+        {ITEMS.map(({ href, key, label }) =>
+          active === key ? (
+            <p key={key} className="pl-1 text-[13px] font-semibold text-brand">
+              {label}
+            </p>
+          ) : (
+            <Link
+              key={key}
+              href={href}
+              onClick={closeOnNavigate ? () => setMenuOpen(false) : undefined}
+              className="block bg-transparent py-1.5 pl-1 pr-2 text-left text-[13px] text-[#111827] hover:text-brand"
+            >
+              {label}
+            </Link>
+          )
+        )}
+      </nav>
+    </>
+  );
+
   return (
-    <aside className="hidden w-64 flex-shrink-0 flex-col justify-between self-start rounded-3xl bg-white/90 p-6 shadow-lg ring-1 ring-black/5 md:sticky md:top-6 md:h-[calc(100vh-3rem)] md:flex">
-      <div>
-        <Logo />
-        <nav className="mt-8 space-y-2 text-sm">
-          {ITEMS.map(({ href, key, label }) =>
-            active === key ? (
-              <p key={key} className="pl-1 text-[13px] font-semibold text-brand">
-                {label}
-              </p>
-            ) : (
-              <Link
-                key={key}
-                href={href}
-                className="block bg-transparent py-1.5 pl-1 pr-2 text-left text-[13px] text-[#111827] hover:text-brand"
-              >
-                {label}
-              </Link>
-            )
-          )}
-        </nav>
-      </div>
-      <SidebarUserChip displayName={hostName} subtitle="Usuario Anfitrión" onLogout={() => void logout()} />
-    </aside>
+    <>
+      <MobileNavOpenButton onClick={() => setMenuOpen(true)} expanded={menuOpen} />
+      <MobileNavDrawer open={menuOpen} onClose={() => setMenuOpen(false)}>
+        <div className="flex min-h-0 flex-1 flex-col justify-between gap-8">
+          <div>{navItems(true)}</div>
+          <SidebarUserChip
+            displayName={hostName}
+            subtitle="Usuario Anfitrión"
+            onLogout={() => {
+              setMenuOpen(false);
+              void logout();
+            }}
+          />
+        </div>
+      </MobileNavDrawer>
+      <aside className="hidden w-64 flex-shrink-0 flex-col justify-between self-start rounded-3xl bg-white/90 p-6 shadow-lg ring-1 ring-black/5 md:sticky md:top-6 md:flex md:h-[calc(100vh-3rem)]">
+        <div>{navItems(false)}</div>
+        <SidebarUserChip displayName={hostName} subtitle="Usuario Anfitrión" onLogout={() => void logout()} />
+      </aside>
+    </>
   );
 }

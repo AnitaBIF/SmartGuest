@@ -9,7 +9,7 @@ type MeResponse = {
   tipoLabel?: string;
 };
 
-export function AdminSessionFooter() {
+export function AdminSessionFooter({ onBeforeLogout }: { onBeforeLogout?: () => void } = {}) {
   const [displayName, setDisplayName] = useState("Administrador");
   const [tipoLabel, setTipoLabel] = useState("Administrador");
 
@@ -32,7 +32,10 @@ export function AdminSessionFooter() {
     <SidebarUserChip
       displayName={displayName}
       subtitle={tipoLabel}
-      onLogout={() => void logout()}
+      onLogout={() => {
+        onBeforeLogout?.();
+        void logout();
+      }}
     />
   );
 }
