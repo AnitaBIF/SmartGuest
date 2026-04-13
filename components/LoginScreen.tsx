@@ -44,7 +44,7 @@ function NotchedField({
         autoComplete={autoComplete}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border-2 border-brand bg-white px-4 pb-3 pt-5 text-gray-900 placeholder-gray-400 outline-none ring-brand/0 transition-shadow focus:border-brand focus:ring-4 focus:ring-brand/20"
+        className="w-full rounded-lg border-2 border-brand bg-input px-4 pb-3 pt-5 text-foreground placeholder:text-muted outline-none ring-brand/0 transition-shadow focus:border-brand focus:ring-4 focus:ring-brand/20"
       />
     </div>
   );
@@ -157,7 +157,7 @@ export default function LoginScreen({ signOutOnMount = false }: LoginScreenProps
   }
 
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-white">
+    <div className="flex min-h-[100dvh] flex-col text-foreground">
       <header className="flex justify-end px-5 pt-6 sm:px-10 sm:pt-8">
         <span className="text-2xl font-extrabold tracking-tight text-brand sm:text-3xl">
           SMART
@@ -168,20 +168,17 @@ export default function LoginScreen({ signOutOnMount = false }: LoginScreenProps
       </header>
 
       <main className="flex flex-1 flex-col items-center justify-center px-4 py-10 sm:py-16">
-        <div
-          className="w-full max-w-md rounded-2xl bg-white p-6 sm:p-10"
-          style={{ boxShadow: "0 25px 50px -12px rgb(45 90 65 / 0.18), 0 0 0 1px rgb(45 90 65 / 0.06)" }}
-        >
+        <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl shadow-black/10 ring-1 ring-[var(--ring-soft)] sm:p-10 dark:shadow-black/40">
           <h1 className="mb-8 text-center text-3xl font-bold text-brand sm:text-4xl">
             Login
           </h1>
 
           {forgotOpen ? (
             <form className="space-y-6" onSubmit={handleForgot}>
-              <p className="text-center text-sm text-[#6b7280]">
+              <p className="text-center text-sm text-muted">
                 Te enviaremos un enlace a tu email para restablecer la contraseña.
               </p>
-              <p className="text-center text-[11px] text-[#6b7280]">
+              <p className="text-center text-[11px] text-muted">
                 <span className="font-semibold text-red-600">*</span> Campo obligatorio.
               </p>
               <NotchedField
@@ -197,8 +194,8 @@ export default function LoginScreen({ signOutOnMount = false }: LoginScreenProps
                 <p
                   className={`rounded-lg px-4 py-2 text-center text-sm font-medium ${
                     forgotMsg.startsWith("Si ese email")
-                      ? "bg-green-50 text-green-800"
-                      : "bg-red-50 text-red-600"
+                      ? "bg-green-50 text-green-800 dark:bg-green-950/50 dark:text-green-200"
+                      : "bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-300"
                   }`}
                 >
                   {forgotMsg}
@@ -211,14 +208,14 @@ export default function LoginScreen({ signOutOnMount = false }: LoginScreenProps
                     setForgotOpen(false);
                     setForgotMsg("");
                   }}
-                  className="w-full rounded-lg border-2 border-brand bg-white py-3 text-center text-base font-semibold text-brand transition-colors hover:bg-brand/5"
+                  className="w-full rounded-lg border-2 border-brand bg-card py-3 text-center text-base font-semibold text-brand transition-colors hover:bg-brand/10"
                 >
                   Volver
                 </button>
                 <button
                   type="submit"
                   disabled={forgotLoading}
-                  className="w-full rounded-lg bg-brand py-3 text-center text-base font-semibold text-white transition-colors hover:bg-[#24503a] disabled:opacity-60"
+                  className="w-full rounded-lg bg-brand py-3 text-center text-base font-semibold text-white transition-colors hover:brightness-95 disabled:opacity-60"
                 >
                   {forgotLoading ? "Enviando…" : "Enviar enlace"}
                 </button>
@@ -226,7 +223,7 @@ export default function LoginScreen({ signOutOnMount = false }: LoginScreenProps
             </form>
           ) : (
           <form className="space-y-6" onSubmit={handleLogin}>
-            <p className="text-center text-[11px] text-[#6b7280]">
+            <p className="text-center text-[11px] text-muted">
               <span className="font-semibold text-red-600">*</span> Campo obligatorio.
             </p>
             <NotchedField
@@ -249,7 +246,7 @@ export default function LoginScreen({ signOutOnMount = false }: LoginScreenProps
             />
 
             {error && (
-              <p className="rounded-lg bg-red-50 px-4 py-2 text-center text-sm font-medium text-red-600">
+              <p className="rounded-lg bg-red-50 px-4 py-2 text-center text-sm font-medium text-red-600 dark:bg-red-950/40 dark:text-red-300">
                 {error}
               </p>
             )}
@@ -258,7 +255,7 @@ export default function LoginScreen({ signOutOnMount = false }: LoginScreenProps
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-lg bg-brand py-3 text-center text-base font-semibold text-white transition-colors hover:bg-[#24503a] disabled:opacity-60"
+                className="w-full rounded-lg bg-brand py-3 text-center text-base font-semibold text-white transition-colors hover:brightness-95 disabled:opacity-60"
               >
                 {loading ? "Ingresando..." : "Ingresar"}
               </button>

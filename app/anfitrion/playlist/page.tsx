@@ -173,8 +173,8 @@ export default function PlaylistPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_50%_-10%,#e3efe8_0,#f5f7f4_40%,#ffffff_100%)]">
-      <div className="mx-auto flex min-h-screen max-w-6xl gap-6 px-4 py-6 text-[#111827] sm:px-6 lg:px-8">
+    <div className="min-h-screen text-foreground">
+      <div className="mx-auto flex min-h-screen max-w-6xl gap-6 px-4 py-6 text-foreground sm:px-6 lg:px-8">
         <HostSidebar hostName={hostName} active="playlist" />
 
         <main className="flex-1 pb-8">
@@ -224,10 +224,10 @@ export default function PlaylistPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-white">
-                  <th className="rounded-tl-2xl px-5 py-3 text-left text-[13px] font-semibold text-[#111827]">Canción</th>
-                  <th className="px-5 py-3 text-left text-[13px] font-semibold text-[#111827]">Artista</th>
-                  <th className="px-5 py-3 text-left text-[13px] font-semibold text-[#111827]">YouTube</th>
-                  <th className="rounded-tr-2xl px-5 py-3 text-right text-[13px] font-semibold text-[#111827]"></th>
+                  <th className="rounded-tl-2xl px-5 py-3 text-left text-[13px] font-semibold text-foreground">Canción</th>
+                  <th className="px-5 py-3 text-left text-[13px] font-semibold text-foreground">Artista</th>
+                  <th className="px-5 py-3 text-left text-[13px] font-semibold text-foreground">YouTube</th>
+                  <th className="rounded-tr-2xl px-5 py-3 text-right text-[13px] font-semibold text-foreground"></th>
                 </tr>
               </thead>
               <tbody>
@@ -245,7 +245,7 @@ export default function PlaylistPage() {
                         i % 2 === 0 ? "bg-[#f0f7f2]" : "bg-white"
                       }`}
                     >
-                      <td className="px-5 py-3 font-medium text-[#111827]">{song.titulo}</td>
+                      <td className="px-5 py-3 font-medium text-foreground">{song.titulo}</td>
                       <td className="px-5 py-3 text-[#374151]">{song.artista}</td>
                       <td className="px-5 py-3">
                         {song.youtubeUrl ? (
@@ -311,7 +311,7 @@ export default function PlaylistPage() {
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   placeholder="Nombre de la canción"
-                  className="w-full rounded-xl border border-[#d1d5db] px-3 py-2 text-sm text-[#111827] outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+                  className="w-full rounded-xl border border-[#d1d5db] px-3 py-2 text-sm text-foreground outline-none focus:border-brand focus:ring-1 focus:ring-brand"
                 />
               </div>
               <div>
@@ -324,7 +324,7 @@ export default function PlaylistPage() {
                   value={newArtist}
                   onChange={(e) => setNewArtist(e.target.value)}
                   placeholder="Nombre del artista"
-                  className="w-full rounded-xl border border-[#d1d5db] px-3 py-2 text-sm text-[#111827] outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+                  className="w-full rounded-xl border border-[#d1d5db] px-3 py-2 text-sm text-foreground outline-none focus:border-brand focus:ring-1 focus:ring-brand"
                   onKeyDown={(e) => e.key === "Enter" && void addSong()}
                 />
               </div>

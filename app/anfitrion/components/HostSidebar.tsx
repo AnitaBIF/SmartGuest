@@ -59,7 +59,7 @@ export function HostSidebar({
               key={key}
               href={href}
               onClick={closeOnNavigate ? () => setMenuOpen(false) : undefined}
-              className="block bg-transparent py-1.5 pl-1 pr-2 text-left text-[13px] text-[#111827] hover:text-brand"
+              className="block bg-transparent py-1.5 pl-1 pr-2 text-left text-[13px] text-foreground hover:text-brand"
             >
               {label}
             </Link>
@@ -85,7 +85,7 @@ export function HostSidebar({
           />
         </div>
       </MobileNavDrawer>
-      <aside className="hidden w-64 flex-shrink-0 flex-col justify-between self-start rounded-3xl bg-white/90 p-6 shadow-lg ring-1 ring-black/5 md:sticky md:top-6 md:flex md:h-[calc(100vh-3rem)]">
+      <aside className="hidden w-64 flex-shrink-0 flex-col justify-between self-start rounded-3xl border border-border bg-card/95 p-6 shadow-lg ring-1 ring-[var(--ring-soft)] backdrop-blur-sm md:sticky md:top-6 md:flex md:h-[calc(100vh-3rem)]">
         <div>{navItems(false)}</div>
         <SidebarUserChip displayName={hostName} subtitle="Usuario Anfitrión" onLogout={() => void logout()} />
       </aside>

@@ -11,7 +11,7 @@ export function MobileNavOpenButton({ onClick, expanded }: { onClick: () => void
       <button
         type="button"
         onClick={onClick}
-        className="fixed left-4 top-4 z-[70] flex h-11 w-11 items-center justify-center rounded-xl border border-[#c5dece] bg-white text-[#2d5a41] shadow-md ring-1 ring-black/5"
+        className="fixed left-4 top-4 z-[70] flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-card text-brand shadow-md ring-1 ring-[var(--ring-soft)]"
         aria-label="Abrir menú de navegación"
         aria-expanded={expanded}
         aria-haspopup="dialog"
@@ -55,12 +55,12 @@ export function MobileNavDrawer({
         onClick={onClose}
         aria-label="Cerrar menú"
       />
-      <div className="absolute left-0 top-0 flex h-full w-[min(20rem,90vw)] flex-col overflow-y-auto bg-white shadow-2xl ring-1 ring-black/10">
-        <div className="flex items-center justify-end border-b border-[#e8efe9] px-3 py-2">
+      <div className="absolute left-0 top-0 flex h-full w-[min(20rem,90vw)] flex-col overflow-y-auto bg-card text-foreground shadow-2xl ring-1 ring-[var(--ring-soft)]">
+        <div className="flex items-center justify-end border-b border-border-subtle px-3 py-2">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 text-[#6b7280] hover:bg-[#f3f4f6]"
+            className="rounded-lg p-2 text-muted hover:bg-card-muted"
             aria-label="Cerrar menú"
           >
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>

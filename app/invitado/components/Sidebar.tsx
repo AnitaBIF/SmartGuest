@@ -55,7 +55,7 @@ export default function Sidebar() {
               key={href}
               href={href}
               onClick={closeOnNavigate ? () => setMenuOpen(false) : undefined}
-              className={`block py-1.5 pl-1 pr-2 text-[13px] transition-colors ${active ? "font-semibold text-brand" : "text-[#111827] hover:text-brand"}`}
+              className={`block py-1.5 pl-1 pr-2 text-[13px] transition-colors ${active ? "font-semibold text-brand" : "text-foreground hover:text-brand"}`}
             >
               {label}
             </Link>
@@ -74,7 +74,7 @@ export default function Sidebar() {
           <SidebarUserChip displayName={nombre} subtitle="Usuario Invitado" onLogout={handleLogout} />
         </div>
       </MobileNavDrawer>
-      <aside className="hidden w-64 flex-shrink-0 flex-col justify-between self-start rounded-3xl bg-white/90 p-6 shadow-lg ring-1 ring-black/5 md:sticky md:top-6 md:flex md:h-[calc(100vh-3rem)]">
+      <aside className="hidden w-64 flex-shrink-0 flex-col justify-between self-start rounded-3xl border border-border bg-card/95 p-6 shadow-lg ring-1 ring-[var(--ring-soft)] backdrop-blur-sm md:sticky md:top-6 md:flex md:h-[calc(100vh-3rem)]">
         <div>{navBlock(false)}</div>
         <SidebarUserChip displayName={nombre} subtitle="Usuario Invitado" onLogout={() => logout()} />
       </aside>

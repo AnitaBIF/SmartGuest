@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import Sidebar from "../components/Sidebar";
+import { InvitadoShell } from "@/components/InvitadoShell";
 
 type QrPayload = {
   token: string;
@@ -17,6 +17,17 @@ export default function QRPage() {
   const [deadlineMs, setDeadlineMs] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [qrSize, setQrSize] = useState(220);
+
+  useEffect(() => {
+    const ro = () => {
+      const w = typeof window !== "undefined" ? window.innerWidth : 400;
+      setQrSize(w < 380 ? 176 : w < 420 ? 200 : 220);
+    };
+    ro();
+    window.addEventListener("resize", ro);
+    return () => window.removeEventListener("resize", ro);
+  }, []);
 
   const refresh = useCallback(async () => {
     const r = await fetch("/api/invitado/qr-token", { cache: "no-store" });
@@ -72,44 +83,51 @@ export default function QRPage() {
   const ringColor = pct > 0.5 ? "#22c55e" : pct > 0.2 ? "#f59e0b" : "#ef4444";
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_50%_-10%,#e3efe8_0,#f5f7f4_40%,#ffffff_100%)]">
-      <div className="mx-auto flex min-h-screen max-w-5xl gap-6 px-4 py-6 sm:px-6">
-        <Sidebar />
+    <InvitadoShell mainClassName="flex flex-col items-center justify-center">
+      <h1 className="mb-6 w-full text-center text-2xl font-bold text-brand md:mb-8 md:text-right md:self-end">
+        QR de ingreso
+      </h1>
 
-        <main className="flex flex-1 flex-col items-center justify-center pb-8">
-          <h1 className="mb-8 self-end text-2xl font-bold text-brand">QR de ingreso</h1>
-
+      <div className="flex w-full min-w-0 max-w-md flex-col items-center gap-6">
           {loading ? (
-            <p className="text-[#9ca3af]">Preparando tu código de ingreso…</p>
+            <p className="text-muted">Preparando tu código de ingreso…</p>
           ) : error ? (
-            <div className="max-w-sm rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-center text-[14px] text-amber-900">
+            <div className="w-full max-w-sm rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-center text-[14px] text-amber-900 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-100 sm:px-5">
               {error}
             </div>
           ) : !payload ? (
-            <p className="text-[#6b7280]">No hay código disponible.</p>
+            <p className="text-muted">No hay código disponible.</p>
           ) : (
-            <div className="flex max-w-md flex-col items-center gap-6">
-              <div className="rounded-2xl border border-[#c5dece] bg-[#f0f7f2] px-5 py-4 text-center">
-                <p className="text-[13px] font-semibold text-[#2d5a41]">Tu entrada, siempre al día</p>
-                <p className="mt-2 text-[12px] leading-relaxed text-[#4b5563]">
+            <>
+              <div className="w-full rounded-2xl border border-border bg-card-muted px-4 py-4 text-center sm:px-5">
+                <p className="text-[13px] font-semibold text-brand">Tu entrada, siempre al día</p>
+                <p className="mt-2 text-[12px] leading-relaxed text-muted">
                   Podés ver tu QR acá todos los días. Cambia cada {payload.windowSeconds} segundos, así que solo
                   sirve el que tenés en pantalla en ese instante.
                 </p>
               </div>
 
-              <p className="text-center text-[14px] leading-relaxed text-[#4b5563]">
+              <p className="px-1 text-center text-[14px] leading-relaxed text-muted">
                 El día del evento mostrá este QR en la entrada. Recordá mostrarlo desde esta página, no con una
                 captura de pantalla.
               </p>
 
-              <div className="rounded-3xl bg-white p-6 shadow-lg ring-1 ring-[#c5dece]">
-                <QRCodeSVG value={payload.token} size={220} bgColor="#ffffff" fgColor="#111827" level="M" />
+              {/* Fondo blanco fijo: mejor contraste para lectores en puerta (claro u oscuro en el resto de la UI). */}
+              <div className="rounded-3xl bg-[#ffffff] p-4 shadow-lg ring-1 ring-border sm:p-6">
+                <QRCodeSVG value={payload.token} size={qrSize} bgColor="#ffffff" fgColor="#111827" level="M" />
               </div>
 
               <div className="flex flex-col items-center gap-2">
                 <div className="relative flex h-36 w-36 items-center justify-center">
                   <svg className="absolute inset-0 -rotate-90" width="144" height="144" viewBox="0 0 144 144">
-                    <circle cx="72" cy="72" r={radius} fill="none" stroke="#e5e7eb" strokeWidth="8" />
+                    <circle
+                      cx="72"
+                      cy="72"
+                      r={radius}
+                      fill="none"
+                      className="stroke-[#e5e7eb] dark:stroke-zinc-600"
+                      strokeWidth="8"
+                    />
                     <circle
                       cx="72"
                       cy="72"
@@ -123,16 +141,15 @@ export default function QRPage() {
                     />
                   </svg>
                   <div className="text-center">
-                    <span className="text-3xl font-extrabold text-[#111827]">{segRest}</span>
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9ca3af]">seg</p>
+                    <span className="text-3xl font-extrabold text-foreground">{segRest}</span>
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-muted">seg</p>
                   </div>
                 </div>
-                <p className="text-[12px] text-[#6b7280]">Se actualiza solo antes de que venza</p>
+                <p className="text-[12px] text-muted">Se actualiza solo antes de que venza</p>
               </div>
-            </div>
+            </>
           )}
-        </main>
       </div>
-    </div>
+    </InvitadoShell>
   );
 }

@@ -122,7 +122,7 @@ function MiniCalendar({ year, month, events, onDayClick, todayYear, todayMonth, 
                   )}
                 </button>
               ) : (
-                <span className={`relative flex h-8 w-8 items-center justify-center rounded-full text-[13px] ${cell.current ? "text-[#111827]" : "text-[#d1d5db]"}`}>
+                <span className={`relative flex h-8 w-8 items-center justify-center rounded-full text-[13px] ${cell.current ? "text-foreground" : "text-[#d1d5db]"}`}>
                   {cell.day}
                   {isToday && (
                     <span className="absolute bottom-0.5 left-1/2 h-[2px] w-3 -translate-x-1/2 rounded-full bg-[#2d5a41]" />
@@ -449,7 +449,7 @@ function EventDetailModal({
               style={{ backgroundColor: badgeColor }}>
               {isEvento ? "Evento" : "Reunión"}
             </span>
-            <h2 className="text-lg font-bold text-[#111827]">{event.titulo}</h2>
+            <h2 className="text-lg font-bold text-foreground">{event.titulo}</h2>
           </div>
           <button type="button" onClick={onClose} className="rounded-full p-1.5 text-[#6b7280] hover:bg-white/60">
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -949,8 +949,8 @@ export default function AdminDashboard() {
   const mes2Year  = mes1Month === 11 ? mes1Year + 1 : mes1Year;
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_50%_-10%,#e3efe8_0,#f5f7f4_40%,#ffffff_100%)]">
-      <div className="mx-auto flex min-h-screen max-w-6xl gap-6 px-4 py-6 text-[#111827] sm:px-6 lg:px-8">
+    <div className="min-h-screen text-foreground">
+      <div className="mx-auto flex min-h-screen max-w-6xl gap-6 px-4 py-6 text-foreground sm:px-6 lg:px-8">
         <AdminSidebar active="dashboard" />
 
         <main className="flex-1 pb-8">
@@ -1000,7 +1000,7 @@ export default function AdminDashboard() {
                 onClick={() => setSelectedEvent(proximoEvento)}
                 className="w-full max-w-sm rounded-2xl border border-[#d7e6dd] bg-white px-6 py-5 shadow-sm text-left transition-shadow hover:shadow-md hover:border-brand"
               >
-                <p className="mb-4 text-[13px] font-bold tracking-wide text-[#111827]">EVENTO MÁS PRÓXIMO</p>
+                <p className="mb-4 text-[13px] font-bold tracking-wide text-foreground">EVENTO MÁS PRÓXIMO</p>
                 <div className="space-y-2 text-[13px]">
                   <p><span className="font-semibold text-[#374151]">TIPO:</span> <span className="text-[#4b5563]">{proximoEvento.titulo}</span></p>
                   {proximoEvento.anfitriones && (
@@ -1129,7 +1129,7 @@ export default function AdminDashboard() {
                 <Field label="Menús especiales">
                   <div className="relative">
                     <button type="button" onClick={() => setShowMenusDropdown((v) => !v)} className={`${inp} flex items-center justify-between text-left`}>
-                      <span className={evento.menusEspeciales.length === 0 ? "text-[#9ca3af]" : "text-[#111827]"}>
+                      <span className={evento.menusEspeciales.length === 0 ? "text-[#9ca3af]" : "text-foreground"}>
                         {evento.menusEspeciales.length === 0 ? "Seleccionar..." : evento.menusEspeciales.join(", ")}
                       </span>
                       <span className="text-[#6b7280] text-xs ml-2">⌄</span>

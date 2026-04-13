@@ -135,8 +135,8 @@ export default function AdminIngresosPage() {
   }, [eventos, eventoId]);
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_50%_-10%,#e3efe8_0,#f5f7f4_40%,#ffffff_100%)]">
-      <div className="mx-auto flex min-h-screen max-w-6xl gap-6 px-4 py-6 text-[#111827] sm:px-6 lg:px-8">
+    <div className="min-h-screen text-foreground">
+      <div className="mx-auto flex min-h-screen max-w-6xl gap-6 px-4 py-6 text-foreground sm:px-6 lg:px-8">
         <AdminSidebar active="ingresos" />
 
         <main className="flex-1 pb-8">
@@ -191,7 +191,7 @@ export default function AdminIngresosPage() {
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
                 <div className="rounded-2xl bg-white/90 px-4 py-3 shadow-sm ring-1 ring-black/5">
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-[#6b7280]">Invitaciones</p>
-                  <p className="mt-1 text-xl font-bold text-[#111827]">{reporte.resumen.invitacionesTotales}</p>
+                  <p className="mt-1 text-xl font-bold text-foreground">{reporte.resumen.invitacionesTotales}</p>
                 </div>
                 <div className="rounded-2xl bg-white/90 px-4 py-3 shadow-sm ring-1 ring-black/5">
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-[#6b7280]">Confirmaron</p>
@@ -237,7 +237,7 @@ export default function AdminIngresosPage() {
                     <tbody className="divide-y divide-[#f0f4f1]">
                       {reporte.filas.map((f) => (
                         <tr key={f.id} className={f.ingresado ? "bg-[#f7fdf9]" : ""}>
-                          <td className="px-4 py-2.5 font-medium text-[#111827]">{f.nombre}</td>
+                          <td className="px-4 py-2.5 font-medium text-foreground">{f.nombre}</td>
                           <td className="px-4 py-2.5 text-[#4b5563]">{f.dni}</td>
                           <td className="max-w-[140px] truncate px-4 py-2.5 text-[#6b7280]" title={f.grupo}>
                             {f.grupo}

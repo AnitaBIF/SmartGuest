@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import { LeyendaObligatorios, Req } from "@/components/FormRequired";
-import Sidebar from "../components/Sidebar";
+import { InvitadoShell } from "@/components/InvitadoShell";
 
-const inp = "flex-1 rounded-full border border-[#d1d5db] bg-white px-4 py-2 text-[13px] text-[#111827] outline-none focus:border-[#2d5a41] focus:ring-2 focus:ring-[#2d5a41]/20";
+const inp =
+  "w-full min-w-0 flex-1 rounded-full border border-border bg-input px-4 py-2 text-[13px] text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20";
 
 function Field({
   label,
@@ -16,11 +17,11 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-1 sm:flex-row sm:items-center">
-      <label className="w-full text-[13px] text-[#374151] sm:w-52 sm:text-right sm:pr-5">
+      <label className="w-full shrink-0 text-[13px] text-foreground sm:w-52 sm:text-right sm:pr-5">
         {label}
         {required ? <Req /> : null}
       </label>
-      {children}
+      <div className="min-w-0 flex-1">{children}</div>
     </div>
   );
 }
@@ -94,28 +95,21 @@ export default function ConfiguracionPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[radial-gradient(circle_at_50%_-10%,#e3efe8_0,#f5f7f4_40%,#ffffff_100%)]">
-        <div className="mx-auto flex min-h-screen max-w-5xl gap-6 px-4 py-6 sm:px-6">
-          <Sidebar />
-          <main className="flex flex-1 items-center justify-center"><p className="text-[#9ca3af]">Cargando...</p></main>
-        </div>
-      </div>
+      <InvitadoShell mainClassName="flex items-center justify-center">
+        <p className="text-muted">Cargando...</p>
+      </InvitadoShell>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_50%_-10%,#e3efe8_0,#f5f7f4_40%,#ffffff_100%)]">
-      <div className="mx-auto flex min-h-screen max-w-5xl gap-6 px-4 py-6 sm:px-6">
-        <Sidebar />
+    <InvitadoShell>
+      <h1 className="mb-6 w-full text-center text-2xl font-bold text-brand md:mb-8 md:text-right">Configuración</h1>
 
-        <main className="flex-1 pb-8">
-          <h1 className="mb-8 text-right text-2xl font-bold text-brand">Configuración</h1>
-
-          <div className="rounded-3xl bg-white p-8 shadow ring-1 ring-[#e5efe8]">
-            <h2 className="mb-4 text-[18px] font-semibold text-[#111827]">
+      <div className="rounded-3xl border border-border bg-card p-4 shadow ring-1 ring-[var(--ring-soft)] sm:p-8">
+            <h2 className="mb-4 text-[18px] font-semibold text-foreground">
               Aquí puedes editar datos que necesites cambiar
             </h2>
-            <LeyendaObligatorios className="mb-6 text-[12px] text-[#6b7280]" />
+            <LeyendaObligatorios className="mb-6 text-[12px] text-muted" />
 
             <div className="space-y-5">
               <Field label="Nombre y Apellido" required>
@@ -143,12 +137,12 @@ export default function ConfiguracionPage() {
               </Field>
 
               <Field label="Restricciones alimentarias" required>
-                <div className="relative flex-1">
+                <div className="relative min-w-0 w-full flex-1">
                   <select value={form.restriccion} onChange={set("restriccion")}
                     className={`${inp} w-full appearance-none pr-8`}>
                     {restriccionesOpciones.map((r) => <option key={r}>{r}</option>)}
                   </select>
-                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#6b7280] text-xs">⌄</span>
+                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted">⌄</span>
                 </div>
               </Field>
 
@@ -185,8 +179,6 @@ export default function ConfiguracionPage() {
               )}
             </div>
           </div>
-        </main>
-      </div>
-    </div>
+    </InvitadoShell>
   );
 }

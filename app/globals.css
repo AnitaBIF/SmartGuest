@@ -1,29 +1,62 @@
 @import "tailwindcss";
 
- :root {
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
   --background: #f5f7f4;
   --foreground: #111827;
   --brand: #2d5a41;
+  --muted: #6b7280;
+  --card: #ffffff;
+  --card-muted: #f0f7f2;
+  --border: #c5dece;
+  --border-subtle: #e8efe9;
+  --input-bg: #ffffff;
+  --input-border: #94a3b8;
+  --page-bg: radial-gradient(circle at 50% -10%, #e3efe8 0%, #f5f7f4 40%, #ffffff 100%);
+  --ring-soft: rgb(0 0 0 / 0.06);
+  --qr-surface: #ffffff;
+  --qr-fg: #111827;
+}
+
+html.dark {
+  --background: #0c1210;
+  --foreground: #e8ebe9;
+  --brand: #6bc48f;
+  --muted: #9ca3a8;
+  --card: #141c17;
+  --card-muted: #1a2620;
+  --border: #2d4036;
+  --border-subtle: #243029;
+  --input-bg: #101815;
+  --input-border: #3d5247;
+  --page-bg: radial-gradient(circle at 50% -10%, #142820 0%, #0c1210 45%, #060a08 100%);
+  --ring-soft: rgb(255 255 255 / 0.08);
+  --qr-surface: #ffffff;
+  --qr-fg: #111827;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-brand: var(--brand);
+  --color-muted: var(--muted);
+  --color-card: var(--card);
+  --color-card-muted: var(--card-muted);
+  --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
+  --color-input: var(--input-bg);
   --font-sans: var(--font-poppins);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@utility bg-page {
+  background: var(--page-bg);
 }
 
 body {
-  background: radial-gradient(circle at 50% 20%, #e3efe8 0, #f5f7f4 45%, #ffffff 100%);
+  background: var(--page-bg);
+  background-attachment: fixed;
   color: var(--foreground);
-  font-family: var(--font-poppins), system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
+  font-family: var(--font-poppins), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }

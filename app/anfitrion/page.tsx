@@ -87,7 +87,7 @@ function Donut({
                 />
                 <span className="truncate text-[#374151]">{item.label}</span>
               </div>
-              <span className="shrink-0 font-semibold tabular-nums text-[#111827]">
+              <span className="shrink-0 font-semibold tabular-nums text-foreground">
                 {item.value}
               </span>
             </li>
@@ -223,8 +223,8 @@ export default function AnfitrionDashboard() {
   })();
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_50%_0,#e3efe8_0,#f5f7f4_45%,#ffffff_100%)] text-foreground">
-      <div className="mx-auto flex min-h-screen max-w-6xl gap-6 px-4 py-6 sm:px-6 lg:px-8 text-[#111827]">
+    <div className="min-h-screen text-foreground">
+      <div className="mx-auto flex min-h-screen max-w-6xl gap-6 px-4 py-6 sm:px-6 lg:px-8 text-foreground">
         {/* Sidebar */}
         <HostSidebar hostName={anfitrionName} active="resumen" />
 
@@ -347,7 +347,7 @@ export default function AnfitrionDashboard() {
                         : "rounded-xl bg-white"
                     }`}
                   >
-                    <span className="font-medium text-[#111827]">{row.nombre}</span>
+                    <span className="font-medium text-foreground">{row.nombre}</span>
                     <span className="text-[#4b5563] sm:text-right">{row.accion}</span>
                   </li>
                 ))}
@@ -366,7 +366,7 @@ export default function AnfitrionDashboard() {
                   <button
                     type="button"
                     onClick={() => setOpenLink(false)}
-                    className="text-sm text-[#6b7280] hover:text-[#111827]"
+                    className="text-sm text-[#6b7280] hover:text-foreground"
                   >
                     ✕
                   </button>
@@ -387,7 +387,7 @@ export default function AnfitrionDashboard() {
                   <p className="text-[12px] text-[#ef4444]">No tenés un evento vinculado. Pedile al administrador que te asigne uno.</p>
                 ) : (
                   <div className="flex items-center gap-2 rounded-2xl border border-[#d1d5db] bg-[#f9fafb] px-3 py-2">
-                    <span className="truncate text-[11px] text-[#111827]">
+                    <span className="truncate text-[11px] text-foreground">
                       {invitationUrl}
                     </span>
                     <button

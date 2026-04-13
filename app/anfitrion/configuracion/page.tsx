@@ -5,7 +5,7 @@ import { HostSidebar } from "../components/HostSidebar";
 import { LeyendaObligatorios, Req } from "@/components/FormRequired";
 
 const inp =
-  "flex-1 rounded-full border border-[#d1d5db] bg-white px-4 py-2 text-[13px] text-[#111827] outline-none focus:border-[#2d5a41] focus:ring-2 focus:ring-[#2d5a41]/20";
+  "flex-1 rounded-full border border-[#d1d5db] bg-white px-4 py-2 text-[13px] text-foreground outline-none focus:border-[#2d5a41] focus:ring-2 focus:ring-[#2d5a41]/20";
 
 function Field({
   label,
@@ -124,7 +124,7 @@ export default function AnfitrionConfiguracionPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[radial-gradient(circle_at_50%_-10%,#e3efe8_0,#f5f7f4_40%,#ffffff_100%)]">
+      <div className="min-h-screen text-foreground">
         <div className="mx-auto flex min-h-screen max-w-5xl gap-6 px-4 py-6 sm:px-6">
           <HostSidebar hostName={hostName} active="configuracion" />
           <main className="flex flex-1 items-center justify-center">
@@ -139,7 +139,7 @@ export default function AnfitrionConfiguracionPage() {
   const passwordCambio = newPassword.length > 0 || newPasswordConfirm.length > 0;
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_50%_-10%,#e3efe8_0,#f5f7f4_40%,#ffffff_100%)]">
+    <div className="min-h-screen text-foreground">
       <div className="mx-auto flex min-h-screen max-w-5xl gap-6 px-4 py-6 sm:px-6">
         <HostSidebar hostName={hostName} active="configuracion" />
 
@@ -154,7 +154,7 @@ export default function AnfitrionConfiguracionPage() {
           </div>
 
           <div className="rounded-3xl bg-white p-8 shadow ring-1 ring-[#e5efe8]">
-            <h2 className="mb-4 text-[18px] font-semibold text-[#111827]">Datos de acceso y contacto</h2>
+            <h2 className="mb-4 text-[18px] font-semibold text-foreground">Datos de acceso y contacto</h2>
             <LeyendaObligatorios className="mb-6 text-[12px] text-[#6b7280]" />
 
             {error && (
@@ -178,7 +178,7 @@ export default function AnfitrionConfiguracionPage() {
               </Field>
 
               <div className="border-t border-[#e5e7eb] pt-6">
-                <p className="mb-4 text-[14px] font-medium text-[#111827]">Contraseña</p>
+                <p className="mb-4 text-[14px] font-medium text-foreground">Contraseña</p>
                 <p className="mb-4 text-[12px] text-[#6b7280]">
                   Para cambiar email o contraseña, completá tu contraseña actual.
                 </p>

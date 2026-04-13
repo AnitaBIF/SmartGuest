@@ -156,8 +156,8 @@ export default function UsuariosPage() {
   const f = (k: keyof FormState, v: string) => setForm((p) => ({ ...p, [k]: v }));
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_50%_-10%,#e3efe8_0,#f5f7f4_40%,#ffffff_100%)]">
-      <div className="mx-auto flex min-h-screen max-w-6xl gap-6 px-4 py-6 text-[#111827] sm:px-6 lg:px-8">
+    <div className="min-h-screen text-foreground">
+      <div className="mx-auto flex min-h-screen max-w-6xl gap-6 px-4 py-6 text-foreground sm:px-6 lg:px-8">
         <AdminSidebar active="usuarios" />
 
         <main className="flex-1 pb-8">
@@ -174,7 +174,7 @@ export default function UsuariosPage() {
 
           {/* Tabla */}
           <section>
-            <h2 className="mb-4 text-lg font-semibold text-[#111827]">Usuarios</h2>
+            <h2 className="mb-4 text-lg font-semibold text-foreground">Usuarios</h2>
 
             <div className="overflow-hidden rounded-2xl ring-1 ring-[#e5efe8]">
               <div className="grid grid-cols-[2fr_1.2fr_2fr_1.4fr_auto] gap-4 bg-white px-5 py-3 text-[12px] font-semibold text-[#6b7280]">
@@ -372,7 +372,7 @@ export default function UsuariosPage() {
       {deleteConfirm !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
           <div className="w-full max-w-sm rounded-3xl bg-white p-7 shadow-xl ring-1 ring-black/5">
-            <h2 className="mb-2 text-base font-bold text-[#111827]">¿Eliminar usuario?</h2>
+            <h2 className="mb-2 text-base font-bold text-foreground">¿Eliminar usuario?</h2>
             <p className="mb-6 text-sm text-[#6b7280]">
               Esta acción eliminará al usuario de la plataforma. No se puede deshacer.
             </p>

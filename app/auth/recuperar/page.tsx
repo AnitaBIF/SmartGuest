@@ -52,7 +52,7 @@ export default function RecuperarContrasenaPage() {
   }
 
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-white px-4 py-10">
+    <div className="flex min-h-[100dvh] flex-col px-4 py-10 text-foreground">
       <header className="mb-8 text-center">
         <span className="text-2xl font-extrabold tracking-tight text-brand">
           SMART
@@ -63,8 +63,8 @@ export default function RecuperarContrasenaPage() {
       </header>
 
       <main className="mx-auto w-full max-w-md">
-        <h1 className="mb-2 text-center text-xl font-bold text-[#111827]">Nueva contraseña</h1>
-        <p className="mb-6 text-center text-sm text-[#6b7280]">
+        <h1 className="mb-2 text-center text-xl font-bold text-foreground">Nueva contraseña</h1>
+        <p className="mb-6 text-center text-sm text-muted">
           Si llegaste desde el enlace del email, elegí una contraseña nueva. El mismo email sirve para
           recuperar el acceso cuando lo olvides.
         </p>

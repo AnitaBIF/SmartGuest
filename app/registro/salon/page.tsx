@@ -185,7 +185,7 @@ export default function RegistroSalonPage() {
   }
 
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-white">
+    <div className="flex min-h-[100dvh] flex-col text-foreground">
       <header className="flex justify-end px-5 pt-6 sm:px-10 sm:pt-8">
         <span className="text-2xl font-extrabold tracking-tight text-brand sm:text-3xl">
           SMART
@@ -197,7 +197,7 @@ export default function RegistroSalonPage() {
 
       <main className="mx-auto w-full max-w-lg flex-1 px-4 py-8 sm:py-12">
         <h1 className="mb-2 text-center text-2xl font-bold text-brand sm:text-3xl">Registro de salón</h1>
-        <p className="mb-8 text-center text-sm text-[#6b7280]">
+        <p className="mb-8 text-center text-sm text-muted">
           El administrador del salón crea la cuenta con sus datos y los del local. El mismo email sirve para
           ingresar y para recuperar la contraseña si la olvidás.
         </p>

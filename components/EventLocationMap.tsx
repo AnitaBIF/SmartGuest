@@ -18,7 +18,7 @@ function buildQuery(salon: string, direccion: string) {
  * Mapa embebido: Google Maps con búsqueda por texto (sin API key).
  * Suele resolver bien direcciones en Argentina aunque otros geocoders fallen.
  */
-export default function EventLocationMap({ salon, direccion, height = 280, className = "" }: Props) {
+export default function EventLocationMap({ salon, direccion, height, className = "" }: Props) {
   const query = useMemo(() => buildQuery(salon, direccion), [salon, direccion]);
 
   const mapsQuery = useMemo(() => {
@@ -38,17 +38,17 @@ export default function EventLocationMap({ salon, direccion, height = 280, class
 
   if (!query) {
     return (
-      <div className={`rounded-2xl border border-dashed border-[#c5dece] bg-[#f9fafb] px-4 py-6 text-center text-[13px] text-[#6b7280] ${className}`}>
+      <div className={`rounded-2xl border border-dashed border-border bg-card-muted px-4 py-6 text-center text-[13px] text-muted ${className}`}>
         La ubicación del salón se publicará cuando el organizador cargue la dirección.
       </div>
     );
   }
 
   return (
-    <div className={className}>
+    <div className={`min-w-0 ${className}`}>
       <div
-        className="overflow-hidden rounded-2xl shadow ring-1 ring-[#c5dece] bg-[#e5e7eb]"
-        style={{ height }}
+        className={`overflow-hidden rounded-2xl bg-muted/40 shadow ring-1 ring-border ${height == null ? "aspect-[4/3] w-full max-h-[min(360px,58dvh)] min-h-[200px] sm:max-h-[360px]" : ""}`}
+        style={height != null ? { height } : undefined}
       >
         {embedSrc && (
           <iframe
@@ -62,7 +62,7 @@ export default function EventLocationMap({ salon, direccion, height = 280, class
           />
         )}
       </div>
-      <p className="mt-2 text-center text-[12px] text-[#6b7280]">
+      <p className="mt-2 text-center text-[12px] text-muted">
         {salon.trim()}
         {direccion.trim() ? ` — ${direccion.trim()}` : ""}
       </p>
@@ -71,7 +71,7 @@ export default function EventLocationMap({ salon, direccion, height = 280, class
           href={mapsHref}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[12px] font-medium text-[#2d5a41] underline underline-offset-2"
+          className="text-[12px] font-medium text-brand underline underline-offset-2"
         >
           Abrir en Google Maps
         </a>

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import Sidebar from "../components/Sidebar";
+import { InvitadoShell } from "@/components/InvitadoShell";
 
 type Rol = "conductor" | "pasajero" | "no" | null;
 
@@ -330,25 +330,17 @@ export default function SmartpoolPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[radial-gradient(circle_at_50%_-10%,#e3efe8_0,#f5f7f4_40%,#ffffff_100%)]">
-        <div className="mx-auto flex min-h-screen max-w-5xl gap-6 px-4 py-6 sm:px-6">
-          <Sidebar />
-          <main className="flex flex-1 items-center justify-center">
-            <p className="text-[#9ca3af]">Cargando...</p>
-          </main>
-        </div>
-      </div>
+      <InvitadoShell mainClassName="flex items-center justify-center">
+        <p className="text-muted">Cargando...</p>
+      </InvitadoShell>
     );
   }
 
   if (estado?.ecoInvitacionSinCarpooling) {
     const n = estado.grupoCuposInvitacion;
     return (
-      <div className="min-h-screen bg-[radial-gradient(circle_at_50%_-10%,#e3efe8_0,#f5f7f4_40%,#ffffff_100%)]">
-        <div className="mx-auto flex min-h-screen max-w-5xl gap-6 px-4 py-6 sm:px-6">
-          <Sidebar />
-          <main className="flex flex-1 items-start justify-center pb-8 pt-4">
-            <div className="w-full max-w-md rounded-3xl border border-amber-200 bg-amber-50/90 p-8 text-center shadow ring-1 ring-amber-100">
+      <InvitadoShell mainClassName="flex justify-center">
+            <div className="w-full max-w-md rounded-3xl border border-amber-200 bg-amber-50/90 p-4 text-center shadow ring-1 ring-amber-100 sm:p-8">
               <div className="relative mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-amber-100 text-4xl">
                 🚌
               </div>
@@ -376,9 +368,7 @@ export default function SmartpoolPage() {
                 Volver al panel
               </Link>
             </div>
-          </main>
-        </div>
-      </div>
+      </InvitadoShell>
     );
   }
 
@@ -395,11 +385,8 @@ export default function SmartpoolPage() {
     const otroRolLabel = rol === "conductor" ? "pasajero" : "conductor";
 
     return (
-      <div className="min-h-screen bg-[radial-gradient(circle_at_50%_-10%,#e3efe8_0,#f5f7f4_40%,#ffffff_100%)]">
-        <div className="mx-auto flex min-h-screen max-w-5xl gap-6 px-4 py-6 sm:px-6">
-          <Sidebar />
-          <main className="flex flex-1 items-start justify-center pb-8 pt-4">
-            <div className="w-full max-w-md rounded-3xl bg-[#f0f7f2] p-8 text-center shadow ring-1 ring-[#c5dece]">
+      <InvitadoShell mainClassName="flex justify-center">
+            <div className="w-full max-w-md rounded-3xl bg-[#f0f7f2] p-4 text-center shadow ring-1 ring-[#c5dece] sm:p-8 dark:bg-card-muted dark:ring-border">
               {!verMatch ? (
                 <>
                   <div className="relative mx-auto mb-4 h-36 w-36">
@@ -510,7 +497,7 @@ export default function SmartpoolPage() {
                                   key={px.id}
                                   className="rounded-xl border border-[#d1e7d9] bg-[#f7faf8] px-3 py-3"
                                 >
-                                  <p className="text-[13px] font-semibold text-[#111827]">{px.nombre}</p>
+                                  <p className="text-[13px] font-semibold text-foreground">{px.nombre}</p>
                                   {px.plazasPersonas > 1 ? (
                                     <p className="mt-0.5 text-[11px] font-medium text-[#2d5a41]">
                                       Ocupa {px.plazasPersonas} plazas (personas confirmadas en su invitación)
@@ -612,7 +599,7 @@ export default function SmartpoolPage() {
                                   key={s.invitadoId}
                                   className="rounded-xl border border-[#d1e7d9] bg-[#f7faf8] px-3 py-3"
                                 >
-                                  <p className="text-[13px] font-semibold text-[#111827]">{s.nombre}</p>
+                                  <p className="text-[13px] font-semibold text-foreground">{s.nombre}</p>
                                   <p className="mt-0.5 text-[11px] font-medium text-[#374151]">
                                     {s.plazasPersonas === 1
                                       ? "1 plaza en el pool"
@@ -687,7 +674,7 @@ export default function SmartpoolPage() {
                     </div>
                   ) : !p.mutuo ? (
                     <div className="mb-6 space-y-4 rounded-2xl bg-white px-5 py-4 text-left ring-1 ring-[#c5dece]">
-                      <p className="text-[13px] font-semibold text-[#111827]">{p.nombre}</p>
+                      <p className="text-[13px] font-semibold text-foreground">{p.nombre}</p>
                       <p className="text-[12px] text-[#6b7280]">
                         Rol en el pool: <strong>{p.rol === "conductor" ? "Conductor" : "Pasajero"}</strong>
                       </p>
@@ -754,7 +741,7 @@ export default function SmartpoolPage() {
                   ) : (
                     <div className="mb-6 space-y-4 rounded-2xl bg-white px-5 py-4 text-left ring-1 ring-[#c5dece]">
                       <p className="text-[11px] font-bold uppercase tracking-wide text-[#166534]">Match confirmado</p>
-                      <p className="text-[15px] font-bold text-[#111827]">{p.nombre}</p>
+                      <p className="text-[15px] font-bold text-foreground">{p.nombre}</p>
                       <p className="text-[13px] text-[#4b5563]">
                         Celular:{" "}
                         {p.telefono ? (
@@ -788,23 +775,20 @@ export default function SmartpoolPage() {
                 </>
               )}
             </div>
-          </main>
-        </div>
-      </div>
+      </InvitadoShell>
     );
   }
 
   if (estado?.rol === "no" && !mostrarFormEleccion) {
     return (
-      <div className="min-h-screen bg-[radial-gradient(circle_at_50%_-10%,#e3efe8_0,#f5f7f4_40%,#ffffff_100%)]">
-        <div className="mx-auto flex min-h-screen max-w-5xl gap-6 px-4 py-6 sm:px-6">
-          <Sidebar />
-          <main className="flex flex-1 flex-col items-center pb-8 pt-4">
-            <h1 className="mb-6 self-end text-2xl font-bold text-brand">SmartPool</h1>
+      <InvitadoShell mainClassName="flex flex-col items-center">
+            <h1 className="mb-6 w-full text-center text-2xl font-bold text-brand md:text-right md:self-end">
+              SmartPool
+            </h1>
 
-            <div className="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-lg ring-1 ring-[#c5dece]">
+            <div className="w-full max-w-md overflow-hidden rounded-3xl bg-card shadow-lg ring-1 ring-border">
               <div
-                className="relative px-8 pb-10 pt-12 text-center text-white"
+                className="relative px-4 pb-8 pt-10 text-center text-white sm:px-8 sm:pb-10 sm:pt-12"
                 style={{
                   background: "linear-gradient(155deg, #1e4d36 0%, #2d5a41 45%, #3d7a58 100%)",
                 }}
@@ -829,9 +813,9 @@ export default function SmartpoolPage() {
                 </div>
               </div>
 
-              <div className="space-y-5 bg-[#f7faf8] px-8 py-8">
-                <p className="text-center text-[13px] leading-relaxed text-[#4b5563]">
-                  <span className="font-semibold text-[#374151]">Todavía podés cambiar de opinión.</span> No hay compromiso
+              <div className="space-y-5 bg-[#f7faf8] px-4 py-6 dark:bg-card-muted sm:px-8 sm:py-8">
+                <p className="text-center text-[13px] leading-relaxed text-[#4b5563] dark:text-muted">
+                  <span className="font-semibold text-[#374151] dark:text-foreground">Todavía podés cambiar de opinión.</span> No hay compromiso
                   fijo: elegí de nuevo cuando te pinte.
                 </p>
                 <button
@@ -850,20 +834,15 @@ export default function SmartpoolPage() {
                 </button>
               </div>
             </div>
-          </main>
-        </div>
-      </div>
+      </InvitadoShell>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_50%_-10%,#e3efe8_0,#f5f7f4_40%,#ffffff_100%)]">
-      <div className="mx-auto flex min-h-screen max-w-5xl gap-6 px-4 py-6 sm:px-6">
-        <Sidebar />
-        <main className="flex flex-1 flex-col items-center pb-8 pt-4">
-          <h1 className="mb-6 self-end text-2xl font-bold text-brand">SmartPool</h1>
+    <InvitadoShell mainClassName="flex flex-col items-center">
+          <h1 className="mb-6 w-full text-center text-2xl font-bold text-brand md:text-right md:self-end">SmartPool</h1>
 
-          <div className="w-full max-w-md rounded-3xl bg-[#f0f7f2] px-8 py-8 shadow ring-1 ring-[#c5dece]">
+          <div className="w-full max-w-md rounded-3xl bg-[#f0f7f2] px-4 py-6 shadow ring-1 ring-[#c5dece] sm:px-8 sm:py-8 dark:bg-card-muted dark:ring-border">
             <div className="relative mx-auto mb-4 h-28 w-28">
               <Image src="/ecoguest-badge.png" alt="EcoGuest" fill className="object-contain" />
             </div>
@@ -936,8 +915,6 @@ export default function SmartpoolPage() {
               {saving ? "Guardando..." : "Guardar"}
             </button>
           </div>
-        </main>
-      </div>
-    </div>
+    </InvitadoShell>
   );
 }

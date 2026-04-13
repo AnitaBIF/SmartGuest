@@ -32,8 +32,8 @@ export default function CocinaHome() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_50%_-10%,#e3efe8_0,#f5f7f4_40%,#ffffff_100%)]">
-      <div className="mx-auto max-w-5xl px-4 py-8 text-[#111827] sm:px-6 lg:px-8">
+    <div className="min-h-screen text-foreground">
+      <div className="mx-auto max-w-5xl px-4 py-8 text-foreground sm:px-6 lg:px-8">
         <CocinaTopBar />
         <main className="pb-8">
           <h1 className="mb-8 text-right text-2xl font-bold text-brand">Reporte de Cocina</h1>

@@ -293,15 +293,15 @@ export default function SmartSeatPage() {
   /* ─── Render ─── */
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_50%_-10%,#e3efe8_0,#f5f7f4_40%,#ffffff_100%)]">
+      <div className="flex min-h-screen items-center justify-center text-foreground">
         <p className="text-brand text-lg font-semibold animate-pulse">Cargando SmartSeat…</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_50%_-10%,#e3efe8_0,#f5f7f4_40%,#ffffff_100%)] text-foreground">
-      <div className="mx-auto max-w-7xl px-6 py-8 text-[#111827] lg:grid lg:grid-cols-[16rem_1fr] lg:gap-6">
+    <div className="min-h-screen text-foreground">
+      <div className="mx-auto max-w-7xl px-6 py-8 text-foreground lg:grid lg:grid-cols-[16rem_1fr] lg:gap-6">
         <HostSidebar hostName={userName} active="smartseat" />
         <main className="pb-8">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
@@ -448,7 +448,7 @@ export default function SmartSeatPage() {
                     onDragStart={(e) => {
                       e.dataTransfer.setData("application/json", JSON.stringify({ type: "guest", guestId: guest.id }));
                     }}
-                    className="cursor-grab rounded-xl border border-[#d1d5db] bg-white px-3 py-2 text-sm font-medium text-[#111827] shadow-sm"
+                    className="cursor-grab rounded-xl border border-[#d1d5db] bg-white px-3 py-2 text-sm font-medium text-foreground shadow-sm"
                   >
                     <span>{guest.name}</span>
                     <span className="ml-2 text-[10px] text-[#6b7280]">

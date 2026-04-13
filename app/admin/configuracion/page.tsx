@@ -12,7 +12,7 @@ import {
 } from "@/lib/salonMenuStandardOpciones";
 
 const inp =
-  "flex-1 rounded-full border border-[#d1d5db] bg-white px-4 py-2 text-[13px] text-[#111827] outline-none focus:border-[#2d5a41] focus:ring-2 focus:ring-[#2d5a41]/20";
+  "flex-1 rounded-full border border-[#d1d5db] bg-white px-4 py-2 text-[13px] text-foreground outline-none focus:border-[#2d5a41] focus:ring-2 focus:ring-[#2d5a41]/20";
 
 function Field({
   label,
@@ -169,7 +169,7 @@ export default function AdminConfiguracionPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[radial-gradient(circle_at_50%_-10%,#e3efe8_0,#f5f7f4_40%,#ffffff_100%)]">
+      <div className="min-h-screen text-foreground">
         <div className="mx-auto flex min-h-screen max-w-5xl gap-6 px-4 py-6 sm:px-6">
           <AdminSidebar active="configuracion" />
           <main className="flex flex-1 items-center justify-center">
@@ -184,7 +184,7 @@ export default function AdminConfiguracionPage() {
   const passwordCambio = newPassword.length > 0 || newPasswordConfirm.length > 0;
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_50%_-10%,#e3efe8_0,#f5f7f4_40%,#ffffff_100%)]">
+    <div className="min-h-screen text-foreground">
       <div className="mx-auto flex min-h-screen max-w-5xl gap-6 px-4 py-6 sm:px-6">
         <AdminSidebar active="configuracion" />
 
@@ -204,7 +204,7 @@ export default function AdminConfiguracionPage() {
           </div>
 
           <div className="rounded-3xl bg-white p-8 shadow ring-1 ring-[#e5efe8]">
-            <h2 className="mb-4 text-[18px] font-semibold text-[#111827]">Titular y acceso</h2>
+            <h2 className="mb-4 text-[18px] font-semibold text-foreground">Titular y acceso</h2>
             <LeyendaObligatorios className="mb-6 text-[12px] text-[#6b7280]" />
 
             {error && (
@@ -228,7 +228,7 @@ export default function AdminConfiguracionPage() {
               </Field>
 
               <div className="border-t border-[#e5e7eb] pt-6">
-                <h3 className="mb-4 text-[15px] font-semibold text-[#111827]">Datos del local</h3>
+                <h3 className="mb-4 text-[15px] font-semibold text-foreground">Datos del local</h3>
                 <div className="space-y-5">
                   <Field label="Nombre del salón" required>
                     <input className={inp} type="text" value={salonNombre} onChange={(e) => setSalonNombre(e.target.value)} />
@@ -246,7 +246,7 @@ export default function AdminConfiguracionPage() {
               </div>
 
               <div className="border-t border-[#e5e7eb] pt-6">
-                <h3 className="mb-2 text-[15px] font-semibold text-[#111827]">Carta del salón (menús por defecto)</h3>
+                <h3 className="mb-2 text-[15px] font-semibold text-foreground">Carta del salón (menús por defecto)</h3>
                 <p className="mb-4 text-[12px] text-[#6b7280]">
                   Podés <strong>modificar esto cuando quieras</strong>. Al crear un <strong>evento nuevo</strong> en el calendario se precargan estos menús; en cada fiesta seguís pudiendo ajustarlos solo para ese evento.
                 </p>
@@ -257,7 +257,7 @@ export default function AdminConfiguracionPage() {
                     </p>
                     <div className="flex flex-col gap-2 pl-1">
                       {MENUS_ESPECIALES_CATALOGO.map((op) => (
-                        <label key={op} className="flex cursor-pointer items-center gap-2 text-[13px] text-[#111827]">
+                        <label key={op} className="flex cursor-pointer items-center gap-2 text-[13px] text-foreground">
                           <input
                             type="checkbox"
                             checked={salonMenusEspeciales.includes(op)}
@@ -272,7 +272,7 @@ export default function AdminConfiguracionPage() {
                       <div className="mt-3 sm:pl-0">
                         <label className="mb-1 block text-[12px] text-[#374151]">Detalle «Otro»</label>
                         <textarea
-                          className="min-h-[4rem] w-full max-w-xl rounded-xl border border-[#d1d5db] bg-white px-3 py-2 text-[13px] text-[#111827] outline-none focus:border-[#2d5a41] focus:ring-2 focus:ring-[#2d5a41]/20"
+                          className="min-h-[4rem] w-full max-w-xl rounded-xl border border-[#d1d5db] bg-white px-3 py-2 text-[13px] text-foreground outline-none focus:border-[#2d5a41] focus:ring-2 focus:ring-[#2d5a41]/20"
                           value={salonMenusOtro}
                           onChange={(e) => setSalonMenusOtro(e.target.value)}
                           rows={2}
@@ -297,7 +297,7 @@ export default function AdminConfiguracionPage() {
                           max={SALON_MENU_STANDARD_MAX_OPCIONES}
                           value={nOpcionesMenuStandard}
                           onChange={(e) => aplicarCantidadOpcionesMenu(parseInt(e.target.value, 10))}
-                          className="w-full max-w-[8rem] rounded-full border border-[#d1d5db] bg-white px-4 py-2 text-[13px] text-[#111827] outline-none focus:border-[#2d5a41] focus:ring-2 focus:ring-[#2d5a41]/20"
+                          className="w-full max-w-[8rem] rounded-full border border-[#d1d5db] bg-white px-4 py-2 text-[13px] text-foreground outline-none focus:border-[#2d5a41] focus:ring-2 focus:ring-[#2d5a41]/20"
                         />
                       </div>
                       {opcionesMenuStandard.map((op, i) => (
@@ -317,7 +317,7 @@ export default function AdminConfiguracionPage() {
                                 return next;
                               });
                             }}
-                            className="w-full rounded-full border border-[#d1d5db] bg-white px-4 py-2 text-[13px] text-[#111827] outline-none focus:border-[#2d5a41] focus:ring-2 focus:ring-[#2d5a41]/20"
+                            className="w-full rounded-full border border-[#d1d5db] bg-white px-4 py-2 text-[13px] text-foreground outline-none focus:border-[#2d5a41] focus:ring-2 focus:ring-[#2d5a41]/20"
                             placeholder={i === 0 ? "Ej.: Entrada, plato, postre, bebidas…" : "Descripción de esta opción"}
                           />
                         </div>
@@ -328,7 +328,7 @@ export default function AdminConfiguracionPage() {
               </div>
 
               <div className="border-t border-[#e5e7eb] pt-6">
-                <p className="mb-4 text-[14px] font-medium text-[#111827]">Contraseña</p>
+                <p className="mb-4 text-[14px] font-medium text-foreground">Contraseña</p>
                 <p className="mb-4 text-[12px] text-[#6b7280]">
                   Para cambiar email o contraseña, completá tu contraseña actual.
                 </p>

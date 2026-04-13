@@ -129,7 +129,7 @@ export default function DatePicker({ value, onChange, min, className = "" }: Pro
           className="flex h-7 w-7 items-center justify-center rounded-full text-[#6b7280] hover:bg-[#f0f7f2] transition-colors">
           <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span className="text-sm font-semibold text-[#111827]">
+        <span className="text-sm font-semibold text-foreground">
           {MONTHS_ES[viewMonth]} {viewYear}
         </span>
         <button type="button" onClick={nextMonth}

@@ -17,25 +17,25 @@ export function SidebarUserChip({
   const sub = subtitle.trim() || "—";
 
   return (
-    <div className="mt-8 rounded-2xl border border-[#b4c9bc] bg-white px-4 py-3">
+    <div className="mt-8 rounded-2xl border border-border bg-card-muted px-4 py-3">
       <div className="flex items-start gap-2.5">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-brand/80 bg-white">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-brand/80 bg-card">
           <span className="text-sm font-semibold text-[#4b2e83]" aria-hidden>
             👤
           </span>
         </div>
         <div className="min-w-0 flex-1 text-left">
-          <p className="break-words text-[12px] font-semibold leading-snug text-[#111827]" title={name}>
+          <p className="break-words text-[12px] font-semibold leading-snug text-foreground" title={name}>
             {name}
           </p>
-          <p className="mt-0.5 break-words text-[10px] leading-snug text-[#6b7280]" title={sub}>
+          <p className="mt-0.5 break-words text-[10px] leading-snug text-muted" title={sub}>
             {sub}
           </p>
         </div>
         <button
           type="button"
           onClick={onLogout}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#d1d5db] text-[#4b5563] hover:bg-[#f3f4f6]"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border text-muted hover:bg-card-muted"
           aria-label="Cerrar sesión"
           title="Cerrar sesión"
         >

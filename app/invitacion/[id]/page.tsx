@@ -43,7 +43,7 @@ function Field({
   );
 }
 
-const inp = "flex-1 rounded-full border border-[#c5dece] bg-white px-4 py-2 text-[13px] text-[#111827] outline-none focus:border-[#2d5a41] focus:ring-2 focus:ring-[#2d5a41]/20";
+const inp = "flex-1 rounded-full border border-[#c5dece] bg-white px-4 py-2 text-[13px] text-foreground outline-none focus:border-[#2d5a41] focus:ring-2 focus:ring-[#2d5a41]/20";
 
 type Paso = "loading" | "bienvenida" | "formulario" | "confirmado" | "error";
 
@@ -369,7 +369,7 @@ export default function InvitacionPage({ params }: { params: Promise<{ id: strin
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-[#2d5a41]">
                   Tus datos (listado del anfitrión)
                 </p>
-                <p className="mt-1 text-[14px] font-medium text-[#111827]">{precarga!.nombreCompleto}</p>
+                <p className="mt-1 text-[14px] font-medium text-foreground">{precarga!.nombreCompleto}</p>
                 {precarga?.telefono ? (
                   <p className="mt-1 text-[12px] text-[#4b5563]">
                     Celular: <span className="font-medium text-[#374151]">{precarga.telefono}</span>
@@ -578,7 +578,7 @@ export default function InvitacionPage({ params }: { params: Promise<{ id: strin
 
 function Page({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-[100dvh] bg-white">
+    <div className="min-h-[100dvh] text-foreground">
       <header className="flex justify-end px-5 pt-5 sm:px-8 sm:pt-6">
         <Logo />
       </header>

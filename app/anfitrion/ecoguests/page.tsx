@@ -30,7 +30,7 @@ function EcoGuestRow({ guest }: { guest: InvitadoApi }) {
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
-          <p className="truncate text-[14px] font-semibold text-[#111827]" title={guest.nombre}>
+          <p className="truncate text-[14px] font-semibold text-foreground" title={guest.nombre}>
             {guest.nombre}
           </p>
           <span
@@ -148,8 +148,8 @@ export default function EcoGuestsPage() {
   }, [ecoGuests]);
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_50%_-10%,#e3efe8_0,#f5f7f4_40%,#ffffff_100%)]">
-      <div className="mx-auto flex min-h-screen max-w-6xl gap-6 px-4 py-6 text-[#111827] sm:px-6 lg:px-8">
+    <div className="min-h-screen text-foreground">
+      <div className="mx-auto flex min-h-screen max-w-6xl gap-6 px-4 py-6 text-foreground sm:px-6 lg:px-8">
         <HostSidebar hostName={userName} active="ecoguests" />
 
         <main className="flex-1 pb-8">

@@ -223,8 +223,8 @@ export default function RestriccionesPage() {
   }, [guests, mesaIdsValidas]);
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_50%_-10%,#e3efe8_0,#f5f7f4_40%,#ffffff_100%)] text-foreground">
-      <div className="mx-auto flex max-w-6xl gap-6 px-6 py-8 text-[#111827]">
+    <div className="min-h-screen text-foreground">
+      <div className="mx-auto flex max-w-6xl gap-6 px-6 py-8 text-foreground">
         <HostSidebar hostName={userName} active="restricciones" />
 
         <main className="flex-1 pb-8">
@@ -293,7 +293,7 @@ export default function RestriccionesPage() {
                                   className="rounded-2xl bg-[#f5fbf7] px-4 py-4 text-left shadow-[0_18px_35px_rgba(0,0,0,0.04)] ring-1 ring-[#e3efe8]"
                                 >
                                   <div className="flex flex-wrap items-center justify-between gap-2">
-                                    <p className="text-sm font-semibold text-[#111827]">{g.name}</p>
+                                    <p className="text-sm font-semibold text-foreground">{g.name}</p>
                                     {badgeAsistencia(g.asistencia)}
                                   </div>
                                   <p className="mt-2 whitespace-pre-line text-[12px] leading-snug text-[#374151]">
@@ -320,7 +320,7 @@ export default function RestriccionesPage() {
                               className="rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-4 text-left"
                             >
                               <div className="flex flex-wrap items-center justify-between gap-2">
-                                <p className="text-sm font-semibold text-[#111827]">{g.name}</p>
+                                <p className="text-sm font-semibold text-foreground">{g.name}</p>
                                 {badgeAsistencia(g.asistencia)}
                               </div>
                               <p className="mt-2 whitespace-pre-line text-[12px] text-[#374151]">
@@ -347,7 +347,7 @@ export default function RestriccionesPage() {
                               className="rounded-2xl bg-[#fafafa] px-4 py-4 text-left shadow-sm ring-1 ring-[#e5e7eb]"
                             >
                               <div className="flex flex-wrap items-center justify-between gap-2">
-                                <p className="text-sm font-semibold text-[#111827]">{g.name}</p>
+                                <p className="text-sm font-semibold text-foreground">{g.name}</p>
                                 {badgeAsistencia(g.asistencia)}
                               </div>
                               <p className="mt-2 whitespace-pre-line text-[12px] leading-snug text-[#374151]">
