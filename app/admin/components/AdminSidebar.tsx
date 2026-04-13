@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { MobileNavDrawer, MobileNavOpenButton } from "@/components/MobileNavDrawer";
+import { ThemeToggleRow } from "@/components/ThemeToggle";
 import { AdminSessionFooter } from "./AdminSessionFooter";
 
 export type AdminSidebarHighlight = "dashboard" | "usuarios" | "cocina" | "ingresos" | "configuracion";
@@ -57,15 +58,21 @@ export function AdminSidebar({ active }: { active: AdminSidebarHighlight }) {
     <>
       <MobileNavOpenButton onClick={() => setMenuOpen(true)} expanded={menuOpen} />
       <MobileNavDrawer open={menuOpen} onClose={() => setMenuOpen(false)}>
-        <div className="flex min-h-0 flex-1 flex-col justify-between gap-8 print:hidden">
-          <div>{navItems(true)}</div>
+        <div className="flex min-h-0 flex-1 flex-col justify-between gap-6 print:hidden">
+          <div>
+            {navItems(true)}
+            <ThemeToggleRow className="mt-6 print:hidden" />
+          </div>
           <div className="print:hidden">
             <AdminSessionFooter onBeforeLogout={() => setMenuOpen(false)} />
           </div>
         </div>
       </MobileNavDrawer>
       <aside className="hidden w-64 flex-shrink-0 flex-col justify-between self-start rounded-3xl border border-border bg-card/95 p-6 shadow-lg ring-1 ring-[var(--ring-soft)] backdrop-blur-sm md:sticky md:top-6 md:flex md:h-[calc(100vh-3rem)] print:hidden">
-        <div>{navItems(false)}</div>
+        <div>
+          {navItems(false)}
+          <ThemeToggleRow className="mt-6 print:hidden" />
+        </div>
         <AdminSessionFooter />
       </aside>
     </>

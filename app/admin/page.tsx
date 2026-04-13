@@ -100,7 +100,9 @@ function MiniCalendar({ year, month, events, onDayClick, todayYear, todayMonth, 
       <h2 className="mb-4 text-center text-xl font-bold text-brand">{monthName}</h2>
       <div className="grid grid-cols-7 gap-y-1">
         {DAYS_LABEL.map((d) => (
-          <div key={d} className="py-1 text-center text-[11px] font-semibold text-[#6b7280]">{d}</div>
+          <div key={d} className="py-1 text-center text-[11px] font-semibold text-muted">
+            {d}
+          </div>
         ))}
         {cells.map((cell, i) => {
           const ev = cell.current ? eventMap[cell.day] : null;
@@ -122,7 +124,9 @@ function MiniCalendar({ year, month, events, onDayClick, todayYear, todayMonth, 
                   )}
                 </button>
               ) : (
-                <span className={`relative flex h-8 w-8 items-center justify-center rounded-full text-[13px] ${cell.current ? "text-foreground" : "text-[#d1d5db]"}`}>
+                <span
+                  className={`relative flex h-8 w-8 items-center justify-center rounded-full text-[13px] ${cell.current ? "text-foreground" : "text-muted/45 dark:text-zinc-600"}`}
+                >
                   {cell.day}
                   {isToday && (
                     <span className="absolute bottom-0.5 left-1/2 h-[2px] w-3 -translate-x-1/2 rounded-full bg-[#2d5a41]" />
@@ -953,7 +957,7 @@ export default function AdminDashboard() {
       <div className="mx-auto flex min-h-screen max-w-6xl gap-6 px-4 py-6 text-foreground sm:px-6 lg:px-8">
         <AdminSidebar active="dashboard" />
 
-        <main className="flex-1 pb-8">
+        <main className="min-w-0 flex-1 pb-8">
           <h1 className="mb-6 text-right text-2xl font-bold text-brand">Dashboard</h1>
 
           {/* Stat cards */}
@@ -971,7 +975,7 @@ export default function AdminDashboard() {
 
           {/* Calendarios */}
           <div className="mb-3 flex items-center justify-between">
-            <div className="flex gap-4 text-[12px] text-[#4b5563]">
+            <div className="flex flex-wrap gap-4 text-[12px] text-muted">
               <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-[#22c55e]" />Confirmado</span>
               <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-[#ef4444]" />Pendiente</span>
               <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-[#f59e0b]" />Reunión</span>
@@ -979,7 +983,7 @@ export default function AdminDashboard() {
             <button
               type="button"
               onClick={() => setShowReunionModal(true)}
-              className="flex items-center gap-2 rounded-full border border-brand px-4 py-1.5 text-[13px] font-medium text-brand transition-colors hover:bg-[#f0f7f2]"
+              className="flex items-center gap-2 rounded-full border border-brand px-4 py-1.5 text-[13px] font-medium text-brand transition-colors hover:bg-card-muted"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -987,39 +991,50 @@ export default function AdminDashboard() {
               Agendar reunión
             </button>
           </div>
-          <div className="mb-8 flex gap-8">
+          <div className="mb-8 flex min-w-0 flex-col gap-8 sm:flex-row">
             <MiniCalendar year={mes1Year} month={mes1Month} events={calEvents} onDayClick={setSelectedEvent} todayYear={today.getFullYear()} todayMonth={today.getMonth()} todayDay={today.getDate()} />
             <MiniCalendar year={mes2Year} month={mes2Month} events={calEvents} onDayClick={setSelectedEvent} todayYear={today.getFullYear()} todayMonth={today.getMonth()} todayDay={today.getDate()} />
           </div>
 
           {/* Bottom row */}
-          <div className="flex items-end justify-between gap-6">
+          <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
             {proximoEvento ? (
               <button
                 type="button"
                 onClick={() => setSelectedEvent(proximoEvento)}
-                className="w-full max-w-sm rounded-2xl border border-[#d7e6dd] bg-white px-6 py-5 shadow-sm text-left transition-shadow hover:shadow-md hover:border-brand"
+                className="w-full max-w-sm rounded-2xl border border-border bg-card px-6 py-5 text-left shadow-sm ring-1 ring-[var(--ring-soft)] transition-shadow hover:border-brand hover:shadow-md"
               >
-                <p className="mb-4 text-[13px] font-bold tracking-wide text-foreground">EVENTO MÁS PRÓXIMO</p>
+                <p className="mb-4 text-[13px] font-bold tracking-wide text-brand">EVENTO MÁS PRÓXIMO</p>
                 <div className="space-y-2 text-[13px]">
-                  <p><span className="font-semibold text-[#374151]">TIPO:</span> <span className="text-[#4b5563]">{proximoEvento.titulo}</span></p>
+                  <p>
+                    <span className="font-semibold text-foreground">TIPO:</span>{" "}
+                    <span className="text-muted">{proximoEvento.titulo}</span>
+                  </p>
                   {proximoEvento.anfitriones && (
-                    <p><span className="font-semibold text-[#374151]">ANFITRIONES:</span> <span className="text-[#4b5563]">{proximoEvento.anfitriones}</span></p>
+                    <p>
+                      <span className="font-semibold text-foreground">ANFITRIONES:</span>{" "}
+                      <span className="text-muted">{proximoEvento.anfitriones}</span>
+                    </p>
                   )}
-                  <p><span className="font-semibold text-[#374151]">FECHA Y HORA:</span> <span className="text-[#4b5563]">{proximoEvento.fecha}, {proximoEvento.hora}</span></p>
+                  <p>
+                    <span className="font-semibold text-foreground">FECHA Y HORA:</span>{" "}
+                    <span className="text-muted">
+                      {proximoEvento.fecha}, {proximoEvento.hora}
+                    </span>
+                  </p>
                 </div>
-                <p className="mt-3 text-[11px] text-brand">Ver detalle →</p>
+                <p className="mt-3 text-[11px] font-semibold text-brand">Ver detalle →</p>
               </button>
             ) : (
-              <div className="w-full max-w-sm rounded-2xl border border-[#d7e6dd] bg-white px-6 py-5 shadow-sm">
-                <p className="text-[13px] text-[#9ca3af]">No hay eventos próximos.</p>
+              <div className="w-full max-w-sm rounded-2xl border border-border bg-card px-6 py-5 shadow-sm ring-1 ring-[var(--ring-soft)]">
+                <p className="text-[13px] text-muted">No hay eventos próximos.</p>
               </div>
             )}
 
             <button
               type="button"
               onClick={openNuevoEventoModal}
-              className="whitespace-nowrap rounded-full bg-[#2d5a41] px-7 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#24503a]"
+              className="w-full shrink-0 rounded-full bg-brand px-7 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:brightness-95 sm:w-auto"
             >
               Crear evento nuevo
             </button>

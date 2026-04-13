@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Poppins } from "next/font/google";
 import { AppThemeProvider } from "@/components/AppThemeProvider";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { ThemeToggleGate } from "@/components/ThemeToggleGate";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -44,7 +44,7 @@ export default function RootLayout({
     >
       <body className="flex min-h-full flex-col">
         <AppThemeProvider>
-          <ThemeToggle />
+          <ThemeToggleGate />
           {children}
         </AppThemeProvider>
       </body>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { MobileNavDrawer, MobileNavOpenButton } from "@/components/MobileNavDrawer";
+import { ThemeToggleRow } from "@/components/ThemeToggle";
 import { SidebarUserChip } from "@/components/SidebarUserChip";
 import { logout } from "@/lib/supabase";
 
@@ -69,13 +70,19 @@ export default function Sidebar() {
     <>
       <MobileNavOpenButton onClick={() => setMenuOpen(true)} expanded={menuOpen} />
       <MobileNavDrawer open={menuOpen} onClose={() => setMenuOpen(false)}>
-        <div className="flex min-h-0 flex-1 flex-col justify-between gap-8">
-          <div>{navBlock(true)}</div>
+        <div className="flex min-h-0 flex-1 flex-col justify-between gap-6">
+          <div>
+            {navBlock(true)}
+            <ThemeToggleRow className="mt-6" />
+          </div>
           <SidebarUserChip displayName={nombre} subtitle="Usuario Invitado" onLogout={handleLogout} />
         </div>
       </MobileNavDrawer>
       <aside className="hidden w-64 flex-shrink-0 flex-col justify-between self-start rounded-3xl border border-border bg-card/95 p-6 shadow-lg ring-1 ring-[var(--ring-soft)] backdrop-blur-sm md:sticky md:top-6 md:flex md:h-[calc(100vh-3rem)]">
-        <div>{navBlock(false)}</div>
+        <div>
+          {navBlock(false)}
+          <ThemeToggleRow className="mt-6" />
+        </div>
         <SidebarUserChip displayName={nombre} subtitle="Usuario Invitado" onLogout={() => logout()} />
       </aside>
     </>
