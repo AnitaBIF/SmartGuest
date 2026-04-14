@@ -24,8 +24,8 @@ function EcoGuestRow({ guest }: { guest: InvitadoApi }) {
   const rolLabel = esConductor ? "Conductor" : "Pasajero";
 
   return (
-    <li className="flex gap-4 px-4 py-3.5 transition-colors hover:bg-[#f6faf7] sm:px-5 sm:py-4">
-      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-[#e8f3ec] ring-1 ring-[#c5dece]">
+    <li className="flex gap-4 px-4 py-3.5 transition-colors hover:bg-card-muted sm:px-5 sm:py-4">
+      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-card-muted ring-1 ring-border">
         <Image src="/ecoguest-badge.png" alt="" fill className="object-contain p-1" sizes="48px" aria-hidden />
       </div>
       <div className="min-w-0 flex-1">
@@ -35,16 +35,16 @@ function EcoGuestRow({ guest }: { guest: InvitadoApi }) {
           </p>
           <span
             className={`inline-flex w-fit shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
-              esConductor ? "bg-[#1a4d2e]/10 text-[#1a4d2e]" : "bg-[#3d6b5c]/10 text-[#2d5a41]"
+              esConductor ? "bg-brand/15 text-brand dark:bg-brand/25" : "bg-brand/10 text-brand dark:bg-brand/20"
             }`}
           >
             {rolLabel}
           </span>
         </div>
-        <p className="mt-0.5 truncate text-[12px] text-[#6b7280]" title={guest.grupo}>
+        <p className="mt-0.5 truncate text-[12px] text-muted" title={guest.grupo}>
           Grupo: {guest.grupo || "—"}
           {!esConductor && (guest.personasGrupo ?? 1) > 1 ? (
-            <span className="text-[#2d5a41]"> · {guest.personasGrupo} pers. confirmadas (SmartPool)</span>
+            <span className="text-brand"> · {guest.personasGrupo} pers. confirmadas (SmartPool)</span>
           ) : null}
         </p>
       </div>
@@ -156,7 +156,7 @@ export default function EcoGuestsPage() {
           <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-2xl font-semibold text-brand">EcoGuests</h1>
-              <p className="mt-1 max-w-xl text-[12px] text-[#6b7280]">
+              <p className="mt-1 max-w-xl text-[12px] text-muted">
                 Solo invitados con <strong>asistencia confirmada</strong> que en SmartPool eligieron{" "}
                 <strong>conductor</strong> o <strong>pasajero</strong> (mismo criterio que el resumen del evento).
               </p>
@@ -201,7 +201,7 @@ export default function EcoGuestsPage() {
                 type="button"
                 disabled={ecoGuests.length === 0}
                 onClick={() => downloadCsv(ecoGuests)}
-                className="text-center text-[11px] font-medium text-[#2d5a41] underline underline-offset-2 hover:text-[#1a4d2e] disabled:cursor-not-allowed disabled:opacity-40"
+                className="text-center text-[11px] font-medium text-brand underline underline-offset-2 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 También en CSV (Excel)
               </button>
@@ -209,15 +209,15 @@ export default function EcoGuestsPage() {
           </div>
 
           {loading ? (
-            <p className="text-[13px] text-[#6b7280]">Cargando…</p>
+            <p className="text-[13px] text-muted">Cargando…</p>
           ) : error ? (
             <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-800">{error}</div>
           ) : ecoGuests.length === 0 ? (
-            <div className="rounded-2xl bg-white/90 px-5 py-8 text-center shadow-sm ring-1 ring-black/5">
-              <div className="relative mx-auto mb-3 h-14 w-14 overflow-hidden rounded-2xl bg-[#e8f3ec] ring-1 ring-[#c5dece]">
+            <div className="rounded-2xl border border-border bg-card px-5 py-8 text-center shadow-sm ring-1 ring-[var(--ring-soft)]">
+              <div className="relative mx-auto mb-3 h-14 w-14 overflow-hidden rounded-2xl bg-card-muted ring-1 ring-border">
                 <Image src="/ecoguest-badge.png" alt="EcoGuest" fill className="object-contain p-2" sizes="56px" />
               </div>
-              <p className="text-[13px] leading-relaxed text-[#4b5563]">
+              <p className="text-[13px] leading-relaxed text-muted">
                 Todavía no hay EcoGuests en este evento. Los invitados tienen que{" "}
                 <strong>confirmar asistencia</strong> y elegir conductor o pasajero en{" "}
                 <strong>SmartPool</strong> desde su cuenta.
@@ -225,28 +225,28 @@ export default function EcoGuestsPage() {
             </div>
           ) : (
             <div className="max-w-3xl space-y-4">
-              <div className="flex flex-wrap items-center gap-2 text-[12px] text-[#4b5563]">
-                <span className="rounded-full bg-white/90 px-3 py-1 font-medium shadow-sm ring-1 ring-black/5">
+              <div className="flex flex-wrap items-center gap-2 text-[12px] text-muted">
+                <span className="rounded-full border border-border bg-card px-3 py-1 font-medium shadow-sm ring-1 ring-[var(--ring-soft)]">
                   {conteo.total} {conteo.total === 1 ? "EcoGuest" : "EcoGuests"}
                 </span>
-                <span className="rounded-full bg-[#1a4d2e]/8 px-3 py-1 font-medium text-[#1a4d2e]">
+                <span className="rounded-full bg-brand/15 px-3 py-1 font-medium text-brand dark:bg-brand/20">
                   {conteo.conductores} {conteo.conductores === 1 ? "conductor" : "conductores"}
                 </span>
-                <span className="rounded-full bg-[#2d5a41]/8 px-3 py-1 font-medium text-[#2d5a41]">
+                <span className="rounded-full bg-brand/10 px-3 py-1 font-medium text-brand dark:bg-brand/15">
                   {conteo.pasajeros} plaza{conteo.pasajeros === 1 ? "" : "s"} pasajero
                   {conteo.pasajerosFilas !== conteo.pasajeros ? (
-                    <span className="font-normal text-[#4b5563]"> ({conteo.pasajerosFilas} invit.)</span>
+                    <span className="font-normal text-muted"> ({conteo.pasajerosFilas} invit.)</span>
                   ) : null}
                 </span>
               </div>
 
-              <div className="overflow-hidden rounded-2xl bg-white/90 shadow-sm ring-1 ring-black/5">
-                <div className="border-b border-[#e8efe9] bg-[#f6faf7] px-4 py-2.5 sm:px-5">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6b7280]">
+              <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm ring-1 ring-[var(--ring-soft)]">
+                <div className="border-b border-border-subtle bg-card-muted px-4 py-2.5 sm:px-5">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
                     Lista del evento
                   </p>
                 </div>
-                <ul className="divide-y divide-[#e8efe9]">
+                <ul className="divide-y divide-border-subtle">
                   {ecoGuests.map((guest) => (
                     <EcoGuestRow key={guest.id} guest={guest} />
                   ))}

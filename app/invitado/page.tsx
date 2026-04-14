@@ -19,11 +19,8 @@ type EventoData = {
 
 function InfoCard({ label, value }: { label: string; value: string }) {
   return (
-    <div
-      className="flex w-full min-w-0 flex-col items-center justify-center rounded-xl px-3 py-2.5 text-center text-white sm:px-4 sm:py-3"
-      style={{ backgroundColor: "#7aab8f" }}
-    >
-      <p className="text-[11px] font-semibold opacity-90 sm:text-[12px]">{label}</p>
+    <div className="flex w-full min-w-0 flex-col items-center justify-center rounded-xl border border-[#5d8f73]/35 bg-[#7aab8f] px-3 py-2.5 text-center text-white shadow-sm dark:border-border dark:bg-card-muted dark:text-foreground dark:shadow-none sm:px-4 sm:py-3">
+      <p className="text-[11px] font-semibold opacity-90 dark:text-muted sm:text-[12px]">{label}</p>
       <p className="mt-0.5 text-[13px] font-bold break-words sm:text-[14px]">{value}</p>
     </div>
   );

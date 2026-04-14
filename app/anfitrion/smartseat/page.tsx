@@ -307,7 +307,7 @@ export default function SmartSeatPage() {
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <div>
               <h1 className="text-2xl font-semibold text-brand">SmartSeat</h1>
-              <p className="mt-1 max-w-xl text-[12px] text-[#6b7280]">
+              <p className="mt-1 max-w-xl text-[12px] text-muted">
                 Invitados con <strong>asistencia confirmada</strong>. Si la invitación es para varias personas, se ocupan{" "}
                 <strong>varias sillas</strong> con el mismo nombre (grupo familiar). La página se actualiza sola cada poco
                 si no moviste mesas sin guardar.
@@ -333,7 +333,7 @@ export default function SmartSeatPage() {
             </div>
           </div>
 
-          <div className="mb-4 flex flex-wrap items-center gap-4 text-[11px] text-[#4b5563]">
+          <div className="mb-4 flex flex-wrap items-center gap-4 text-[11px] text-muted">
             <span className="flex items-center gap-2">
               <span className="inline-block h-3.5 w-3.5 shrink-0 rounded-full ring-1 ring-black/10" style={{ backgroundColor: SEAT_LIBRE }} />
               Desocupada
@@ -347,10 +347,10 @@ export default function SmartSeatPage() {
           <div className="grid gap-6 lg:grid-cols-[1fr_18rem]">
             <section className="grid gap-6 sm:grid-cols-2">
               {tables.map((table) => (
-                <div key={table.id} className="rounded-2xl bg-white/80 p-5 shadow-sm ring-1 ring-[#d7e6dd]">
+                <div key={table.id} className="rounded-2xl border border-border bg-card p-5 shadow-sm ring-1 ring-[var(--ring-soft)]">
                   <h2 className="mb-4 text-lg font-semibold text-brand">MESA {table.numero}</h2>
                   <div className="relative mx-auto h-56 w-56">
-                    <div className="absolute inset-10 rounded-full border-2 border-[#c5d8cc] bg-[#f0f7f2]" />
+                    <div className="absolute inset-10 rounded-full border-2 border-border bg-card-muted" />
                     {table.seats.map((seat) => {
                       const angle = (seat.index / table.seats.length) * Math.PI * 2 - Math.PI / 2;
                       const radius = 90;
@@ -419,13 +419,13 @@ export default function SmartSeatPage() {
                 </div>
               ))}
               {tables.length === 0 && (
-                <p className="col-span-full text-center text-[#6b7280]">No hay mesas creadas para tu evento.</p>
+                <p className="col-span-full text-center text-muted">No hay mesas creadas para tu evento.</p>
               )}
             </section>
 
             {/* Panel lateral de invitados no asignados */}
             <aside
-              className="h-[calc(100vh-3rem)] rounded-2xl bg-[#f5fbf7] p-4 shadow-sm ring-1 ring-black/5 lg:sticky lg:top-6 lg:flex lg:flex-col"
+              className="h-[calc(100vh-3rem)] rounded-2xl border border-border bg-card-muted p-4 shadow-sm ring-1 ring-[var(--ring-soft)] lg:sticky lg:top-6 lg:flex lg:flex-col"
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 e.preventDefault();
@@ -448,25 +448,25 @@ export default function SmartSeatPage() {
                     onDragStart={(e) => {
                       e.dataTransfer.setData("application/json", JSON.stringify({ type: "guest", guestId: guest.id }));
                     }}
-                    className="cursor-grab rounded-xl border border-[#d1d5db] bg-white px-3 py-2 text-sm font-medium text-foreground shadow-sm"
+                    className="cursor-grab rounded-xl border border-border bg-card px-3 py-2 text-sm font-medium text-foreground shadow-sm"
                   >
                     <span>{guest.name}</span>
-                    <span className="ml-2 text-[10px] text-[#6b7280]">
+                    <span className="ml-2 text-[10px] text-muted">
                       {guest.seatCount > 1 ? `${guest.seatCount} pers.` : guest.grupo}
                     </span>
                   </div>
                 ))}
                 {unassignedGuests.length === 0 && allGuests.length > 0 && (
-                  <p className="text-center text-xs text-[#9ca3af]">¡Todos asignados!</p>
+                  <p className="text-center text-xs text-muted">¡Todos asignados!</p>
                 )}
                 {allGuests.length === 0 && (
-                  <p className="text-center text-[12px] leading-relaxed text-[#6b7280]">
+                  <p className="text-center text-[12px] leading-relaxed text-muted">
                     Nadie confirmó aún. Cuando los invitados confirmen asistencia, van a aparecer en esta lista para
                     asignar mesa.
                   </p>
                 )}
               </div>
-              <p className="mt-3 text-xs text-[#4b5563]">
+              <p className="mt-3 text-xs text-muted">
                 Arrastrá a una silla: se llenan todas las plazas del grupo en esa mesa. Doble clic en una silla ocupada
                 desasigna todo el grupo. Guardá para persistir.
               </p>

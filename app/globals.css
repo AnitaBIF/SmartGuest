@@ -20,18 +20,19 @@
 }
 
 html.dark {
-  --background: #0c1210;
+  /* Neutro cálido + verde apagado: menos “neón” y menos contraste duro que #0c1210 + mint */
+  --background: #141816;
   --foreground: #e8ebe9;
-  --brand: #6bc48f;
-  --muted: #9ca3a8;
-  --card: #141c17;
-  --card-muted: #1a2620;
-  --border: #2d4036;
-  --border-subtle: #243029;
-  --input-bg: #101815;
-  --input-border: #3d5247;
-  --page-bg: radial-gradient(circle at 50% -10%, #142820 0%, #0c1210 45%, #060a08 100%);
-  --ring-soft: rgb(255 255 255 / 0.08);
+  --brand: #8fd4ae;
+  --muted: #9aa3a0;
+  --card: #1b211e;
+  --card-muted: #232a27;
+  --border: #3a4540;
+  --border-subtle: #2a322f;
+  --input-bg: #161b19;
+  --input-border: #4a5751;
+  --page-bg: radial-gradient(120% 80% at 50% 0%, #1c2621 0%, #141816 42%, #101412 100%);
+  --ring-soft: rgb(255 255 255 / 0.06);
   --qr-surface: #ffffff;
   --qr-fg: #111827;
 }
