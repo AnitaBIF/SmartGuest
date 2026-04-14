@@ -12,7 +12,7 @@ import {
 } from "@/lib/salonMenuStandardOpciones";
 
 const inp =
-  "flex-1 rounded-full border border-[#d1d5db] bg-white px-4 py-2 text-[13px] text-foreground outline-none focus:border-[#2d5a41] focus:ring-2 focus:ring-[#2d5a41]/20";
+  "flex-1 rounded-full border border-border bg-input px-4 py-2 text-[13px] text-foreground outline-none placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/20";
 
 function Field({
   label,
@@ -25,7 +25,7 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-1 sm:flex-row sm:items-center">
-      <label className="w-full text-[13px] text-[#374151] sm:w-52 sm:text-right sm:pr-5">
+      <label className="w-full text-[13px] text-foreground sm:w-52 sm:text-right sm:pr-5">
         {label}
         {required ? <Req /> : null}
       </label>
@@ -173,7 +173,7 @@ export default function AdminConfiguracionPage() {
         <div className="mx-auto flex min-h-screen max-w-5xl gap-6 px-4 py-6 sm:px-6">
           <AdminSidebar active="configuracion" />
           <main className="flex flex-1 items-center justify-center">
-            <p className="text-[#9ca3af]">Cargando...</p>
+            <p className="text-muted">Cargando...</p>
           </main>
         </div>
       </div>
@@ -191,8 +191,8 @@ export default function AdminConfiguracionPage() {
         <main className="flex-1 pb-8">
           <h1 className="mb-8 text-right text-2xl font-bold text-brand">Configuración</h1>
 
-          <div className="mb-6 rounded-2xl border border-[#c5dece] bg-[#f0f7f2] px-5 py-4 text-[13px] leading-relaxed text-[#374151]">
-            <p className="font-semibold text-[#2d5a41]">Cuenta del salón y del administrador</p>
+          <div className="mb-6 rounded-2xl border border-border bg-card-muted px-5 py-4 text-[13px] leading-relaxed text-foreground">
+            <p className="font-semibold text-brand">Cuenta del salón y del administrador</p>
             <p className="mt-2">
               Los <strong>eventos cargados en el calendario</strong> y las condiciones pactadas con cada cliente se gestionan según tu proceso con el anfitrión; acá actualizás datos de acceso, la ficha del local y{" "}
               <strong>qué menús ofrece el salón por defecto</strong>.
@@ -203,12 +203,12 @@ export default function AdminConfiguracionPage() {
             </p>
           </div>
 
-          <div className="rounded-3xl bg-white p-8 shadow ring-1 ring-[#e5efe8]">
+          <div className="rounded-3xl border border-border bg-card p-8 shadow ring-1 ring-[var(--ring-soft)]">
             <h2 className="mb-4 text-[18px] font-semibold text-foreground">Titular y acceso</h2>
-            <LeyendaObligatorios className="mb-6 text-[12px] text-[#6b7280]" />
+            <LeyendaObligatorios className="mb-6 text-[12px] text-muted" />
 
             {error && (
-              <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-800">
+              <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
                 {error}
               </div>
             )}
@@ -252,8 +252,8 @@ export default function AdminConfiguracionPage() {
                 </p>
                 <div className="space-y-4">
                   <div>
-                    <p className="mb-2 text-[13px] font-medium text-[#374151]">
-                      Menús especiales que ofrecen <span className="font-normal text-[#6b7280]">(opcional)</span>
+                    <p className="mb-2 text-[13px] font-medium text-foreground">
+                      Menús especiales que ofrecen <span className="font-normal text-muted">(opcional)</span>
                     </p>
                     <div className="flex flex-col gap-2 pl-1">
                       {MENUS_ESPECIALES_CATALOGO.map((op) => (
@@ -270,9 +270,9 @@ export default function AdminConfiguracionPage() {
                     </div>
                     {salonMenusEspeciales.includes("Otro") && (
                       <div className="mt-3 sm:pl-0">
-                        <label className="mb-1 block text-[12px] text-[#374151]">Detalle «Otro»</label>
+                        <label className="mb-1 block text-[12px] text-foreground">Detalle «Otro»</label>
                         <textarea
-                          className="min-h-[4rem] w-full max-w-xl rounded-xl border border-[#d1d5db] bg-white px-3 py-2 text-[13px] text-foreground outline-none focus:border-[#2d5a41] focus:ring-2 focus:ring-[#2d5a41]/20"
+                          className="min-h-[4rem] w-full max-w-xl rounded-xl border border-border bg-input px-3 py-2 text-[13px] text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
                           value={salonMenusOtro}
                           onChange={(e) => setSalonMenusOtro(e.target.value)}
                           rows={2}
@@ -282,13 +282,13 @@ export default function AdminConfiguracionPage() {
                     )}
                   </div>
                   <div className="flex flex-col gap-1 sm:flex-row sm:items-start">
-                    <span className="w-full text-[13px] text-[#374151] sm:w-52 sm:text-right sm:pr-5 sm:pt-2">
+                    <span className="w-full text-[13px] text-foreground sm:w-52 sm:text-right sm:pr-5 sm:pt-2">
                       Menú estándar del salón
                       <Req />
                     </span>
                     <div className="flex max-w-xl flex-1 flex-col gap-3">
                       <div>
-                        <label className="mb-1 block text-[12px] text-[#374151]">
+                        <label className="mb-1 block text-[12px] text-foreground">
                           ¿Cuántas opciones de menú estándar ofrecen?
                         </label>
                         <input
@@ -297,12 +297,12 @@ export default function AdminConfiguracionPage() {
                           max={SALON_MENU_STANDARD_MAX_OPCIONES}
                           value={nOpcionesMenuStandard}
                           onChange={(e) => aplicarCantidadOpcionesMenu(parseInt(e.target.value, 10))}
-                          className="w-full max-w-[8rem] rounded-full border border-[#d1d5db] bg-white px-4 py-2 text-[13px] text-foreground outline-none focus:border-[#2d5a41] focus:ring-2 focus:ring-[#2d5a41]/20"
+                          className="w-full max-w-[8rem] rounded-full border border-border bg-input px-4 py-2 text-[13px] text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
                         />
                       </div>
                       {opcionesMenuStandard.map((op, i) => (
                         <div key={i} className="flex flex-col gap-1">
-                          <label className="text-[12px] font-medium text-[#374151]" htmlFor={`cfg_menu_std_${i}`}>
+                          <label className="text-[12px] font-medium text-foreground" htmlFor={`cfg_menu_std_${i}`}>
                             Opción {i + 1}
                           </label>
                           <input
@@ -317,7 +317,7 @@ export default function AdminConfiguracionPage() {
                                 return next;
                               });
                             }}
-                            className="w-full rounded-full border border-[#d1d5db] bg-white px-4 py-2 text-[13px] text-foreground outline-none focus:border-[#2d5a41] focus:ring-2 focus:ring-[#2d5a41]/20"
+                            className="w-full rounded-full border border-border bg-input px-4 py-2 text-[13px] text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
                             placeholder={i === 0 ? "Ej.: Entrada, plato, postre, bebidas…" : "Descripción de esta opción"}
                           />
                         </div>
@@ -327,9 +327,9 @@ export default function AdminConfiguracionPage() {
                 </div>
               </div>
 
-              <div className="border-t border-[#e5e7eb] pt-6">
+              <div className="border-t border-border pt-6">
                 <p className="mb-4 text-[14px] font-medium text-foreground">Contraseña</p>
-                <p className="mb-4 text-[12px] text-[#6b7280]">
+                <p className="mb-4 text-[12px] text-muted">
                   Para cambiar email o contraseña, completá tu contraseña actual.
                 </p>
                 <div className="space-y-5">

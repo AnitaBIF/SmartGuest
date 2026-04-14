@@ -61,3 +61,8 @@ body {
   color: var(--foreground);
   font-family: var(--font-poppins), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
+
+/* Modales admin: el encabezado usa color inline (pastel); en oscuro forzamos superficie legible */
+html.dark .admin-modal-tinted-header {
+  background-color: var(--card-muted) !important;
+}

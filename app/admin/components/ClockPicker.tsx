@@ -125,25 +125,25 @@ export default function ClockPicker({ value, onChange, className = "" }: Props) 
     <div
       ref={dropRef}
       style={{ position: "fixed", top: dropPos.top, left: dropPos.left, width: Math.max(dropPos.width, 248), zIndex: 9999 }}
-      className="rounded-2xl bg-white p-5 shadow-xl ring-1 ring-black/10"
+      className="rounded-2xl border border-border bg-card p-5 shadow-xl ring-1 ring-[var(--ring-soft)]"
     >
       {/* Header: HH : MM  +  AM/PM */}
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-1 text-[28px] font-bold leading-none">
           <button type="button" onClick={() => setStep("h")}
-            className={`rounded px-1 transition-colors ${step === "h" ? "text-[#2d5a41]" : "text-[#9ca3af] hover:text-[#2d5a41]"}`}>
+            className={`rounded px-1 transition-colors ${step === "h" ? "text-brand" : "text-muted hover:text-brand"}`}>
             {String(displayH).padStart(2, "0")}
           </button>
-          <span className="text-[#c4c9d0]">:</span>
+          <span className="text-muted">:</span>
           <button type="button" onClick={() => setStep("m")}
-            className={`rounded px-1 transition-colors ${step === "m" ? "text-[#2d5a41]" : "text-[#9ca3af] hover:text-[#2d5a41]"}`}>
+            className={`rounded px-1 transition-colors ${step === "m" ? "text-brand" : "text-muted hover:text-brand"}`}>
             {String(min).padStart(2, "0")}
           </button>
         </div>
-        <div className="overflow-hidden rounded-lg border border-[#d1d5db] text-[11px] font-semibold">
+        <div className="overflow-hidden rounded-lg border border-border text-[11px] font-semibold">
           {(["AM", "PM"] as const).map((ap) => (
             <button key={ap} type="button" onClick={() => toggleAmPm(ap)}
-              className={`block w-full px-2.5 py-1 transition-colors ${ampm === ap ? "bg-[#2d5a41] text-white" : "text-[#6b7280] hover:bg-[#f0f7f2]"}`}>
+              className={`block w-full px-2.5 py-1 transition-colors ${ampm === ap ? "bg-brand text-white" : "text-muted hover:bg-card-muted"}`}>
               {ap}
             </button>
           ))}
@@ -151,13 +151,13 @@ export default function ClockPicker({ value, onChange, className = "" }: Props) 
       </div>
 
       {/* Step indicator */}
-      <p className="mb-2 text-center text-[10px] font-medium uppercase tracking-widest text-[#9ca3af]">
+      <p className="mb-2 text-center text-[10px] font-medium uppercase tracking-widest text-muted">
         {step === "h" ? "Horas" : "Minutos"}
       </p>
 
       {/* SVG clock face */}
       <svg width="208" height="208" viewBox="0 0 200 200" className="mx-auto block">
-        <circle cx={CX} cy={CY} r={R + 20} fill="#f0f7f2" />
+        <circle cx={CX} cy={CY} r={R + 20} className="fill-[#f0f7f2] dark:fill-card-muted" />
         <line x1={CX} y1={CY} x2={handEnd.x} y2={handEnd.y} stroke="#2d5a41" strokeWidth="2.5" strokeLinecap="round" />
         <circle cx={handEnd.x} cy={handEnd.y} r="5" fill="#2d5a41" />
         <circle cx={CX} cy={CY} r="4" fill="#2d5a41" />
@@ -169,9 +169,9 @@ export default function ClockPicker({ value, onChange, className = "" }: Props) 
               return (
                 <g key={h} onClick={() => selectHour(h)} style={{ cursor: "pointer" }}>
                   <circle cx={p.x} cy={p.y} r="15" fill={sel ? "#2d5a41" : "transparent"}
-                    className={sel ? "" : "hover:fill-[#e0ede6]"} />
+                    className={sel ? "" : "hover:fill-emerald-200/40 dark:hover:fill-zinc-600"} />
                   <text x={p.x} y={p.y} textAnchor="middle" dominantBaseline="central"
-                    fontSize="13" fontWeight={sel ? "700" : "400"} fill={sel ? "white" : "#374151"}
+                    fontSize="13" fontWeight={sel ? "700" : "400"} className={sel ? "fill-white" : "fill-[#374151] dark:fill-zinc-200"}
                     style={{ pointerEvents: "none" }}>{h}</text>
                 </g>
               );
@@ -182,9 +182,9 @@ export default function ClockPicker({ value, onChange, className = "" }: Props) 
               return (
                 <g key={m} onClick={() => selectMinute(m)} style={{ cursor: "pointer" }}>
                   <circle cx={p.x} cy={p.y} r="15" fill={sel ? "#2d5a41" : "transparent"}
-                    className={sel ? "" : "hover:fill-[#e0ede6]"} />
+                    className={sel ? "" : "hover:fill-emerald-200/40 dark:hover:fill-zinc-600"} />
                   <text x={p.x} y={p.y} textAnchor="middle" dominantBaseline="central"
-                    fontSize="11" fontWeight={sel ? "700" : "400"} fill={sel ? "white" : "#374151"}
+                    fontSize="11" fontWeight={sel ? "700" : "400"} className={sel ? "fill-white" : "fill-[#374151] dark:fill-zinc-200"}
                     style={{ pointerEvents: "none" }}>{String(m).padStart(2, "0")}</text>
                 </g>
               );
@@ -200,10 +200,10 @@ export default function ClockPicker({ value, onChange, className = "" }: Props) 
         ref={btnRef}
         type="button"
         onClick={handleOpen}
-        className="flex h-[38px] w-full items-center justify-between rounded-xl border border-[#94a3b8] bg-white px-3 py-2 text-sm whitespace-nowrap shadow-sm outline-none focus:border-[#2d5a41] focus:ring-2 focus:ring-[#2d5a41]/30"
+        className="flex h-[38px] w-full items-center justify-between rounded-xl border border-border bg-input px-3 py-2 text-sm whitespace-nowrap text-foreground shadow-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
       >
-        <span className={value ? "font-medium text-[#0f172a]" : "text-[#64748b]"}>{buttonLabel}</span>
-        <svg className="h-4 w-4 flex-shrink-0 text-[#6b7280]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <span className={value ? "font-medium" : "text-muted"}>{buttonLabel}</span>
+        <svg className="h-4 w-4 shrink-0 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="10" />
           <polyline points="12 6 12 12 16 14" />
         </svg>

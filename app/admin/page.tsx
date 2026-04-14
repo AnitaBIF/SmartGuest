@@ -143,13 +143,13 @@ function MiniCalendar({ year, month, events, onDayClick, todayYear, todayMonth, 
 
 /* ─── Helpers de formulario (contraste alto + fondo explícito para legibilidad) ─── */
 const inp =
-  "w-full rounded-full border border-[#94a3b8] bg-white px-3 py-2 text-sm text-[#0f172a] placeholder:text-[#64748b] shadow-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30";
+  "w-full rounded-full border border-border bg-input px-3 py-2 text-sm text-foreground placeholder:text-muted shadow-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30";
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex gap-2">
-      <span className="w-28 flex-shrink-0 font-semibold text-[#374151]">{label}</span>
-      <span className="text-[#4b5563]">{value}</span>
+      <span className="w-28 flex-shrink-0 font-semibold text-foreground">{label}</span>
+      <span className="text-muted">{value}</span>
     </div>
   );
 }
@@ -165,7 +165,7 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-[12px] font-semibold tracking-wide text-[#1e293b]">
+      <label className="text-[12px] font-semibold tracking-wide text-foreground">
         {label}
         {required ? <Req /> : null}
       </label>
@@ -175,7 +175,7 @@ function Field({
 }
 
 const MENU_STD_TA =
-  "w-full rounded-2xl border border-[#94a3b8] bg-white px-4 py-3 text-sm text-[#0f172a] placeholder:text-[#64748b] shadow-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30";
+  "w-full rounded-2xl border border-border bg-input px-4 py-3 text-sm text-foreground placeholder:text-muted shadow-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30";
 
 /** Opciones del menú estándar definidas en la cuenta del salón (texto `salon_menu_standard`). */
 function opcionesMenuStandardDesdeSalon(raw: string): string[] {
@@ -221,7 +221,7 @@ function MenuStandardElegirUno({
         <label
           key={opt}
           className={`flex cursor-pointer items-start gap-3 rounded-2xl border px-3 py-2.5 text-sm transition-colors ${
-            value === opt ? "border-brand bg-[#f0f7f2] ring-1 ring-brand/25" : "border-[#e2e8f0] bg-white hover:bg-[#f8fafc]"
+            value === opt ? "border-brand bg-card-muted ring-1 ring-brand/25" : "border-border bg-card hover:bg-card-muted"
           }`}
         >
           <input
@@ -231,15 +231,15 @@ function MenuStandardElegirUno({
             checked={value === opt}
             onChange={() => onChange(opt)}
           />
-          <span className="text-[#0f172a] leading-snug">{opt}</span>
+          <span className="leading-snug text-foreground">{opt}</span>
         </label>
       ))}
       {allowCustom ? (
         <label
           className={`flex cursor-pointer flex-col gap-2 rounded-2xl border px-3 py-2.5 text-sm ${
             !listed && value.trim()
-              ? "border-brand/40 bg-[#fffbeb] ring-1 ring-amber-200/50"
-              : "border-[#e2e8f0] bg-white"
+              ? "border-brand/40 bg-amber-50 ring-1 ring-amber-200/50 dark:bg-amber-950/35 dark:ring-amber-800/50"
+              : "border-border bg-card"
           }`}
         >
           <span className="flex items-start gap-3">
@@ -252,7 +252,7 @@ function MenuStandardElegirUno({
                 if (listed) onChange("");
               }}
             />
-            <span className="font-medium text-[#0f172a]">Otro (texto libre)</span>
+            <span className="font-medium text-foreground">Otro (texto libre)</span>
           </span>
           {!listed ? (
             <textarea
@@ -265,7 +265,7 @@ function MenuStandardElegirUno({
           ) : null}
         </label>
       ) : (
-        <p className="text-[11px] leading-snug text-[#6b7280]">
+        <p className="text-[11px] leading-snug text-muted">
           Elegí una opción. Para cambiar la lista, actualizá el menú estándar en Configuración del salón.
         </p>
       )}
@@ -275,7 +275,7 @@ function MenuStandardElegirUno({
 
 /* ─── Modal detalle con edición completa ─── */
 const editInp =
-  "w-full rounded-full border border-[#94a3b8] bg-white px-3 py-2 text-sm text-[#0f172a] placeholder:text-[#64748b] shadow-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30";
+  "w-full rounded-full border border-border bg-input px-3 py-2 text-sm text-foreground placeholder:text-muted shadow-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30";
 
 function EventDetailModal({
   event,
@@ -425,7 +425,7 @@ function EventDetailModal({
 
   const editBtn = (
     <button type="button" onClick={() => setEditing(true)}
-      className="mt-2 flex items-center gap-1.5 rounded-full border border-brand px-4 py-1.5 text-[12px] font-medium text-brand transition-colors hover:bg-[#f0f7f2]">
+      className="mt-2 flex items-center gap-1.5 rounded-full border border-brand px-4 py-1.5 text-[12px] font-medium text-brand transition-colors hover:bg-card-muted">
       <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
       </svg>
@@ -436,7 +436,9 @@ function EventDetailModal({
   const saveBar = (onSave: () => void) => (
     <div className="flex gap-2 pt-1">
       <button type="button" onClick={() => setEditing(false)}
-        className="flex-1 rounded-full border border-[#d1d5db] py-1.5 text-[12px] text-[#374151] hover:bg-white">Cancelar</button>
+        className="flex-1 rounded-full border border-border py-1.5 text-[12px] text-foreground hover:bg-card-muted">
+        Cancelar
+      </button>
       <button type="button" onClick={onSave} disabled={saving}
         className="flex-1 rounded-full bg-[#2d5a41] py-1.5 text-[12px] font-semibold text-white hover:bg-[#24503a] disabled:opacity-60">
         {saving ? "Guardando..." : "Guardar"}
@@ -445,9 +447,12 @@ function EventDetailModal({
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md rounded-3xl bg-white shadow-xl ring-1 ring-black/5 max-h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between rounded-t-3xl px-7 pt-6 pb-5 flex-shrink-0" style={{ backgroundColor: bgColor }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm dark:bg-black/50">
+      <div className="flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-3xl border border-border bg-card shadow-xl ring-1 ring-[var(--ring-soft)]">
+        <div
+          className="admin-modal-tinted-header flex flex-shrink-0 items-center justify-between rounded-t-3xl px-7 pb-5 pt-6"
+          style={{ backgroundColor: bgColor }}
+        >
           <div>
             <span className="mb-1 inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold text-white"
               style={{ backgroundColor: badgeColor }}>
@@ -455,7 +460,7 @@ function EventDetailModal({
             </span>
             <h2 className="text-lg font-bold text-foreground">{event.titulo}</h2>
           </div>
-          <button type="button" onClick={onClose} className="rounded-full p-1.5 text-[#6b7280] hover:bg-white/60">
+          <button type="button" onClick={onClose} className="rounded-full p-1.5 text-muted hover:bg-card/80">
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
@@ -477,11 +482,11 @@ function EventDetailModal({
               {event.mesas       ? <Row label="Mesas"       value={`${event.mesas} mesas`} /> : null}
               {event.menu        && <Row label="Menú"        value={event.menu} />}
               {event.dressCode   && <Row label="Dress code"  value={event.dressCode} />}
-              <hr className="border-[#e5efe8]" />
+              <hr className="border-border" />
               <Row label="Monto total"  value={fmtMoney(event.montoTotal ?? 0)} />
               <Row label="Seña abonada" value={fmtMoney(event.sena ?? 0)} />
               <div className="flex gap-2">
-                <span className="w-28 flex-shrink-0 font-semibold text-[#374151]">Pago faltante</span>
+                <span className="w-28 flex-shrink-0 font-semibold text-foreground">Pago faltante</span>
                 <span className={`font-bold ${faltante > 0 ? "text-[#ef4444]" : "text-[#22c55e]"}`}>
                   {faltante > 0 ? fmtMoney(faltante) : "✓ Pagado"}
                 </span>
@@ -491,24 +496,24 @@ function EventDetailModal({
           )}
 
           {isEvento && editing && (
-            <div className="space-y-3 rounded-2xl border border-[#d1e7d9] bg-[#f5fbf7] p-4">
-              <LeyendaObligatorios className="text-[11px] text-[#64748b]" />
+            <div className="space-y-3 rounded-2xl border border-border bg-card-muted p-4">
+              <LeyendaObligatorios className="text-[11px] text-muted" />
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-[12px] font-semibold text-[#1e293b]">Anfitrión 1</label>
+                  <label className="mb-1 block text-[12px] font-semibold text-foreground">Anfitrión 1</label>
                   <input type="text" value={eAnf1} onChange={(e) => setEAnf1(e.target.value)} className={editInp} />
                 </div>
                 <div>
-                  <label className="mb-1 block text-[12px] font-semibold text-[#1e293b]">Anfitrión 2</label>
+                  <label className="mb-1 block text-[12px] font-semibold text-foreground">Anfitrión 2</label>
                   <input type="text" value={eAnf2} onChange={(e) => setEAnf2(e.target.value)} className={editInp} />
                 </div>
               </div>
               <div>
-                <label className="mb-1 block text-[12px] font-semibold text-[#1e293b]">Tipo de evento</label>
+                <label className="mb-1 block text-[12px] font-semibold text-foreground">Tipo de evento</label>
                 <input type="text" value={eTipo} onChange={(e) => setETipo(e.target.value)} className={editInp} />
               </div>
               <div>
-                <label className="mb-1 block text-[12px] font-semibold text-[#1e293b]">
+                <label className="mb-1 block text-[12px] font-semibold text-foreground">
                   Nombre del salón / lugar
                   <Req />
                 </label>
@@ -521,7 +526,7 @@ function EventDetailModal({
                 />
               </div>
               <div>
-                <label className="mb-1 block text-[12px] font-semibold text-[#1e293b]">
+                <label className="mb-1 block text-[12px] font-semibold text-foreground">
                   Dirección del salón (calle, nº, ciudad)
                   <Req />
                 </label>
@@ -535,29 +540,29 @@ function EventDetailModal({
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-[12px] font-semibold text-[#1e293b]">
+                  <label className="mb-1 block text-[12px] font-semibold text-foreground">
                     Fecha
                     <Req />
                   </label>
                   <DatePicker value={eFecha} onChange={setEFecha} />
                 </div>
                 <div>
-                  <label className="mb-1 block text-[12px] font-semibold text-[#1e293b]">Hora</label>
+                  <label className="mb-1 block text-[12px] font-semibold text-foreground">Hora</label>
                   <ClockPicker value={eHora} onChange={setEHora} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-[12px] font-semibold text-[#1e293b]">Invitados</label>
+                  <label className="mb-1 block text-[12px] font-semibold text-foreground">Invitados</label>
                   <input type="number" min={0} value={eInv} onChange={(e) => setEInv(e.target.value)} className={editInp} />
                 </div>
                 <div>
-                  <label className="mb-1 block text-[12px] font-semibold text-[#1e293b]">Mesas</label>
+                  <label className="mb-1 block text-[12px] font-semibold text-foreground">Mesas</label>
                   <input type="number" min={0} value={eMesas} onChange={(e) => setEMesas(e.target.value)} className={editInp} />
                 </div>
               </div>
               <div>
-                <label className="mb-1 block text-[12px] font-semibold text-[#1e293b]">Menú standard</label>
+                <label className="mb-1 block text-[12px] font-semibold text-foreground">Menú standard</label>
                 <MenuStandardElegirUno
                   opciones={menuStandardOpciones}
                   value={eMenu}
@@ -566,22 +571,22 @@ function EventDetailModal({
                 />
               </div>
               <div>
-                <label className="mb-1 block text-[12px] font-semibold text-[#1e293b]">Dress code</label>
+                <label className="mb-1 block text-[12px] font-semibold text-foreground">Dress code</label>
                 <input type="text" value={eDress} onChange={(e) => setEDress(e.target.value)} className={editInp} />
               </div>
-              <hr className="border-[#d1e7d9]" />
+              <hr className="border-border" />
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-[12px] font-semibold text-[#1e293b]">Monto total</label>
+                  <label className="mb-1 block text-[12px] font-semibold text-foreground">Monto total</label>
                   <input type="text" value={eMonto} onChange={(e) => setEMonto(e.target.value)} className={editInp} />
                 </div>
                 <div>
-                  <label className="mb-1 block text-[12px] font-semibold text-[#1e293b]">Seña abonada</label>
+                  <label className="mb-1 block text-[12px] font-semibold text-foreground">Seña abonada</label>
                   <input type="text" value={eSena} onChange={(e) => setESena(e.target.value)} className={editInp} />
                 </div>
               </div>
               <div className="flex gap-2">
-                <span className="text-[12px] font-semibold text-[#1e293b]">Pago faltante:</span>
+                <span className="text-[12px] font-semibold text-foreground">Pago faltante:</span>
                 <span className={`text-[13px] font-bold ${faltante > 0 ? "text-[#ef4444]" : "text-[#22c55e]"}`}>
                   {faltante > 0 ? fmtMoney(faltante) : "✓ Pagado"}
                 </span>
@@ -600,10 +605,10 @@ function EventDetailModal({
           )}
 
           {!isEvento && editing && (
-            <div className="space-y-3 rounded-2xl border border-[#d1e7d9] bg-[#f5fbf7] p-4">
-              <LeyendaObligatorios className="text-[11px] text-[#64748b]" />
+            <div className="space-y-3 rounded-2xl border border-border bg-card-muted p-4">
+              <LeyendaObligatorios className="text-[11px] text-muted" />
               <div>
-                <label className="mb-1 block text-[12px] font-semibold text-[#1e293b]">
+                <label className="mb-1 block text-[12px] font-semibold text-foreground">
                   Título
                   <Req />
                 </label>
@@ -611,33 +616,33 @@ function EventDetailModal({
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-[12px] font-semibold text-[#1e293b]">
+                  <label className="mb-1 block text-[12px] font-semibold text-foreground">
                     Fecha
                     <Req />
                   </label>
                   <DatePicker value={rFecha} onChange={setRFecha} />
                 </div>
                 <div>
-                  <label className="mb-1 block text-[12px] font-semibold text-[#1e293b]">Hora</label>
+                  <label className="mb-1 block text-[12px] font-semibold text-foreground">Hora</label>
                   <ClockPicker value={rHora} onChange={setRHora} />
                 </div>
               </div>
               <div>
-                <label className="mb-1 block text-[12px] font-semibold text-[#1e293b]">Participantes</label>
+                <label className="mb-1 block text-[12px] font-semibold text-foreground">Participantes</label>
                 <input type="text" value={rParticipantes} onChange={(e) => setRParticipantes(e.target.value)} className={editInp} />
               </div>
               <div>
-                <label className="mb-1 block text-[12px] font-semibold text-[#1e293b]">Notas</label>
+                <label className="mb-1 block text-[12px] font-semibold text-foreground">Notas</label>
                 <textarea
                   rows={2}
                   value={rNotas}
                   onChange={(e) => setRNotas(e.target.value)}
-                  className="w-full rounded-2xl border border-[#94a3b8] bg-white px-3 py-2 text-sm text-[#0f172a] shadow-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
+                  className="w-full rounded-2xl border border-border bg-input px-3 py-2 text-sm text-foreground shadow-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
                 />
               </div>
               {saveBar(handleSaveReunion)}
               <button type="button" onClick={handleDeleteReunion} disabled={saving}
-                className="w-full rounded-full border border-[#ef4444] py-1.5 text-[12px] font-medium text-[#ef4444] hover:bg-[#fee2e2] disabled:opacity-60">
+                className="w-full rounded-full border border-red-400 py-1.5 text-[12px] font-medium text-red-600 hover:bg-red-950/30 dark:border-red-700 dark:text-red-400 disabled:opacity-60">
                 Eliminar reunión
               </button>
             </div>
@@ -650,13 +655,13 @@ function EventDetailModal({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 px-7 py-4 flex-shrink-0 border-t border-[#e5efe8]">
+        <div className="flex flex-shrink-0 flex-wrap items-center justify-between gap-3 border-t border-border bg-card-muted px-7 py-4">
           {isEvento ? (
             <button
               type="button"
               onClick={() => void handleDeleteEvento()}
               disabled={deleting || saving}
-              className="rounded-full border border-[#fecaca] bg-white px-4 py-2 text-sm font-medium text-[#b91c1c] hover:bg-[#fef2f2] disabled:opacity-60"
+              className="rounded-full border border-red-300 bg-card px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-950/30 dark:border-red-900/60 dark:text-red-300 disabled:opacity-60"
             >
               {deleting ? "Eliminando…" : "Eliminar evento"}
             </button>
@@ -1044,18 +1049,27 @@ export default function AdminDashboard() {
 
       {/* Modal crear evento: scroll interno para que todo el formulario sea accesible */}
       {showEventoModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-3 sm:p-4">
-          <div className="flex max-h-[min(92dvh,calc(100dvh-1.5rem))] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-xl ring-1 ring-black/10">
-            <div className="flex shrink-0 items-center justify-between border-b border-[#e5efe8] bg-[#f8fafc] px-6 py-4 sm:px-7">
-              <h2 className="text-lg font-bold text-[#0f172a]">Nuevo evento</h2>
-              <button type="button" onClick={() => { setShowEventoModal(false); setShowMenusDropdown(false); resetEvento(); }} className="rounded-full p-1.5 text-[#475569] hover:bg-[#e2e8f0]" aria-label="Cerrar">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3 backdrop-blur-sm sm:p-4 dark:bg-black/55">
+          <div className="flex max-h-[min(92dvh,calc(100dvh-1.5rem))] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-border bg-card shadow-xl ring-1 ring-[var(--ring-soft)]">
+            <div className="flex shrink-0 items-center justify-between border-b border-border bg-card-muted px-6 py-4 sm:px-7">
+              <h2 className="text-lg font-bold text-foreground">Nuevo evento</h2>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowEventoModal(false);
+                  setShowMenusDropdown(false);
+                  resetEvento();
+                }}
+                className="rounded-full p-1.5 text-muted hover:bg-card"
+                aria-label="Cerrar"
+              >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-5 sm:px-7">
-              <LeyendaObligatorios className="mb-3 text-[11px] text-[#64748b]" />
-              <p className="mb-4 rounded-xl border border-[#c5dece] bg-[#f0f7f2] px-3 py-2.5 text-[11px] leading-relaxed text-[#374151]">
+              <LeyendaObligatorios className="mb-3 text-[11px] text-muted" />
+              <p className="mb-4 rounded-xl border border-border bg-card-muted px-3 py-2.5 text-[11px] leading-relaxed text-foreground">
                 Los menús se precargan desde{" "}
                 <Link href="/admin/configuracion" className="font-semibold text-brand underline underline-offset-2">
                   Configuración → Carta del salón
@@ -1083,7 +1097,7 @@ export default function AdminDashboard() {
                           <option key={a.id} value={a.id}>{a.nombre} {a.apellido}</option>
                         ))}
                       </select>
-                      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#6b7280] text-xs">⌄</span>
+                      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted">⌄</span>
                     </div>
                   </Field>
                 </div>
@@ -1104,7 +1118,7 @@ export default function AdminDashboard() {
                       <option>Corporativo</option>
                       <option>Otro</option>
                     </select>
-                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#6b7280] text-xs">⌄</span>
+                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted">⌄</span>
                   </div>
                   {evento.tipo === "Otro" && (
                     <input type="text" placeholder="Especificá el tipo de evento" value={evento.tipoOtro}
@@ -1144,17 +1158,20 @@ export default function AdminDashboard() {
                 <Field label="Menús especiales">
                   <div className="relative">
                     <button type="button" onClick={() => setShowMenusDropdown((v) => !v)} className={`${inp} flex items-center justify-between text-left`}>
-                      <span className={evento.menusEspeciales.length === 0 ? "text-[#9ca3af]" : "text-foreground"}>
+                      <span className={evento.menusEspeciales.length === 0 ? "text-muted" : "text-foreground"}>
                         {evento.menusEspeciales.length === 0 ? "Seleccionar..." : evento.menusEspeciales.join(", ")}
                       </span>
-                      <span className="text-[#6b7280] text-xs ml-2">⌄</span>
+                      <span className="ml-2 text-xs text-muted">⌄</span>
                     </button>
                     {showMenusDropdown && (
-                      <div className="absolute z-20 mt-1 w-full rounded-xl border border-[#d1e7d9] bg-white shadow-lg">
+                      <div className="absolute z-20 mt-1 w-full rounded-xl border border-border bg-card shadow-lg ring-1 ring-[var(--ring-soft)]">
                         {MENUS_ESPECIALES_CATALOGO.map((op) => (
-                          <label key={op} className="flex cursor-pointer items-center gap-2.5 px-4 py-2.5 hover:bg-[#f0f7f2] first:rounded-t-xl last:rounded-b-xl">
+                          <label
+                            key={op}
+                            className="flex cursor-pointer items-center gap-2.5 px-4 py-2.5 first:rounded-t-xl last:rounded-b-xl hover:bg-card-muted"
+                          >
                             <input type="checkbox" checked={evento.menusEspeciales.includes(op)} onChange={() => toggleMenu(op)} className="accent-[#2d5a41] h-4 w-4 rounded" />
-                            <span className="text-sm text-[#374151]">{op}</span>
+                            <span className="text-sm text-foreground">{op}</span>
                           </label>
                         ))}
                       </div>
@@ -1165,7 +1182,7 @@ export default function AdminDashboard() {
                       onChange={(e) => setEvento((p) => ({ ...p, menusOtro: e.target.value }))}
                       className={`${inp} mt-1.5`} />
                   )}
-                  <p className="mt-1.5 text-[11px] leading-snug text-[#6b7280]">
+                  <p className="mt-1.5 text-[11px] leading-snug text-muted">
                     Solo las opciones marcadas aparecerán para el anfitrión y los invitados al elegir menú.
                   </p>
                 </Field>
@@ -1199,7 +1216,13 @@ export default function AdminDashboard() {
                 </Field>
                 <div className="col-span-2">
                   <Field label="Pago faltante">
-                    <input type="text" readOnly value={pagoFaltante} placeholder="Se calcula automáticamente" className={`${inp} bg-[#f5fbf7] text-brand font-semibold cursor-default`} />
+                    <input
+                      type="text"
+                      readOnly
+                      value={pagoFaltante}
+                      placeholder="Se calcula automáticamente"
+                      className={`${inp} cursor-default bg-card-muted font-semibold text-brand`}
+                    />
                   </Field>
                 </div>
 
@@ -1224,12 +1247,12 @@ export default function AdminDashboard() {
             </div>
 
             {eventoFormError && (
-              <p className="shrink-0 bg-red-50 px-6 py-2 text-center text-[13px] font-medium text-red-700 ring-1 ring-red-100 sm:px-7">
+              <p className="shrink-0 bg-red-50 px-6 py-2 text-center text-[13px] font-medium text-red-700 ring-1 ring-red-100 dark:bg-red-950/50 dark:text-red-200 dark:ring-red-900/40 sm:px-7">
                 {eventoFormError}
               </p>
             )}
 
-            <div className="flex shrink-0 justify-center border-t border-[#e5efe8] bg-[#f8fafc] px-6 py-4 sm:px-7">
+            <div className="flex shrink-0 justify-center border-t border-border bg-card-muted px-6 py-4 sm:px-7">
               <button
                 type="button"
                 onClick={handleCrearEvento}
@@ -1256,14 +1279,14 @@ export default function AdminDashboard() {
 
       {/* Modal agendar reunión */}
       {showReunionModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-3xl bg-white p-7 shadow-xl ring-1 ring-black/5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm dark:bg-black/50">
+          <div className="w-full max-w-sm rounded-3xl border border-border bg-card p-7 shadow-xl ring-1 ring-[var(--ring-soft)]">
             <h2 className="mb-3 text-lg font-semibold text-brand">Agendar reunión</h2>
-            <LeyendaObligatorios className="mb-4 text-[11px] text-[#6b7280]" />
+            <LeyendaObligatorios className="mb-4 text-[11px] text-muted" />
             <div className="space-y-4">
               {(["titulo", "participantes"] as const).map((key) => (
                 <div key={key}>
-                  <label className="mb-1 block text-[12px] font-medium text-[#4b5563]">
+                  <label className="mb-1 block text-[12px] font-medium text-foreground">
                     {key === "titulo" ? (
                       <>
                         Título
@@ -1278,27 +1301,27 @@ export default function AdminDashboard() {
                     placeholder={key === "titulo" ? "Ej: Reunión con cliente" : "Nombres separados por coma"}
                     value={reunion[key]}
                     onChange={(e) => setReunion((p) => ({ ...p, [key]: e.target.value }))}
-                    className="w-full rounded-xl border border-[#d1d5db] px-3 py-2 text-sm text-gray-900 outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+                    className="w-full rounded-xl border border-border bg-input px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted focus:border-brand focus:ring-1 focus:ring-brand"
                   />
                 </div>
               ))}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-[12px] font-medium text-[#4b5563]">
+                  <label className="mb-1 block text-[12px] font-medium text-foreground">
                     Fecha
                     <Req />
                   </label>
                   <DatePicker value={reunion.fecha} onChange={(v) => setReunion((p) => ({ ...p, fecha: v }))} />
                 </div>
                 <div>
-                  <label className="mb-1 block text-[12px] font-medium text-[#4b5563]">Hora</label>
+                  <label className="mb-1 block text-[12px] font-medium text-foreground">Hora</label>
                   <ClockPicker value={reunion.hora} onChange={(v) => setReunion((p) => ({ ...p, hora: v }))} />
                 </div>
               </div>
             </div>
             <div className="mt-6 flex gap-3">
               <button type="button" onClick={() => setShowReunionModal(false)}
-                className="flex-1 rounded-xl border border-[#d1d5db] py-2 text-sm text-[#374151] hover:bg-[#f3f4f6]">
+                className="flex-1 rounded-xl border border-border py-2 text-sm text-foreground hover:bg-card-muted">
                 Cancelar
               </button>
               <button type="button" onClick={handleCrearReunion} disabled={savingReunion}

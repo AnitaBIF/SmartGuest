@@ -16,10 +16,11 @@ const TIPO_LABEL: Record<TipoDB, string> = {
 };
 
 const TIPO_COLORS: Record<TipoDB, string> = {
-  administrador: "bg-[#dbeafe] text-[#1e40af]",
-  anfitrion:     "bg-[#dcfce7] text-[#166534]",
-  jefe_cocina:   "bg-[#fef9c3] text-[#854d0e]",
-  seguridad:     "bg-[#f3e8ff] text-[#6b21a8]",
+  administrador:
+    "bg-blue-100 text-blue-900 dark:bg-blue-950/70 dark:text-blue-100",
+  anfitrion: "bg-emerald-100 text-emerald-900 dark:bg-emerald-950/70 dark:text-emerald-100",
+  jefe_cocina: "bg-amber-100 text-amber-900 dark:bg-amber-950/70 dark:text-amber-100",
+  seguridad: "bg-violet-100 text-violet-900 dark:bg-violet-950/70 dark:text-violet-100",
 };
 
 type Usuario = {
@@ -51,7 +52,8 @@ function IconTrash() {
 }
 
 /* ─── Input estilizado ─── */
-const inp = "w-full rounded-xl border border-[#d1d5db] px-3 py-2 text-sm text-gray-900 outline-none focus:border-[#2d5a41] focus:ring-1 focus:ring-[#2d5a41]";
+const inp =
+  "w-full rounded-xl border border-border bg-input px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted focus:border-brand focus:ring-1 focus:ring-brand";
 
 type FormState = {
   nombre: string; apellido: string; dni: string;
@@ -176,8 +178,8 @@ export default function UsuariosPage() {
           <section>
             <h2 className="mb-4 text-lg font-semibold text-foreground">Usuarios</h2>
 
-            <div className="overflow-hidden rounded-2xl ring-1 ring-[#e5efe8]">
-              <div className="grid grid-cols-[2fr_1.2fr_2fr_1.4fr_auto] gap-4 bg-white px-5 py-3 text-[12px] font-semibold text-[#6b7280]">
+            <div className="overflow-hidden rounded-2xl border border-border bg-card ring-1 ring-[var(--ring-soft)]">
+              <div className="grid grid-cols-[2fr_1.2fr_2fr_1.4fr_auto] gap-4 bg-card-muted px-5 py-3 text-[12px] font-semibold text-muted">
                 <span>Nombre y Apellido</span>
                 <span>DNI</span>
                 <span>Email</span>
@@ -186,7 +188,7 @@ export default function UsuariosPage() {
               </div>
 
               {loading && (
-                <div className="bg-white px-5 py-10 text-center text-sm text-[#9ca3af]">
+                <div className="bg-card px-5 py-10 text-center text-sm text-muted">
                   Cargando usuarios...
                 </div>
               )}
@@ -194,11 +196,11 @@ export default function UsuariosPage() {
               {!loading && usuarios.map((u, i) => (
                 <div
                   key={u.id}
-                  className={`grid grid-cols-[2fr_1.2fr_2fr_1.4fr_auto] items-center gap-4 px-5 py-3 text-[13px] ${i % 2 === 0 ? "bg-white" : "bg-[#f0f7f2]"}`}
+                  className={`grid grid-cols-[2fr_1.2fr_2fr_1.4fr_auto] items-center gap-4 px-5 py-3 text-[13px] ${i % 2 === 0 ? "bg-card" : "bg-card-muted"}`}
                 >
-                  <span className="font-medium">{u.nombre} {u.apellido}</span>
-                  <span className="text-[#4b5563]">{u.dni || "—"}</span>
-                  <span className="truncate text-[#4b5563]">{u.email}</span>
+                  <span className="font-medium text-foreground">{u.nombre} {u.apellido}</span>
+                  <span className="text-muted">{u.dni || "—"}</span>
+                  <span className="truncate text-muted">{u.email}</span>
                   <span className={`inline-flex w-fit items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${TIPO_COLORS[u.tipo]}`}>
                     {TIPO_LABEL[u.tipo]}
                   </span>
@@ -206,7 +208,7 @@ export default function UsuariosPage() {
                     <button
                       type="button"
                       onClick={() => openEdit(u)}
-                      className="rounded-full p-1.5 text-[#6b7280] hover:bg-[#e0ede6] hover:text-[#2d5a41] transition-colors"
+                      className="rounded-full p-1.5 text-muted hover:bg-card-muted hover:text-brand transition-colors"
                       title="Editar"
                     >
                       <IconEdit />
@@ -214,7 +216,7 @@ export default function UsuariosPage() {
                     <button
                       type="button"
                       onClick={() => setDeleteConfirm(u.id)}
-                      className="rounded-full p-1.5 text-[#6b7280] hover:bg-[#fee2e2] hover:text-[#ef4444] transition-colors"
+                      className="rounded-full p-1.5 text-muted hover:bg-red-950/40 hover:text-red-400 transition-colors"
                       title="Eliminar"
                     >
                       <IconTrash />
@@ -224,7 +226,7 @@ export default function UsuariosPage() {
               ))}
 
               {!loading && usuarios.length === 0 && (
-                <div className="bg-white px-5 py-10 text-center text-sm text-[#9ca3af]">
+                <div className="bg-card px-5 py-10 text-center text-sm text-muted">
                   No hay usuarios registrados.
                 </div>
               )}
@@ -242,19 +244,19 @@ export default function UsuariosPage() {
 
       {/* ─── Modal crear / editar ─── */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-3xl bg-white shadow-xl ring-1 ring-black/5">
-            <div className="rounded-t-3xl bg-[#f0f7f2] px-7 py-5">
-              <h2 className="text-lg font-bold text-[#2d5a41]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4 dark:bg-black/50">
+          <div className="w-full max-w-md rounded-3xl border border-border bg-card shadow-xl ring-1 ring-[var(--ring-soft)]">
+            <div className="rounded-t-3xl border-b border-border bg-card-muted px-7 py-5">
+              <h2 className="text-lg font-bold text-brand">
                 {editTarget ? "Editar usuario" : "Crear nuevo usuario"}
               </h2>
             </div>
 
             <div className="space-y-4 px-7 py-6">
-              <LeyendaObligatorios className="text-[11px] text-[#6b7280]" />
+              <LeyendaObligatorios className="text-[11px] text-muted" />
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="mb-1 block text-[11px] font-medium text-[#6b7280]">
+                  <label className="mb-1 block text-[11px] font-medium text-muted">
                     Nombre
                     <Req />
                   </label>
@@ -262,7 +264,7 @@ export default function UsuariosPage() {
                     onChange={(e) => f("nombre", e.target.value)} />
                 </div>
                 <div>
-                  <label className="mb-1 block text-[11px] font-medium text-[#6b7280]">
+                  <label className="mb-1 block text-[11px] font-medium text-muted">
                     Apellido
                     <Req />
                   </label>
@@ -272,13 +274,13 @@ export default function UsuariosPage() {
               </div>
 
               <div>
-                <label className="mb-1 block text-[11px] font-medium text-[#6b7280]">DNI</label>
+                <label className="mb-1 block text-[11px] font-medium text-muted">DNI</label>
                 <input className={inp} placeholder="Ej: 30456789" value={form.dni}
                   onChange={(e) => f("dni", e.target.value)} />
               </div>
 
               <div>
-                <label className="mb-1 block text-[11px] font-medium text-[#6b7280]">
+                <label className="mb-1 block text-[11px] font-medium text-muted">
                   Email
                   <Req />
                 </label>
@@ -287,7 +289,7 @@ export default function UsuariosPage() {
               </div>
 
               <div>
-                <label className="mb-1 block text-[11px] font-medium text-[#6b7280]">
+                <label className="mb-1 block text-[11px] font-medium text-muted">
                   {editTarget ? (
                     "Nueva contraseña (dejar vacío para no cambiar)"
                   ) : (
@@ -308,7 +310,7 @@ export default function UsuariosPage() {
                   <button
                     type="button"
                     onClick={() => setShowPass((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#2d5a41] text-xs"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted hover:text-brand"
                   >
                     {showPass ? "Ocultar" : "Ver"}
                   </button>
@@ -316,7 +318,7 @@ export default function UsuariosPage() {
               </div>
 
               <div>
-                <label className="mb-1 block text-[11px] font-medium text-[#6b7280]">
+                <label className="mb-1 block text-[11px] font-medium text-muted">
                   Tipo de usuario
                   <Req />
                 </label>
@@ -328,13 +330,13 @@ export default function UsuariosPage() {
                   >
                     {TIPOS_DB.map((t) => <option key={t} value={t}>{TIPO_LABEL[t]}</option>)}
                   </select>
-                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#6b7280] text-xs">⌄</span>
+                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted">⌄</span>
                 </div>
               </div>
 
               {form.tipo === "anfitrion" && (
                 <div>
-                  <label className="mb-1 block text-[11px] font-medium text-[#6b7280]">Máx. invitados permitidos</label>
+                  <label className="mb-1 block text-[11px] font-medium text-muted">Máx. invitados permitidos</label>
                   <input
                     className={inp}
                     type="number"
@@ -347,11 +349,11 @@ export default function UsuariosPage() {
               )}
             </div>
 
-            <div className="flex justify-end gap-3 border-t border-[#e5efe8] px-7 py-4">
+            <div className="flex justify-end gap-3 border-t border-border bg-card-muted px-7 py-4">
               <button
                 type="button"
                 onClick={closeModal}
-                className="rounded-full border border-[#d1d5db] px-6 py-2 text-sm text-[#374151] hover:bg-[#f3f4f6]"
+                className="rounded-full border border-border px-6 py-2 text-sm text-foreground hover:bg-card"
               >
                 Cancelar
               </button>
@@ -370,17 +372,17 @@ export default function UsuariosPage() {
 
       {/* ─── Modal confirmar eliminación ─── */}
       {deleteConfirm !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
-          <div className="w-full max-w-sm rounded-3xl bg-white p-7 shadow-xl ring-1 ring-black/5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4 dark:bg-black/50">
+          <div className="w-full max-w-sm rounded-3xl border border-border bg-card p-7 shadow-xl ring-1 ring-[var(--ring-soft)]">
             <h2 className="mb-2 text-base font-bold text-foreground">¿Eliminar usuario?</h2>
-            <p className="mb-6 text-sm text-[#6b7280]">
+            <p className="mb-6 text-sm text-muted">
               Esta acción eliminará al usuario de la plataforma. No se puede deshacer.
             </p>
             <div className="flex gap-3">
               <button
                 type="button"
                 onClick={() => setDeleteConfirm(null)}
-                className="flex-1 rounded-xl border border-[#d1d5db] py-2 text-sm text-[#374151] hover:bg-[#f3f4f6]"
+                className="flex-1 rounded-xl border border-border py-2 text-sm text-foreground hover:bg-card-muted"
               >
                 Cancelar
               </button>

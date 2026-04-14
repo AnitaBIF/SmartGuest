@@ -141,13 +141,13 @@ export default function AdminIngresosPage() {
 
         <main className="flex-1 pb-8">
           <h1 className="mb-2 text-right text-2xl font-bold text-brand">Ingresos por QR</h1>
-          <p className="mb-6 text-right text-[12px] text-[#6b7280]">
+          <p className="mb-6 text-right text-[12px] text-muted">
             Quién pasó por puerta (validación de seguridad) y cuántas personas representa cada invitación confirmada.
           </p>
 
           <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div className="max-w-md flex-1">
-              <label htmlFor="ev-ing" className="mb-1 block text-[12px] font-semibold text-[#374151]">
+              <label htmlFor="ev-ing" className="mb-1 block text-[12px] font-semibold text-foreground">
                 Evento
               </label>
               <select
@@ -155,7 +155,7 @@ export default function AdminIngresosPage() {
                 value={eventoId}
                 onChange={(e) => setEventoId(e.target.value)}
                 disabled={loadingLista}
-                className="w-full rounded-xl border border-[#94a3b8] bg-white px-3 py-2.5 text-sm text-[#0f172a] shadow-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
+                className="w-full rounded-xl border border-border bg-input px-3 py-2.5 text-sm text-foreground shadow-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
               >
                 <option value="">{loadingLista ? "Cargando…" : "Elegí un evento"}</option>
                 {eventos.map((e) => (
@@ -169,7 +169,7 @@ export default function AdminIngresosPage() {
               <button
                 type="button"
                 onClick={() => downloadCsv(reporte)}
-                className="rounded-full border border-brand bg-white px-4 py-2 text-[13px] font-semibold text-brand hover:bg-[#f0f7f2]"
+                className="rounded-full border border-brand bg-card px-4 py-2 text-[13px] font-semibold text-brand hover:bg-card-muted"
               >
                 Descargar CSV
               </button>
@@ -183,48 +183,50 @@ export default function AdminIngresosPage() {
           )}
 
           {loadingReporte && (
-            <p className="text-[13px] text-[#6b7280]">Cargando datos de ingreso…</p>
+            <p className="text-[13px] text-muted">Cargando datos de ingreso…</p>
           )}
 
           {!loadingReporte && reporte && (
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-                <div className="rounded-2xl bg-white/90 px-4 py-3 shadow-sm ring-1 ring-black/5">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[#6b7280]">Invitaciones</p>
+                <div className="rounded-2xl border border-border bg-card px-4 py-3 shadow-sm ring-1 ring-[var(--ring-soft)]">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">Invitaciones</p>
                   <p className="mt-1 text-xl font-bold text-foreground">{reporte.resumen.invitacionesTotales}</p>
                 </div>
-                <div className="rounded-2xl bg-white/90 px-4 py-3 shadow-sm ring-1 ring-black/5">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[#6b7280]">Confirmaron</p>
-                  <p className="mt-1 text-xl font-bold text-[#2d5a41]">{reporte.resumen.invitacionesConfirmadas}</p>
-                  <p className="text-[11px] text-[#6b7280]">{reporte.resumen.personasConfirmadasEsperadas} pers.</p>
+                <div className="rounded-2xl border border-border bg-card px-4 py-3 shadow-sm ring-1 ring-[var(--ring-soft)]">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">Confirmaron</p>
+                  <p className="mt-1 text-xl font-bold text-brand">{reporte.resumen.invitacionesConfirmadas}</p>
+                  <p className="text-[11px] text-muted">{reporte.resumen.personasConfirmadasEsperadas} pers.</p>
                 </div>
-                <div className="rounded-2xl bg-[linear-gradient(135deg,#2d5a41,#3d7a56)] px-4 py-3 shadow-sm">
+                <div className="rounded-2xl bg-[linear-gradient(135deg,#2d5a41,#3d7a56)] px-4 py-3 shadow-sm dark:bg-[linear-gradient(135deg,#1e3d2d,#2a5240)]">
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-[#a8d5b5]">Ingresaron (inv.)</p>
                   <p className="mt-1 text-xl font-bold text-white">{reporte.resumen.invitacionesIngresadas}</p>
                 </div>
-                <div className="rounded-2xl bg-[linear-gradient(135deg,#2d5a41,#3d7a56)] px-4 py-3 shadow-sm">
+                <div className="rounded-2xl bg-[linear-gradient(135deg,#2d5a41,#3d7a56)] px-4 py-3 shadow-sm dark:bg-[linear-gradient(135deg,#1e3d2d,#2a5240)]">
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-[#a8d5b5]">Personas ingreso</p>
                   <p className="mt-1 text-xl font-bold text-white">{reporte.resumen.personasIngresadas}</p>
                 </div>
-                <div className="col-span-2 rounded-2xl bg-amber-50 px-4 py-3 shadow-sm ring-1 ring-amber-200/60 sm:col-span-1 lg:col-span-1">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-900/80">Pendiente ingreso</p>
-                  <p className="mt-1 text-xl font-bold text-amber-950">
+                <div className="col-span-2 rounded-2xl border border-amber-200/60 bg-amber-50 px-4 py-3 shadow-sm ring-1 ring-amber-200/40 dark:border-amber-800/50 dark:bg-amber-950/35 dark:ring-amber-900/40 sm:col-span-1 lg:col-span-1">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-900/80 dark:text-amber-200/90">
+                    Pendiente ingreso
+                  </p>
+                  <p className="mt-1 text-xl font-bold text-amber-950 dark:text-amber-100">
                     {Math.max(0, reporte.resumen.personasConfirmadasEsperadas - reporte.resumen.personasIngresadas)}{" "}
-                    <span className="text-[12px] font-normal text-amber-900/70">pers. confirmadas sin QR</span>
+                    <span className="text-[12px] font-normal text-amber-900/70 dark:text-amber-200/80">
+                      pers. confirmadas sin QR
+                    </span>
                   </p>
                 </div>
               </div>
 
-              <div className="overflow-hidden rounded-2xl bg-white/90 shadow-sm ring-1 ring-black/5">
-                <div className="border-b border-[#e8efe9] bg-[#f6faf7] px-4 py-2.5">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6b7280]">
-                    Detalle · {eventoLabel}
-                  </p>
+              <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm ring-1 ring-[var(--ring-soft)]">
+                <div className="border-b border-border-subtle bg-card-muted px-4 py-2.5">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">Detalle · {eventoLabel}</p>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[720px] text-left text-[13px]">
                     <thead>
-                      <tr className="border-b border-[#e8efe9] text-[11px] font-semibold uppercase tracking-wide text-[#6b7280]">
+                      <tr className="border-b border-border-subtle text-[11px] font-semibold uppercase tracking-wide text-muted">
                         <th className="px-4 py-3">Nombre</th>
                         <th className="px-4 py-3">DNI</th>
                         <th className="px-4 py-3">Grupo</th>
@@ -234,16 +236,16 @@ export default function AdminIngresosPage() {
                         <th className="px-4 py-3 text-center">Mesa</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#f0f4f1]">
+                    <tbody className="divide-y divide-border-subtle">
                       {reporte.filas.map((f) => (
-                        <tr key={f.id} className={f.ingresado ? "bg-[#f7fdf9]" : ""}>
+                        <tr key={f.id} className={f.ingresado ? "bg-brand/5 dark:bg-brand/10" : ""}>
                           <td className="px-4 py-2.5 font-medium text-foreground">{f.nombre}</td>
-                          <td className="px-4 py-2.5 text-[#4b5563]">{f.dni}</td>
-                          <td className="max-w-[140px] truncate px-4 py-2.5 text-[#6b7280]" title={f.grupo}>
+                          <td className="px-4 py-2.5 text-muted">{f.dni}</td>
+                          <td className="max-w-[140px] truncate px-4 py-2.5 text-muted" title={f.grupo}>
                             {f.grupo}
                           </td>
-                          <td className="px-4 py-2.5 text-center tabular-nums">{f.personasGrupo}</td>
-                          <td className="px-4 py-2.5 capitalize text-[#6b7280]">{f.asistencia}</td>
+                          <td className="px-4 py-2.5 text-center tabular-nums text-foreground">{f.personasGrupo}</td>
+                          <td className="px-4 py-2.5 capitalize text-muted">{f.asistencia}</td>
                           <td className="px-4 py-2.5">
                             {f.ingresado ? (
                               <span className="text-[#166534]">{fmtFechaHora(f.ingresoAt)}</span>
@@ -264,7 +266,7 @@ export default function AdminIngresosPage() {
           )}
 
           {!eventoId && !loadingLista && (
-            <p className="text-center text-[13px] text-[#9ca3af]">Seleccioná un evento para ver el reporte.</p>
+            <p className="text-center text-[13px] text-muted">Seleccioná un evento para ver el reporte.</p>
           )}
         </main>
       </div>

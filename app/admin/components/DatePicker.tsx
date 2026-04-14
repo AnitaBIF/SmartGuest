@@ -121,19 +121,19 @@ export default function DatePicker({ value, onChange, min, className = "" }: Pro
     <div
       ref={dropRef}
       style={{ position: "fixed", top: dropPos.top, left: dropPos.left, minWidth: Math.max(dropPos.width, 260), zIndex: 9999 }}
-      className="rounded-2xl bg-white p-4 shadow-xl ring-1 ring-black/10 select-none"
+      className="select-none rounded-2xl border border-border bg-card p-4 shadow-xl ring-1 ring-[var(--ring-soft)]"
     >
       {/* Header */}
       <div className="mb-3 flex items-center justify-between">
         <button type="button" onClick={prevMonth}
-          className="flex h-7 w-7 items-center justify-center rounded-full text-[#6b7280] hover:bg-[#f0f7f2] transition-colors">
+          className="flex h-7 w-7 items-center justify-center rounded-full text-muted transition-colors hover:bg-card-muted">
           <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
         <span className="text-sm font-semibold text-foreground">
           {MONTHS_ES[viewMonth]} {viewYear}
         </span>
         <button type="button" onClick={nextMonth}
-          className="flex h-7 w-7 items-center justify-center rounded-full text-[#6b7280] hover:bg-[#f0f7f2] transition-colors">
+          className="flex h-7 w-7 items-center justify-center rounded-full text-muted transition-colors hover:bg-card-muted">
           <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
       </div>
@@ -141,7 +141,9 @@ export default function DatePicker({ value, onChange, min, className = "" }: Pro
       {/* Day labels */}
       <div className="grid grid-cols-7 mb-1">
         {DAYS_ES.map((d) => (
-          <div key={d} className="py-1 text-center text-[10px] font-semibold text-[#9ca3af]">{d}</div>
+          <div key={d} className="py-1 text-center text-[10px] font-semibold text-muted">
+            {d}
+          </div>
         ))}
       </div>
 
@@ -160,8 +162,8 @@ export default function DatePicker({ value, onChange, min, className = "" }: Pro
               onClick={() => selectDay(d)}
               className={`
                 relative mx-auto flex h-8 w-8 items-center justify-center rounded-full text-[13px] transition-colors
-                ${dis  ? "text-[#d1d5db] cursor-not-allowed" : ""}
-                ${!dis && !sel ? "text-[#374151] hover:bg-[#e0ede6]" : ""}
+                ${dis ? "cursor-not-allowed text-muted/40" : ""}
+                ${!dis && !sel ? "text-foreground hover:bg-card-muted" : ""}
                 ${sel  ? "bg-[#2d5a41] text-white font-semibold" : ""}
               `}
             >
@@ -182,12 +184,10 @@ export default function DatePicker({ value, onChange, min, className = "" }: Pro
         ref={btnRef}
         type="button"
         onClick={handleOpen}
-        className="flex h-[38px] w-full items-center justify-between rounded-xl border border-[#94a3b8] bg-white px-3 py-2 text-sm whitespace-nowrap shadow-sm outline-none focus:border-[#2d5a41] focus:ring-2 focus:ring-[#2d5a41]/30"
+        className="flex h-[38px] w-full items-center justify-between rounded-xl border border-border bg-input px-3 py-2 text-sm whitespace-nowrap text-foreground shadow-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
       >
-        <span className={value ? "font-medium text-[#0f172a]" : "text-[#64748b]"}>
-          {formatDisplay(value) ?? "dd/mm/aaaa"}
-        </span>
-        <svg className="h-4 w-4 flex-shrink-0 text-[#6b7280]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <span className={value ? "font-medium" : "text-muted"}>{formatDisplay(value) ?? "dd/mm/aaaa"}</span>
+        <svg className="h-4 w-4 shrink-0 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
         </svg>
       </button>
