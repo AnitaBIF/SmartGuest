@@ -147,14 +147,48 @@ export default function InvitacionPage({ params }: { params: Promise<{ id: strin
     });
   }, [grupoPersonas]);
 
-  const handleContinuar = () => {
+  const handleContinuar = async () => {
     if (asiste === null) return;
-    if (asiste) setPaso("formulario");
-    else handleRegistrarNoAsiste();
+    if (asiste) {
+      setPaso("formulario");
+      return;
+    }
+    await handleRegistrarNoAsiste();
   };
 
   const handleRegistrarNoAsiste = async () => {
-    setPaso("confirmado");
+    const invId = evento?.invitadoId;
+    const evId = evento?.id ?? id;
+    if (!invId) {
+      setError(
+        "Este enlace no permite registrar que no asistís de forma automática. Pedile al anfitrión tu invitación personal o contactalo por otro medio."
+      );
+      return;
+    }
+    setError("");
+    setSaving(true);
+    try {
+      const res = await fetch("/api/invitado/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          evento_id: evId,
+          invitado_id: invId,
+          asiste: false,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(typeof data.error === "string" ? data.error : "No se pudo registrar tu respuesta. Intentá de nuevo.");
+        return;
+      }
+      setAsiste(false);
+      setPaso("confirmado");
+    } catch {
+      setError("Error de conexión. Intentá de nuevo.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleConfirmar = async () => {
@@ -310,7 +344,10 @@ export default function InvitacionPage({ params }: { params: Promise<{ id: strin
               <label key={String(val)} className="flex cursor-pointer items-center gap-2 text-[14px] font-semibold text-[#2d5a41]">
                 <span>{val ? "SÍ" : "NO"}</span>
                 <span
-                  onClick={() => setAsiste(val)}
+                  onClick={() => {
+                    setError("");
+                    setAsiste(val);
+                  }}
                   className="flex h-6 w-6 items-center justify-center rounded border-2 transition-colors"
                   style={{
                     borderColor: "#2d5a41",
@@ -327,14 +364,20 @@ export default function InvitacionPage({ params }: { params: Promise<{ id: strin
             ))}
           </div>
 
+          {error ? (
+            <div className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-center text-[13px] text-red-600 ring-1 ring-red-200">
+              {error}
+            </div>
+          ) : null}
+
           <button
             type="button"
-            onClick={handleContinuar}
-            disabled={asiste === null}
+            onClick={() => void handleContinuar()}
+            disabled={asiste === null || saving}
             className="w-full rounded-xl py-3 text-base font-bold text-white transition-colors disabled:opacity-40"
             style={{ backgroundColor: "#2d5a41" }}
           >
-            Continuar
+            {saving ? "Guardando..." : "Continuar"}
           </button>
         </Card>
       </Page>
@@ -561,6 +604,7 @@ export default function InvitacionPage({ params }: { params: Promise<{ id: strin
               <button
                 type="button"
                 onClick={() => {
+                  setError("");
                   setPaso("bienvenida");
                   setAsiste(null);
                 }}

@@ -139,6 +139,73 @@ export async function POST(req: NextRequest) {
 
   const invitado_id = typeof invitadoIdRaw === "string" && invitadoIdRaw.length > 0 ? invitadoIdRaw : null;
 
+  const supabase = adminClient();
+
+  /** Declinación RSVP: solo `evento_id` + `invitado_id`, sin cuenta ni DNI. */
+  if (asiste === false) {
+    if (!evento_id || !invitado_id) {
+      return NextResponse.json(
+        {
+          error:
+            "Para avisar que no asistís necesitás el enlace personal de tu invitación. Si abriste un link genérico al evento, pedile al anfitrión tu invitación individual.",
+        },
+        { status: 400 }
+      );
+    }
+
+    const { data: ev, error: evErr } = await supabase.from("eventos").select("id").eq("id", evento_id).maybeSingle();
+    if (evErr || !ev) {
+      return NextResponse.json({ error: "Evento no encontrado." }, { status: 404 });
+    }
+
+    const { data: invDecl, error: invDeclErr } = await supabase
+      .from("invitados")
+      .select("id, usuario_id, evento_id, asistencia")
+      .eq("id", invitado_id)
+      .maybeSingle();
+
+    if (invDeclErr || !invDecl) {
+      return NextResponse.json({ error: "Invitación no válida." }, { status: 404 });
+    }
+    if (invDecl.evento_id !== evento_id) {
+      return NextResponse.json({ error: "El enlace no corresponde a este evento." }, { status: 400 });
+    }
+    if (invDecl.asistencia !== "pendiente") {
+      return NextResponse.json({ error: "Esta invitación ya fue respondida." }, { status: 409 });
+    }
+    if (!invDecl.usuario_id) {
+      return NextResponse.json({ error: "Invitación no válida." }, { status: 404 });
+    }
+
+    const builtDecline = await buildInvitadoUpdatePayload(supabase, {
+      asiste: false,
+      invitado_id,
+      grupoPersonasConfirmadas: null,
+      menusGrupo: null,
+      direccion: null,
+      localidad: null,
+      cancion: null,
+      menuOpcionesPermitidas: [],
+    });
+    if (!builtDecline.ok) {
+      return NextResponse.json({ error: builtDecline.error }, { status: 400 });
+    }
+
+    const declinePayload = { ...builtDecline.payload, cancion: null } as InvitadoUpdate;
+
+    const { error: declineUpErr } = await supabase
+      .from("invitados")
+      .update(declinePayload)
+      .eq("id", invitado_id);
+
+    if (declineUpErr) {
+      return NextResponse.json({ error: declineUpErr.message }, { status: 500 });
+    }
+
+    await syncCancionPlaylist(supabase, evento_id, invDecl.usuario_id, null);
+    return NextResponse.json({ ok: true });
+  }
+
   if (!evento_id || !email || !password || !nombre) {
     return NextResponse.json({ error: "Faltan campos obligatorios." }, { status: 400 });
   }
@@ -153,8 +220,6 @@ export async function POST(req: NextRequest) {
       );
     }
   }
-
-  const supabase = adminClient();
 
   const { data: evento, error: evError } = await supabase
     .from("eventos")
