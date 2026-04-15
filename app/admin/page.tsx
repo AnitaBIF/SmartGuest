@@ -728,12 +728,36 @@ export default function AdminDashboard() {
   });
   const [evento, setEvento] = useState(emptyEventoForm);
   const [eventoFormError, setEventoFormError] = useState("");
+  const emptyNuevoAnfitrion = () => ({
+    nombre: "",
+    apellido: "",
+    dni: "",
+    email: "",
+    password: "",
+    max_invitados: "",
+  });
+  const [crearAnfitrionOpen, setCrearAnfitrionOpen] = useState(false);
+  const [nuevoAnfitrion, setNuevoAnfitrion] = useState(emptyNuevoAnfitrion);
+  const [crearAnfitrionSaving, setCrearAnfitrionSaving] = useState(false);
+  const [crearAnfitrionError, setCrearAnfitrionError] = useState("");
+
+  const refreshAnfitrionesLista = useCallback(async () => {
+    const anfRes = await fetch("/api/admin/usuarios");
+    if (anfRes.ok) {
+      const users = await anfRes.json();
+      setAnfitriones(users.filter((u: { tipo: string }) => u.tipo === "anfitrion"));
+    }
+  }, []);
+
   const resetEvento = () => {
     setEventoFormError("");
     setEvento(emptyEventoForm());
   };
   const openNuevoEventoModal = () => {
     setEventoFormError("");
+    setCrearAnfitrionOpen(false);
+    setCrearAnfitrionError("");
+    setNuevoAnfitrion(emptyNuevoAnfitrion());
     const stdOpts = opcionesMenuStandardDesdeSalon(salonEventoDefaults.menuStandard);
     const menuStandardInicial = stdOpts.length === 1 ? stdOpts[0]! : "";
     setEvento({
@@ -853,6 +877,64 @@ export default function AdminDashboard() {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  const handleCrearAnfitrionDesdeEvento = async () => {
+    setCrearAnfitrionError("");
+    const n = nuevoAnfitrion.nombre.trim();
+    const a = nuevoAnfitrion.apellido.trim();
+    const em = nuevoAnfitrion.email.trim().toLowerCase();
+    if (!n || !a || !em) {
+      setCrearAnfitrionError("Completá nombre, apellido y email del anfitrión.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) {
+      setCrearAnfitrionError("Email no válido.");
+      return;
+    }
+    if (nuevoAnfitrion.password.length < 8) {
+      setCrearAnfitrionError("La contraseña debe tener al menos 8 caracteres.");
+      return;
+    }
+    setCrearAnfitrionSaving(true);
+    try {
+      const res = await fetch("/api/admin/usuarios", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nombre: n,
+          apellido: a,
+          dni: nuevoAnfitrion.dni.trim(),
+          email: em,
+          password: nuevoAnfitrion.password,
+          tipo: "anfitrion",
+          max_invitados: nuevoAnfitrion.max_invitados ? parseInt(nuevoAnfitrion.max_invitados, 10) : 0,
+        }),
+      });
+      const j = (await res.json().catch(() => ({}))) as { id?: string; error?: string };
+      if (!res.ok) {
+        setCrearAnfitrionError(typeof j.error === "string" ? j.error : "No se pudo crear el anfitrión.");
+        return;
+      }
+      const newId = typeof j.id === "string" ? j.id : "";
+      if (!newId) {
+        setCrearAnfitrionError("Respuesta inválida del servidor.");
+        return;
+      }
+      await refreshAnfitrionesLista();
+      const nombreCompleto = `${n} ${a}`;
+      setEvento((p) => ({
+        ...p,
+        anfitrionId: newId,
+        anfitrion1: nombreCompleto,
+      }));
+      setNuevoAnfitrion(emptyNuevoAnfitrion());
+      setCrearAnfitrionOpen(false);
+    } catch {
+      setCrearAnfitrionError("Error de red. Intentá de nuevo.");
+    } finally {
+      setCrearAnfitrionSaving(false);
+    }
+  };
 
   // Guardar evento real
   const handleCrearEvento = async () => {
@@ -1053,6 +1135,9 @@ export default function AdminDashboard() {
                 onClick={() => {
                   setShowEventoModal(false);
                   setShowMenusDropdown(false);
+                  setCrearAnfitrionOpen(false);
+                  setCrearAnfitrionError("");
+                  setNuevoAnfitrion(emptyNuevoAnfitrion());
                   resetEvento();
                 }}
                 className="rounded-full p-1.5 text-muted hover:bg-card"
@@ -1094,6 +1179,112 @@ export default function AdminDashboard() {
                       </select>
                       <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted">⌄</span>
                     </div>
+                    <p className="mt-1.5 text-[11px] leading-snug text-muted">
+                      El anfitrión gestiona invitados, mesas y confirmaciones. También aparece en{" "}
+                      <Link href="/admin/usuarios" className="font-semibold text-brand underline underline-offset-2">
+                        Gestión de usuarios
+                      </Link>
+                      .
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCrearAnfitrionError("");
+                        setCrearAnfitrionOpen((o) => !o);
+                      }}
+                      className="mt-2 text-left text-[12px] font-semibold text-brand underline decoration-brand/30 underline-offset-2 hover:decoration-brand"
+                    >
+                      {crearAnfitrionOpen ? "Ocultar formulario de nuevo anfitrión" : "+ Crear anfitrión y vincularlo a este evento"}
+                    </button>
+                    {crearAnfitrionOpen && (
+                      <div className="mt-3 space-y-3 rounded-2xl border border-border bg-card-muted/60 p-4 ring-1 ring-[var(--ring-soft)]">
+                        <p className="text-[11px] leading-relaxed text-muted">
+                          Se crea la misma cuenta que en Gestión de usuarios (rol anfitrión). Al guardar, queda seleccionada arriba y podés seguir completando el evento.
+                        </p>
+                        <div className="grid grid-cols-2 gap-3">
+                          <Field label="Nombre" required>
+                            <input
+                              className={inp}
+                              value={nuevoAnfitrion.nombre}
+                              onChange={(e) => setNuevoAnfitrion((p) => ({ ...p, nombre: e.target.value }))}
+                              autoComplete="given-name"
+                            />
+                          </Field>
+                          <Field label="Apellido" required>
+                            <input
+                              className={inp}
+                              value={nuevoAnfitrion.apellido}
+                              onChange={(e) => setNuevoAnfitrion((p) => ({ ...p, apellido: e.target.value }))}
+                              autoComplete="family-name"
+                            />
+                          </Field>
+                        </div>
+                        <Field label="DNI (opcional)">
+                          <input
+                            className={inp}
+                            inputMode="numeric"
+                            placeholder="7 a 10 dígitos o vacío"
+                            value={nuevoAnfitrion.dni}
+                            onChange={(e) => setNuevoAnfitrion((p) => ({ ...p, dni: e.target.value }))}
+                            autoComplete="off"
+                          />
+                        </Field>
+                        <Field label="Email" required>
+                          <input
+                            className={inp}
+                            type="email"
+                            value={nuevoAnfitrion.email}
+                            onChange={(e) => setNuevoAnfitrion((p) => ({ ...p, email: e.target.value }))}
+                            autoComplete="email"
+                          />
+                        </Field>
+                        <Field label="Contraseña inicial" required>
+                          <input
+                            className={inp}
+                            type="password"
+                            placeholder="Mínimo 8 caracteres"
+                            value={nuevoAnfitrion.password}
+                            onChange={(e) => setNuevoAnfitrion((p) => ({ ...p, password: e.target.value }))}
+                            autoComplete="new-password"
+                          />
+                        </Field>
+                        <Field label="Máx. invitados permitidos">
+                          <input
+                            className={inp}
+                            type="number"
+                            min={0}
+                            placeholder="Ej: 150"
+                            value={nuevoAnfitrion.max_invitados}
+                            onChange={(e) => setNuevoAnfitrion((p) => ({ ...p, max_invitados: e.target.value }))}
+                          />
+                        </Field>
+                        {crearAnfitrionError && (
+                          <p className="text-[12px] font-medium text-red-600 dark:text-red-300">{crearAnfitrionError}</p>
+                        )}
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          <button
+                            type="button"
+                            disabled={crearAnfitrionSaving}
+                            onClick={() => void handleCrearAnfitrionDesdeEvento()}
+                            className="rounded-full bg-brand px-5 py-2 text-xs font-semibold text-white transition-colors hover:brightness-95 disabled:opacity-60"
+                          >
+                            {crearAnfitrionSaving ? "Creando…" : "Crear anfitrión y vincular"}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={crearAnfitrionSaving}
+                            onClick={() => {
+                              setCrearAnfitrionOpen(false);
+                              setCrearAnfitrionError("");
+                              setNuevoAnfitrion(emptyNuevoAnfitrion());
+                            }}
+                            className="rounded-full border border-border px-4 py-2 text-xs font-medium text-foreground hover:bg-card"
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </Field>
                 </div>
                 <Field label="Anfitrión 1 (nombre)">
