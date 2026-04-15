@@ -1,33 +1,39 @@
-import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import type { Database } from "@/lib/database.types";
+import { eventoPerteneceAlSalon, requireSalonAdmin } from "@/lib/adminSalonAuth";
 
-function adminClient() {
-  return createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
+export async function GET(req: NextRequest) {
+  const auth = await requireSalonAdmin(req);
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+  const { db, salonNombre, salonDireccion } = auth.ctx;
 
-export async function GET() {
-  const supabase = adminClient();
+  if (!salonNombre || !salonDireccion) {
+    return NextResponse.json([]);
+  }
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from("eventos")
     .select("*")
+    .eq("salon", salonNombre)
+    .eq("direccion", salonDireccion)
     .order("fecha", { ascending: true });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-  return NextResponse.json(data);
+  return NextResponse.json(data ?? []);
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const supabase = adminClient();
+  const auth = await requireSalonAdmin(req);
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+  const { db, salonNombre, salonDireccion } = auth.ctx;
 
+  const body = await req.json();
   const salon = String(body.salon ?? "").trim();
   const direccion = String(body.direccion ?? "").trim();
   if (!salon || !direccion) {
@@ -36,8 +42,14 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
   }
+  if (salon !== salonNombre || direccion !== salonDireccion) {
+    return NextResponse.json(
+      { error: "El evento debe usar el mismo nombre y dirección del salón configurados en tu cuenta." },
+      { status: 403 }
+    );
+  }
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from("eventos")
     .insert({
       nombre: body.nombre ?? "",
@@ -73,18 +85,36 @@ export async function POST(req: NextRequest) {
       numero: i + 1,
       estado: "pendiente" as const,
     }));
-    await supabase.from("mesas").insert(mesasInsert);
+    await db.from("mesas").insert(mesasInsert);
   }
 
   return NextResponse.json(data, { status: 201 });
 }
 
 export async function PUT(req: NextRequest) {
+  const auth = await requireSalonAdmin(req);
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+  const { db, salonNombre, salonDireccion } = auth.ctx;
+
   const body = await req.json();
-  const supabase = adminClient();
 
   if (!body.id) {
     return NextResponse.json({ error: "ID requerido." }, { status: 400 });
+  }
+
+  const { data: existing, error: exErr } = await db
+    .from("eventos")
+    .select("id, salon, direccion")
+    .eq("id", body.id)
+    .maybeSingle();
+
+  if (exErr || !existing) {
+    return NextResponse.json({ error: "Evento no encontrado." }, { status: 404 });
+  }
+  if (!eventoPerteneceAlSalon(existing, salonNombre, salonDireccion)) {
+    return NextResponse.json({ error: "No autorizado a modificar este evento." }, { status: 403 });
   }
 
   const update: Record<string, unknown> = {};
@@ -107,6 +137,9 @@ export async function PUT(req: NextRequest) {
     if (!s) {
       return NextResponse.json({ error: "El nombre del salón no puede quedar vacío." }, { status: 400 });
     }
+    if (s !== salonNombre) {
+      return NextResponse.json({ error: "El nombre del salón debe coincidir con el de tu cuenta." }, { status: 403 });
+    }
     update.salon = s;
   }
   if (body.direccion !== undefined) {
@@ -114,10 +147,13 @@ export async function PUT(req: NextRequest) {
     if (!d) {
       return NextResponse.json({ error: "La dirección del salón no puede quedar vacía." }, { status: 400 });
     }
+    if (d !== salonDireccion) {
+      return NextResponse.json({ error: "La dirección debe coincidir con la de tu cuenta." }, { status: 403 });
+    }
     update.direccion = d;
   }
 
-  const { error } = await supabase
+  const { error } = await db
     .from("eventos")
     .update(update as Database["public"]["Tables"]["eventos"]["Update"])
     .eq("id", body.id);
@@ -130,14 +166,32 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const auth = await requireSalonAdmin(req);
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+  const { db, salonNombre, salonDireccion } = auth.ctx;
+
   const body = await req.json().catch(() => ({}));
   const id = typeof body?.id === "string" ? body.id : "";
   if (!id) {
     return NextResponse.json({ error: "ID requerido." }, { status: 400 });
   }
 
-  const supabase = adminClient();
-  const { error } = await supabase.from("eventos").delete().eq("id", id);
+  const { data: existing, error: exErr } = await db
+    .from("eventos")
+    .select("id, salon, direccion")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (exErr || !existing) {
+    return NextResponse.json({ error: "Evento no encontrado." }, { status: 404 });
+  }
+  if (!eventoPerteneceAlSalon(existing, salonNombre, salonDireccion)) {
+    return NextResponse.json({ error: "No autorizado a eliminar este evento." }, { status: 403 });
+  }
+
+  const { error } = await db.from("eventos").delete().eq("id", id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

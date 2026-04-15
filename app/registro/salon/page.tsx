@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 import { LeyendaObligatorios } from "@/components/FormRequired";
 import { MENUS_ESPECIALES_CATALOGO } from "@/lib/grupoFamiliar";
 import {
@@ -78,6 +79,12 @@ export default function RegistroSalonPage() {
   const [error, setError] = useState("");
   const [ok, setOk] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  /** Si había otra sesión en el navegador, la cerramos para que el login sea solo la cuenta nueva. */
+  useEffect(() => {
+    if (!ok) return;
+    void supabase.auth.signOut();
+  }, [ok]);
 
   const aplicarCantidadOpcionesMenu = (n: number) => {
     const clamped = Math.min(

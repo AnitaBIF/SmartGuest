@@ -1,35 +1,6 @@
-import { createClient } from "@supabase/supabase-js";
-import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
-import type { Database } from "@/lib/database.types";
 import { plazasSmartseatPorInvitado } from "@/lib/grupoFamiliar";
-
-function adminClient() {
-  return createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
-
-async function getSessionUser(req: NextRequest) {
-  const supabaseAuth = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return req.cookies.getAll();
-        },
-        setAll() {},
-      },
-    }
-  );
-  const {
-    data: { user },
-  } = await supabaseAuth.auth.getUser();
-  return user;
-}
+import { eventoPerteneceAlSalon, requireSalonAdmin } from "@/lib/adminSalonAuth";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -37,16 +8,11 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
  * Reporte de ingresos por evento (QR en puerta). Solo administrador del salón.
  */
 export async function GET(req: NextRequest) {
-  const user = await getSessionUser(req);
-  if (!user) {
-    return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+  const auth = await requireSalonAdmin(req);
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
-
-  const supabase = adminClient();
-  const { data: perfil } = await supabase.from("usuarios").select("tipo").eq("id", user.id).single();
-  if (perfil?.tipo !== "administrador") {
-    return NextResponse.json({ error: "Solo administradores del salón pueden ver este reporte." }, { status: 403 });
-  }
+  const { db: supabase, salonNombre, salonDireccion } = auth.ctx;
 
   const eventoId = req.nextUrl.searchParams.get("eventoId")?.trim() ?? "";
   if (!UUID_RE.test(eventoId)) {
@@ -55,12 +21,16 @@ export async function GET(req: NextRequest) {
 
   const { data: evento, error: eErr } = await supabase
     .from("eventos")
-    .select("id, nombre, fecha")
+    .select("id, nombre, fecha, salon, direccion")
     .eq("id", eventoId)
     .maybeSingle();
 
   if (eErr || !evento) {
     return NextResponse.json({ error: "Evento no encontrado." }, { status: 404 });
+  }
+
+  if (!eventoPerteneceAlSalon(evento, salonNombre, salonDireccion)) {
+    return NextResponse.json({ error: "Ese evento no pertenece a tu salón." }, { status: 403 });
   }
 
   const { data: rows, error: rErr } = await supabase
