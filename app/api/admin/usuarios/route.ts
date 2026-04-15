@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
-  const { db, salonNombre, salonDireccion } = auth.ctx;
+  const { db, userId, salonNombre, salonDireccion } = auth.ctx;
 
   const { nombre, apellido, dni, email, password, tipo, max_invitados } = await req.json();
 
@@ -88,11 +88,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Faltan campos obligatorios." }, { status: 400 });
   }
 
-  if (tipo === "administrador") {
-    return NextResponse.json(
-      { error: "Un segundo administrador del salón no se crea desde acá: usá «Registro de salón» con otro email." },
-      { status: 400 }
-    );
+  if (!TIPOS_SALON.includes(tipo as TipoUsuario)) {
+    return NextResponse.json({ error: "Tipo de usuario no válido para el equipo del salón." }, { status: 400 });
   }
 
   if (!salonNombre || !salonDireccion) {
@@ -102,18 +99,39 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const { data: inviter, error: invErr } = await db
+    .from("usuarios")
+    .select(
+      "cuit, habilitacion_numero, salon_menus_especiales, salon_menus_especiales_otro, salon_menu_standard"
+    )
+    .eq("id", userId)
+    .single();
+
+  if (invErr || !inviter) {
+    return NextResponse.json({ error: "No se pudo cargar tu perfil de salón." }, { status: 500 });
+  }
+
+  const cuitInv = typeof inviter.cuit === "string" ? inviter.cuit.trim() : "";
+  const habInv = typeof inviter.habilitacion_numero === "string" ? inviter.habilitacion_numero.trim() : "";
+
+  const userMeta: Record<string, unknown> = {
+    nombre,
+    apellido,
+    dni,
+    tipo,
+    salon_nombre: salonNombre,
+    salon_direccion: salonDireccion,
+  };
+  if (tipo === "administrador") {
+    userMeta.cuit = cuitInv || null;
+    userMeta.habilitacion_numero = habInv || null;
+  }
+
   const { data: authData, error: authError } = await db.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
-    user_metadata: {
-      nombre,
-      apellido,
-      dni,
-      tipo,
-      salon_nombre: salonNombre,
-      salon_direccion: salonDireccion,
-    },
+    user_metadata: userMeta,
   });
 
   if (authError || !authData.user) {
@@ -123,17 +141,48 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { error: updateError } = await db
-    .from("usuarios")
-    .update({ dni: dni ?? "", max_invitados: max_invitados ?? 0 })
-    .eq("id", authData.user.id);
+  const newId = authData.user.id;
+  const maxInv = tipo === "anfitrion" ? (max_invitados ?? 0) : 0;
+
+  const patch: Database["public"]["Tables"]["usuarios"]["Update"] = {
+    dni: typeof dni === "string" ? dni : "",
+    max_invitados: maxInv,
+  };
+
+  if (tipo === "administrador") {
+    patch.salon_menus_especiales = inviter.salon_menus_especiales ?? [];
+    patch.salon_menus_especiales_otro = inviter.salon_menus_especiales_otro ?? null;
+    patch.salon_menu_standard = inviter.salon_menu_standard ?? null;
+  }
+
+  const { error: updateError } = await db.from("usuarios").update(patch).eq("id", newId);
 
   if (updateError) {
-    await db.auth.admin.deleteUser(authData.user.id);
+    await db.auth.admin.deleteUser(newId);
     return NextResponse.json({ error: updateError.message }, { status: 500 });
   }
 
-  return NextResponse.json({ id: authData.user.id }, { status: 201 });
+  if (tipo === "administrador") {
+    const { error: metaErr } = await db.auth.admin.updateUserById(newId, {
+      user_metadata: {
+        nombre,
+        apellido,
+        dni,
+        tipo: "administrador",
+        salon_nombre: salonNombre,
+        salon_direccion: salonDireccion,
+        cuit: cuitInv || null,
+        habilitacion_numero: habInv || null,
+        salon_menu_standard: inviter.salon_menu_standard ?? null,
+      },
+    });
+    if (metaErr) {
+      await db.auth.admin.deleteUser(newId);
+      return NextResponse.json({ error: metaErr.message }, { status: 500 });
+    }
+  }
+
+  return NextResponse.json({ id: newId }, { status: 201 });
 }
 
 // ─── PUT: editar usuario ────────────────────────────────────────────────────
@@ -150,14 +199,17 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "ID requerido." }, { status: 400 });
   }
 
+  const tipoFinal = tipo as TipoUsuario;
+  if (!TIPOS_SALON.includes(tipoFinal)) {
+    return NextResponse.json({ error: "Tipo de usuario no válido." }, { status: 400 });
+  }
+
   const allowed = await puedeGestionarUsuario(db, userId, salonNombre, salonDireccion, id);
   if (!allowed) {
     return NextResponse.json({ error: "No autorizado a editar este usuario." }, { status: 403 });
   }
 
-  if (tipo === "administrador" && id !== userId) {
-    return NextResponse.json({ error: "No podés asignar el rol administrador a otro usuario." }, { status: 400 });
-  }
+  const maxInvPut = tipoFinal === "anfitrion" ? (max_invitados ?? 0) : 0;
 
   const { error: profileError } = await db
     .from("usuarios")
@@ -166,8 +218,8 @@ export async function PUT(req: NextRequest) {
       apellido,
       dni,
       email,
-      tipo: tipo as TipoUsuario,
-      max_invitados: max_invitados ?? 0,
+      tipo: tipoFinal,
+      max_invitados: maxInvPut,
     })
     .eq("id", id);
 
