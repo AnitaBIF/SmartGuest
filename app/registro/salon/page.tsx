@@ -39,7 +39,7 @@ function NotchedField({
         {label}
         {requiredField ? (
           <>
-            <span className="ml-0.5 font-semibold text-amber-100" aria-hidden="true">
+            <span className="ml-0.5 font-semibold text-amber-200 dark:text-zinc-950" aria-hidden="true">
               *
             </span>
             <span className="sr-only"> (obligatorio)</span>
@@ -281,7 +281,7 @@ export default function RegistroSalonPage() {
             <div className="relative rounded-lg border-2 border-brand bg-card px-4 pb-4 pt-6 ring-1 ring-[var(--ring-soft)]">
               <p className="absolute left-4 top-0 z-10 -translate-y-1/2 rounded bg-brand px-3 py-1 text-xs font-semibold tracking-wide text-white dark:text-zinc-950">
                 Menús especiales que ofrecen
-                <span className="ml-0.5 font-semibold text-amber-100" aria-hidden="true">
+                <span className="ml-0.5 font-semibold text-amber-200 dark:text-zinc-950" aria-hidden="true">
                   {" "}
                   (opcional)
                 </span>
@@ -322,7 +322,7 @@ export default function RegistroSalonPage() {
             <div className="relative rounded-lg border-2 border-brand bg-card px-4 pb-4 pt-6 ring-1 ring-[var(--ring-soft)]">
               <p className="absolute left-4 top-0 z-10 -translate-y-1/2 rounded bg-brand px-3 py-1 text-xs font-semibold tracking-wide text-white dark:text-zinc-950">
                 Menú estándar del salón
-                <span className="ml-0.5 font-semibold text-amber-100" aria-hidden="true">
+                <span className="ml-0.5 font-semibold text-amber-200 dark:text-zinc-950" aria-hidden="true">
                   *
                 </span>
                 <span className="sr-only"> (obligatorio)</span>
