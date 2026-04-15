@@ -97,12 +97,25 @@ export default function EventoDetallePage({ params }: { params: Promise<{ id: st
   const { id } = use(params);
   const [evento, setEvento] = useState<EventoCocina | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [estados, setEstados] = useState<Record<string, Estado>>({});
 
   useEffect(() => {
-    fetch("/api/cocina")
-      .then((r) => r.json())
-      .then((data: unknown) => {
+    let cancelled = false;
+    setLoadError("");
+    fetch("/api/cocina", { credentials: "same-origin" })
+      .then(async (r) => {
+        const data: unknown = await r.json();
+        if (cancelled) return;
+        if (!r.ok) {
+          const msg =
+            typeof data === "object" && data !== null && "error" in data && typeof (data as { error: unknown }).error === "string"
+              ? (data as { error: string }).error
+              : "No se pudo cargar el reporte.";
+          setLoadError(msg);
+          setEvento(null);
+          return;
+        }
         const list: EventoCocina[] = Array.isArray(data) ? (data as EventoCocina[]) : [];
         const found = list.find((e) => e.id === id);
         if (found) {
@@ -112,13 +125,23 @@ export default function EventoDetallePage({ params }: { params: Promise<{ id: st
             initial[m.id] = (m as Mesa & { estado?: Estado }).estado ?? "pendiente";
           });
           setEstados(initial);
+        } else {
+          setEvento(null);
         }
-        setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        if (!cancelled) setLoadError("No se pudo cargar el reporte.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   if (loading) return <div className="flex min-h-screen items-center justify-center"><p className="text-muted">Cargando...</p></div>;
+  if (loadError) return <div className="flex min-h-screen items-center justify-center px-4"><p className="text-center text-[13px] text-red-800 dark:text-red-200">{loadError}</p></div>;
   if (!evento) return <div className="flex min-h-screen items-center justify-center"><p className="text-muted">Evento no encontrado.</p></div>;
 
   const getEstado = (mesaId: string | number): Estado => estados[mesaId] ?? "pendiente";

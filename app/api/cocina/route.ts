@@ -1,6 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
-import { NextResponse } from "next/server";
-import type { Database } from "@/lib/database.types";
+import { NextRequest, NextResponse } from "next/server";
+import { requireSalonCocinaAccess } from "@/lib/adminSalonAuth";
 import {
   bucketsToMenusPayload,
   emptyMenuBuckets,
@@ -8,21 +7,22 @@ import {
   menuBucketsFromInvitado,
 } from "@/lib/cocinaConteos";
 
-function adminClient() {
-  return createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
+export async function GET(req: NextRequest) {
+  const auth = await requireSalonCocinaAccess(req);
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+  const { db: supabase, salonNombre, salonDireccion } = auth.ctx;
 
-export async function GET() {
-  const supabase = adminClient();
+  if (!salonNombre || !salonDireccion) {
+    return NextResponse.json([]);
+  }
 
-  // Traer todos los eventos con sus mesas
   const { data: eventos, error: evError } = await supabase
     .from("eventos")
     .select("id, nombre, tipo, fecha, horario, anfitrion1_nombre, anfitrion2_nombre, cant_invitados, cant_mesas")
+    .eq("salon", salonNombre)
+    .eq("direccion", salonDireccion)
     .order("fecha", { ascending: true });
 
   if (evError || !eventos) {

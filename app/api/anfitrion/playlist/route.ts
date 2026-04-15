@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 import type { Database } from "@/lib/database.types";
+import { eventoCoincideConSalonPerfil } from "@/lib/adminSalonAuth";
 import { syncCancionPlaylist } from "@/lib/cancionPlaylistSync";
 import { mergePlaylistRows, youtubeSearchUrlForSong } from "@/lib/playlistSongKey";
 
@@ -33,18 +34,24 @@ async function getSessionUser(req: NextRequest) {
 }
 
 async function eventoDelAnfitrion(supabase: ReturnType<typeof adminClient>, userId: string) {
-  const { data: me } = await supabase.from("usuarios").select("tipo").eq("id", userId).single();
+  const { data: me } = await supabase
+    .from("usuarios")
+    .select("tipo, salon_nombre, salon_direccion")
+    .eq("id", userId)
+    .single();
   if (me?.tipo !== "anfitrion") return null;
 
   const { data: evento } = await supabase
     .from("eventos")
-    .select("id")
+    .select("id, salon, direccion")
     .eq("anfitrion_id", userId)
     .order("fecha", { ascending: false })
     .limit(1)
     .single();
 
-  return evento?.id ?? null;
+  if (!evento?.id) return null;
+  if (!eventoCoincideConSalonPerfil(evento, me.salon_nombre ?? "", me.salon_direccion ?? "")) return null;
+  return evento.id;
 }
 
 /**

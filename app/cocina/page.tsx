@@ -20,15 +20,35 @@ function totalMenus(ev: EventoCocina) {
 export default function CocinaHome() {
   const [eventos, setEventos] = useState<EventoCocina[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
-    fetch("/api/cocina")
-      .then((r) => r.json())
-      .then((data) => {
+    let cancelled = false;
+    setLoadError("");
+    fetch("/api/cocina", { credentials: "same-origin" })
+      .then(async (r) => {
+        const data: unknown = await r.json();
+        if (cancelled) return;
+        if (!r.ok) {
+          const msg =
+            typeof data === "object" && data !== null && "error" in data && typeof (data as { error: unknown }).error === "string"
+              ? (data as { error: string }).error
+              : "No se pudo cargar el reporte.";
+          setLoadError(msg);
+          setEventos([]);
+          return;
+        }
         setEventos(Array.isArray(data) ? data : []);
-        setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        if (!cancelled) setLoadError("No se pudo cargar el reporte.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
@@ -40,7 +60,11 @@ export default function CocinaHome() {
 
           {loading && <p className="text-center text-muted">Cargando eventos...</p>}
 
-          {!loading && eventos.length === 0 && (
+          {!loading && loadError && (
+            <p className="text-center text-[13px] text-red-800 dark:text-red-200">{loadError}</p>
+          )}
+
+          {!loading && !loadError && eventos.length === 0 && (
             <p className="text-center text-muted">No hay eventos con mesas creadas.</p>
           )}
 

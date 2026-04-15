@@ -15,6 +15,7 @@ import {
   normalizeDniInput,
   splitNombreCompleto,
 } from "@/lib/invitadosImport";
+import { eventoCoincideConSalonPerfil } from "@/lib/adminSalonAuth";
 
 function adminClient() {
   return createClient<Database>(
@@ -97,20 +98,23 @@ async function insertInvitadoPendiente(
 async function getAnfitrionEvento(supabase: ReturnType<typeof adminClient>, userId: string) {
   const { data: me } = await supabase
     .from("usuarios")
-    .select("tipo")
+    .select("tipo, salon_nombre, salon_direccion")
     .eq("id", userId)
     .single();
   if (me?.tipo !== "anfitrion") return null;
 
   const { data: evento } = await supabase
     .from("eventos")
-    .select("id, cant_invitados, menus_especiales")
+    .select("id, cant_invitados, menus_especiales, salon, direccion")
     .eq("anfitrion_id", userId)
     .order("fecha", { ascending: false })
     .limit(1)
     .single();
 
   if (!evento?.id) return null;
+  if (!eventoCoincideConSalonPerfil(evento, me.salon_nombre ?? "", me.salon_direccion ?? "")) {
+    return null;
+  }
   return {
     id: evento.id,
     cantInvitados: evento.cant_invitados ?? 0,

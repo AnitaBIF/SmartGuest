@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 import type { Database, EstadoAsistencia } from "@/lib/database.types";
+import { eventoCoincideConSalonPerfil } from "@/lib/adminSalonAuth";
 import { clampCuposMax, mapUiMenuToInvitadoColumns, menuOpcionesParaEvento, plazasSmartpoolPasajeros } from "@/lib/grupoFamiliar";
 import { normalizeDniInput, splitNombreCompleto } from "@/lib/invitadosImport";
 
@@ -56,14 +57,22 @@ async function assertInvitadoOwnedByAnfitrion(
 
   const { data: ev } = await supabase
     .from("eventos")
-    .select("anfitrion_id, menus_especiales")
+    .select("anfitrion_id, menus_especiales, salon, direccion")
     .eq("id", inv.evento_id)
     .single();
 
   if (!ev || ev.anfitrion_id !== userId) return { ok: false as const, status: 403 as const };
 
-  const { data: me } = await supabase.from("usuarios").select("tipo").eq("id", userId).single();
+  const { data: me } = await supabase
+    .from("usuarios")
+    .select("tipo, salon_nombre, salon_direccion")
+    .eq("id", userId)
+    .single();
   if (me?.tipo !== "anfitrion") return { ok: false as const, status: 403 as const };
+
+  if (!eventoCoincideConSalonPerfil(ev, me.salon_nombre ?? "", me.salon_direccion ?? "")) {
+    return { ok: false as const, status: 403 as const };
+  }
 
   return { ok: true as const, inv, menusEspeciales: ev?.menus_especiales ?? [] };
 }

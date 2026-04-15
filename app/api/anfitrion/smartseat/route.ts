@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 import type { Database } from "@/lib/database.types";
+import { eventoCoincideConSalonPerfil } from "@/lib/adminSalonAuth";
 import { ensureMesasForEvento } from "@/lib/ensureEventoMesas";
 import { parseGrupoMenusJson, plazasSmartseatPorInvitado } from "@/lib/grupoFamiliar";
 
@@ -29,6 +30,60 @@ async function getUserId(req: NextRequest) {
   return user?.id ?? null;
 }
 
+type EventoSmartseatScoped = {
+  id: string;
+  cant_invitados: number;
+  cant_mesas: number;
+  salon: string;
+  direccion: string;
+};
+
+async function eventoSmartseatDelAnfitrion(
+  supabase: ReturnType<typeof adminClient>,
+  userId: string,
+  variant: "get" | "put" | "post"
+): Promise<EventoSmartseatScoped | null> {
+  const { data: me } = await supabase
+    .from("usuarios")
+    .select("tipo, salon_nombre, salon_direccion")
+    .eq("id", userId)
+    .single();
+  if (me?.tipo !== "anfitrion") return null;
+
+  const { data: evento } =
+    variant === "put"
+      ? await supabase
+          .from("eventos")
+          .select("id, cant_mesas, salon, direccion")
+          .eq("anfitrion_id", userId)
+          .order("fecha", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      : await supabase
+          .from("eventos")
+          .select("id, cant_invitados, cant_mesas, salon, direccion")
+          .eq("anfitrion_id", userId)
+          .order("fecha", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+  if (!evento) return null;
+  if (!eventoCoincideConSalonPerfil(evento, me.salon_nombre ?? "", me.salon_direccion ?? "")) {
+    return null;
+  }
+  const row = evento as Partial<EventoSmartseatScoped> & { id: string; salon: string; direccion: string };
+  const cant_invitados =
+    typeof row.cant_invitados === "number" ? row.cant_invitados : variant === "put" ? 0 : 0;
+  const cant_mesas = typeof row.cant_mesas === "number" ? row.cant_mesas : 0;
+  return {
+    id: row.id,
+    salon: row.salon,
+    direccion: row.direccion,
+    cant_invitados,
+    cant_mesas,
+  };
+}
+
 // GET: mesas, invitados y asignaciones actuales
 export async function GET(req: NextRequest) {
   const userId = await getUserId(req);
@@ -36,14 +91,7 @@ export async function GET(req: NextRequest) {
 
   const supabase = adminClient();
 
-  const { data: evento } = await supabase
-    .from("eventos")
-    .select("id, cant_invitados, cant_mesas")
-    .eq("anfitrion_id", userId)
-    .order("fecha", { ascending: false })
-    .limit(1)
-    .single();
-
+  const evento = await eventoSmartseatDelAnfitrion(supabase, userId, "get");
   if (!evento) return NextResponse.json({ error: "Sin evento" }, { status: 404 });
 
   const seatsPerTable = evento.cant_mesas > 0
@@ -132,14 +180,7 @@ export async function PUT(req: NextRequest) {
 
   const supabase = adminClient();
 
-  const { data: evento } = await supabase
-    .from("eventos")
-    .select("id, cant_mesas")
-    .eq("anfitrion_id", userId)
-    .order("fecha", { ascending: false })
-    .limit(1)
-    .single();
-
+  const evento = await eventoSmartseatDelAnfitrion(supabase, userId, "put");
   if (!evento) {
     return NextResponse.json({ error: "Sin evento" }, { status: 404 });
   }
@@ -199,14 +240,7 @@ export async function POST(req: NextRequest) {
 
   const supabase = adminClient();
 
-  const { data: evento } = await supabase
-    .from("eventos")
-    .select("id, cant_invitados, cant_mesas")
-    .eq("anfitrion_id", userId)
-    .order("fecha", { ascending: false })
-    .limit(1)
-    .single();
-
+  const evento = await eventoSmartseatDelAnfitrion(supabase, userId, "post");
   if (!evento) return NextResponse.json({ error: "Sin evento" }, { status: 404 });
 
   const seatsPerTable = evento.cant_mesas > 0

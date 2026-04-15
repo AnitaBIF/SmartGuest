@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 import type { Database } from "@/lib/database.types";
+import { eventoCoincideConSalonPerfil } from "@/lib/adminSalonAuth";
 import { ensureMesasForEvento } from "@/lib/ensureEventoMesas";
 import {
   contarMenuPersonaStats,
@@ -38,14 +39,16 @@ export async function GET(req: NextRequest) {
 
   const supabase = adminClient();
 
-  // Obtener datos del usuario (nombre)
   const { data: usuario } = await supabase
     .from("usuarios")
-    .select("nombre, apellido")
+    .select("nombre, apellido, tipo, salon_nombre, salon_direccion")
     .eq("id", user.id)
     .single();
 
-  // Buscar el evento más reciente donde este usuario es anfitrión
+  if (usuario?.tipo !== "anfitrion") {
+    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+  }
+
   const { data: evento } = await supabase
     .from("eventos")
     .select(
@@ -58,6 +61,12 @@ export async function GET(req: NextRequest) {
 
   if (!evento) {
     return NextResponse.json({ error: "No tienes eventos asignados" }, { status: 404 });
+  }
+
+  if (
+    !eventoCoincideConSalonPerfil(evento, usuario?.salon_nombre ?? "", usuario?.salon_direccion ?? "")
+  ) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 
   const [{ data: invitados }, { data: mesasInitial }] = await Promise.all([

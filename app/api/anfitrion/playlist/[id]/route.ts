@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 import type { Database } from "@/lib/database.types";
+import { eventoCoincideConSalonPerfil } from "@/lib/adminSalonAuth";
 
 function adminClient() {
   return createClient<Database>(
@@ -42,20 +43,27 @@ export async function DELETE(
 
   const supabase = adminClient();
 
-  const { data: me } = await supabase.from("usuarios").select("tipo").eq("id", user.id).single();
+  const { data: me } = await supabase
+    .from("usuarios")
+    .select("tipo, salon_nombre, salon_direccion")
+    .eq("id", user.id)
+    .single();
   if (me?.tipo !== "anfitrion") {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 
   const { data: evento } = await supabase
     .from("eventos")
-    .select("id")
+    .select("id, salon, direccion")
     .eq("anfitrion_id", user.id)
     .order("fecha", { ascending: false })
     .limit(1)
     .single();
 
   if (!evento?.id) return NextResponse.json({ error: "No tenés un evento asignado" }, { status: 404 });
+  if (!eventoCoincideConSalonPerfil(evento, me.salon_nombre ?? "", me.salon_direccion ?? "")) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+  }
 
   const { data: row } = await supabase
     .from("canciones")

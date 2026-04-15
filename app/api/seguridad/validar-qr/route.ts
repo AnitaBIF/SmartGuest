@@ -1,7 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
-import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
-import type { Database } from "@/lib/database.types";
+import { eventoPerteneceAlSalon, requireSalonSeguridad } from "@/lib/adminSalonAuth";
 import { isQrReplay } from "@/lib/qr-replay-guard";
 import { verifyRollingQrToken } from "@/lib/secure-qr-token";
 
@@ -17,51 +15,16 @@ type ValidarQrResponse = {
   primerIngreso: boolean;
 };
 
-function adminClient() {
-  return createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
-
 /**
- * Valida el QR escaneado: firma HMAC, ventana temporal, anti-replay, rol seguridad.
+ * Valida el QR escaneado: firma HMAC, ventana temporal, anti-replay, rol seguridad, mismo salón que el evento.
  */
 export async function POST(req: NextRequest) {
-  const response = NextResponse.next();
-  const supabaseAuth = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return req.cookies.getAll();
-        },
-        setAll(c) {
-          c.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
-        },
-      },
-    }
-  );
-
-  const {
-    data: { user },
-  } = await supabaseAuth.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+  const auth = await requireSalonSeguridad(req);
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
-
-  const supabase = adminClient();
-  const { data: perfil } = await supabase
-    .from("usuarios")
-    .select("tipo")
-    .eq("id", user.id)
-    .single();
-
-  if (perfil?.tipo !== "seguridad") {
-    return NextResponse.json({ error: "Solo personal de seguridad puede validar códigos." }, { status: 403 });
-  }
+  const supabase = auth.ctx.db;
+  const { salonNombre, salonDireccion } = auth.ctx;
 
   let body: { token?: string };
   try {
@@ -105,6 +68,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Asistencia no confirmada para este invitado." }, { status: 403 });
   }
 
+  const { data: eventoRow, error: evErr } = await supabase
+    .from("eventos")
+    .select("nombre, salon, direccion")
+    .eq("id", inv.evento_id)
+    .single();
+
+  if (evErr || !eventoRow || !eventoPerteneceAlSalon(eventoRow, salonNombre, salonDireccion)) {
+    return NextResponse.json(
+      { error: "Este código no corresponde a un evento de tu salón." },
+      { status: 403 }
+    );
+  }
+
   const { data: usuario } = await supabase
     .from("usuarios")
     .select("nombre, apellido, dni")
@@ -124,12 +100,6 @@ export async function POST(req: NextRequest) {
       .single();
     mesaNumero = mesa?.numero ?? null;
   }
-
-  const { data: evento } = await supabase
-    .from("eventos")
-    .select("nombre")
-    .eq("id", inv.evento_id)
-    .single();
 
   const hadIngresoPrevio = Boolean(inv.ingreso_at?.trim());
   const nowIso = new Date().toISOString();
@@ -155,7 +125,7 @@ export async function POST(req: NextRequest) {
     nombre: `${usuario.nombre} ${usuario.apellido}`.trim(),
     dni: usuario.dni,
     mesa: mesaNumero,
-    evento: evento?.nombre ?? "Evento",
+    evento: eventoRow.nombre ?? "Evento",
     verified: "rolling-hmac",
     ingresoAt: ingresoAtFinal,
     primerIngreso: !hadIngresoPrevio,

@@ -1,27 +1,43 @@
-import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
-import type { Database } from "@/lib/database.types";
-
-function adminClient() {
-  return createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
+import { eventoPerteneceAlSalon, requireSalonCocinaAccess } from "@/lib/adminSalonAuth";
 
 export async function PUT(req: NextRequest) {
+  const auth = await requireSalonCocinaAccess(req);
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+  const { db, salonNombre, salonDireccion } = auth.ctx;
+  if (!salonNombre || !salonDireccion) {
+    return NextResponse.json({ error: "Cuenta sin salón configurado." }, { status: 403 });
+  }
+
   const { mesa_id, estado } = await req.json();
 
   if (!mesa_id || !estado) {
     return NextResponse.json({ error: "mesa_id y estado requeridos" }, { status: 400 });
   }
 
-  const supabase = adminClient();
-  const { error } = await supabase
+  const { data: mesa, error: mErr } = await db
     .from("mesas")
-    .update({ estado })
-    .eq("id", mesa_id);
+    .select("id, evento_id")
+    .eq("id", mesa_id)
+    .maybeSingle();
+
+  if (mErr || !mesa) {
+    return NextResponse.json({ error: "Mesa no encontrada." }, { status: 404 });
+  }
+
+  const { data: evento, error: evErr } = await db
+    .from("eventos")
+    .select("salon, direccion")
+    .eq("id", mesa.evento_id)
+    .maybeSingle();
+
+  if (evErr || !evento || !eventoPerteneceAlSalon(evento, salonNombre, salonDireccion)) {
+    return NextResponse.json({ error: "No autorizado." }, { status: 403 });
+  }
+
+  const { error } = await db.from("mesas").update({ estado }).eq("id", mesa_id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
