@@ -34,7 +34,7 @@ function NotchedField({
     <div className="relative pt-1">
       <label
         htmlFor={id}
-        className="absolute left-4 top-0 z-10 -translate-y-1/2 rounded bg-brand px-3 py-1 text-xs font-semibold tracking-wide text-white"
+        className="absolute left-4 top-0 z-10 -translate-y-1/2 rounded bg-brand px-3 py-1 text-xs font-semibold tracking-wide text-white dark:text-zinc-950"
       >
         {label}
         {requiredField ? (
@@ -54,7 +54,7 @@ function NotchedField({
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border-2 border-brand bg-white px-4 pb-3 pt-5 text-gray-900 placeholder-gray-400 outline-none ring-brand/0 transition-shadow focus:border-brand focus:ring-4 focus:ring-brand/20"
+        className="w-full rounded-lg border-2 border-brand bg-input px-4 pb-3 pt-5 text-foreground placeholder:text-muted outline-none ring-brand/0 transition-shadow focus:border-brand focus:ring-4 focus:ring-brand/20"
       />
     </div>
   );
@@ -203,21 +203,21 @@ export default function RegistroSalonPage() {
         </p>
 
         {ok ? (
-          <div className="rounded-2xl border border-green-200 bg-green-50 p-6 text-center">
-            <p className="font-semibold text-green-900">Cuenta creada correctamente.</p>
-            <p className="mt-2 text-sm text-green-800">
+          <div className="rounded-2xl border border-green-200 bg-green-50 p-6 text-center dark:border-emerald-800/50 dark:bg-emerald-950/40">
+            <p className="font-semibold text-green-900 dark:text-emerald-100">Cuenta creada correctamente.</p>
+            <p className="mt-2 text-sm text-green-800 dark:text-emerald-200/90">
               Ya podés iniciar sesión con tu email y contraseña.
             </p>
             <Link
               href="/"
-              className="mt-6 inline-block rounded-lg bg-brand px-6 py-3 text-sm font-semibold text-white hover:bg-[#24503a]"
+              className="mt-6 inline-block rounded-lg bg-brand px-6 py-3 text-sm font-semibold text-white transition-colors hover:brightness-95 dark:text-zinc-950"
             >
               Ir al login
             </Link>
           </div>
         ) : (
           <form className="space-y-5" onSubmit={handleSubmit}>
-            <LeyendaObligatorios className="text-[12px] text-[#6b7280]" />
+            <LeyendaObligatorios className="text-[12px] text-muted" />
             <NotchedField
               id="nombre"
               label="Nombre"
@@ -278,20 +278,20 @@ export default function RegistroSalonPage() {
               required
             />
 
-            <div className="relative rounded-lg border-2 border-brand bg-white px-4 pb-4 pt-6">
-              <p className="absolute left-4 top-0 z-10 -translate-y-1/2 rounded bg-brand px-3 py-1 text-xs font-semibold tracking-wide text-white">
+            <div className="relative rounded-lg border-2 border-brand bg-card px-4 pb-4 pt-6 ring-1 ring-[var(--ring-soft)]">
+              <p className="absolute left-4 top-0 z-10 -translate-y-1/2 rounded bg-brand px-3 py-1 text-xs font-semibold tracking-wide text-white dark:text-zinc-950">
                 Menús especiales que ofrecen
                 <span className="ml-0.5 font-semibold text-amber-100" aria-hidden="true">
                   {" "}
                   (opcional)
                 </span>
               </p>
-              <p className="mb-3 text-[12px] text-[#6b7280]">
+              <p className="mb-3 text-[12px] text-muted">
                 Marcá los que apliquen. Esto se usará como valor inicial al crear eventos en el calendario.
               </p>
               <div className="flex flex-col gap-2">
                 {MENUS_ESPECIALES_CATALOGO.map((op) => (
-                  <label key={op} className="flex cursor-pointer items-center gap-2 text-[13px] text-gray-900">
+                  <label key={op} className="flex cursor-pointer items-center gap-2 text-[13px] text-foreground">
                     <input
                       type="checkbox"
                       checked={menusEspeciales.includes(op)}
@@ -304,7 +304,7 @@ export default function RegistroSalonPage() {
               </div>
               {menusEspeciales.includes("Otro") && (
                 <div className="mt-3">
-                  <label htmlFor="menus_otro" className="mb-1 block text-[12px] font-medium text-gray-700">
+                  <label htmlFor="menus_otro" className="mb-1 block text-[12px] font-medium text-foreground">
                     Detalle del menú «Otro»
                   </label>
                   <textarea
@@ -312,27 +312,27 @@ export default function RegistroSalonPage() {
                     value={menusOtro}
                     onChange={(e) => setMenusOtro(e.target.value)}
                     rows={2}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-[13px] text-gray-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                    className="w-full rounded-lg border border-border bg-input px-3 py-2 text-[13px] text-foreground outline-none placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/20"
                     placeholder="Ej.: menú bajo en sodio, alergias, etc."
                   />
                 </div>
               )}
             </div>
 
-            <div className="relative rounded-lg border-2 border-brand bg-white px-4 pb-4 pt-6">
-              <p className="absolute left-4 top-0 z-10 -translate-y-1/2 rounded bg-brand px-3 py-1 text-xs font-semibold tracking-wide text-white">
+            <div className="relative rounded-lg border-2 border-brand bg-card px-4 pb-4 pt-6 ring-1 ring-[var(--ring-soft)]">
+              <p className="absolute left-4 top-0 z-10 -translate-y-1/2 rounded bg-brand px-3 py-1 text-xs font-semibold tracking-wide text-white dark:text-zinc-950">
                 Menú estándar del salón
                 <span className="ml-0.5 font-semibold text-amber-100" aria-hidden="true">
                   *
                 </span>
                 <span className="sr-only"> (obligatorio)</span>
               </p>
-              <p className="mb-3 text-[12px] text-[#6b7280]">
+              <p className="mb-3 text-[12px] text-muted">
                 Indicá cuántas opciones ofrecen y describí cada una. Se precarga al crear cada evento; podés ajustarlo por
                 fiesta.
               </p>
               <div className="mb-4">
-                <label htmlFor="cant_opciones_menu_standard" className="mb-1 block text-[12px] font-medium text-gray-700">
+                <label htmlFor="cant_opciones_menu_standard" className="mb-1 block text-[12px] font-medium text-foreground">
                   ¿Cuántas opciones de menú estándar ofrecen?
                 </label>
                 <input
@@ -342,7 +342,7 @@ export default function RegistroSalonPage() {
                   max={SALON_MENU_STANDARD_MAX_OPCIONES}
                   value={nOpcionesMenuStandard}
                   onChange={(e) => aplicarCantidadOpcionesMenu(parseInt(e.target.value, 10))}
-                  className="w-full max-w-[8rem] rounded-lg border border-gray-300 px-3 py-2 text-[13px] text-gray-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                  className="w-full max-w-[8rem] rounded-lg border border-border bg-input px-3 py-2 text-[13px] text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
                 />
               </div>
               <div className="flex flex-col gap-3">
@@ -350,7 +350,7 @@ export default function RegistroSalonPage() {
                   <div key={i} className="relative pt-1">
                     <label
                       htmlFor={`menu_std_op_${i}`}
-                      className="absolute left-3 top-0 z-10 -translate-y-1/2 rounded bg-[#e8f0eb] px-2 py-0.5 text-[11px] font-semibold text-[#2d5a41]"
+                      className="absolute left-3 top-0 z-10 -translate-y-1/2 rounded bg-card-muted px-2 py-0.5 text-[11px] font-semibold text-brand"
                     >
                       Opción {i + 1}
                     </label>
@@ -371,7 +371,7 @@ export default function RegistroSalonPage() {
                           ? "Ej.: Entrada + plato principal (pollo o pescado) + postre + bebidas…"
                           : "Descripción de esta opción"
                       }
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 pb-2.5 pt-4 text-[13px] text-gray-900 placeholder-gray-400 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                      className="w-full rounded-lg border border-border bg-input px-3 pb-2.5 pt-4 text-[13px] text-foreground placeholder:text-muted outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
                     />
                   </div>
                 ))}
@@ -407,7 +407,7 @@ export default function RegistroSalonPage() {
             />
 
             {error && (
-              <p className="rounded-lg bg-red-50 px-4 py-2 text-center text-sm font-medium text-red-600">
+              <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-center text-sm font-medium text-red-600 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
                 {error}
               </p>
             )}
@@ -415,7 +415,7 @@ export default function RegistroSalonPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-lg bg-brand py-3 text-center text-base font-semibold text-white transition-colors hover:bg-[#24503a] disabled:opacity-60"
+              className="w-full rounded-lg bg-brand py-3 text-center text-base font-semibold text-white transition-colors hover:brightness-95 disabled:opacity-60 dark:text-zinc-950"
             >
               {loading ? "Registrando…" : "Crear cuenta"}
             </button>
