@@ -1,21 +1,7 @@
-import { randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import type { Database, TipoUsuario } from "@/lib/database.types";
 import { adminServiceClient, requireSalonAdmin } from "@/lib/adminSalonAuth";
-import { dniValido, soloDigitos } from "@/lib/registroSalon";
-
-/**
- * `usuarios.dni` es UNIQUE NOT NULL: varios usuarios con DNI vacío o el mismo valor rompen el trigger.
- * Si no hay DNI válido, generamos un identificador único (mismo criterio que import de invitados).
- */
-function dniParaAltaUsuario(input: unknown): string {
-  if (typeof input !== "string") {
-    return `SG${randomUUID().replace(/-/g, "")}`;
-  }
-  const d = soloDigitos(input);
-  if (dniValido(d)) return d;
-  return `SG${randomUUID().replace(/-/g, "")}`;
-}
+import { dniFinalParaAltaUsuario, dniNormalizadoDesdeFormulario, dniProvisorioUsuario } from "@/lib/dniUsuarioForm";
 
 const TIPOS_SALON: TipoUsuario[] = ["administrador", "anfitrion", "jefe_cocina", "seguridad"];
 
@@ -129,7 +115,7 @@ export async function POST(req: NextRequest) {
   const cuitInv = typeof inviter.cuit === "string" ? inviter.cuit.trim() : "";
   const habInv = typeof inviter.habilitacion_numero === "string" ? inviter.habilitacion_numero.trim() : "";
 
-  const dniFinal = dniParaAltaUsuario(dni);
+  const dniFinal = dniFinalParaAltaUsuario(dni);
 
   if (!dniFinal.startsWith("SG")) {
     const { data: dniOcupado } = await db.from("usuarios").select("id").eq("dni", dniFinal).maybeSingle();
@@ -187,8 +173,15 @@ export async function POST(req: NextRequest) {
   }
 
   if (tipo === "administrador") {
+    const { data: nuevoAuth, error: gErr } = await db.auth.admin.getUserById(newId);
+    if (gErr || !nuevoAuth?.user) {
+      await db.auth.admin.deleteUser(newId);
+      return NextResponse.json({ error: gErr?.message ?? "No se pudo leer el usuario creado." }, { status: 500 });
+    }
+    const prevMeta = { ...(nuevoAuth.user.user_metadata as Record<string, unknown>) };
     const { error: metaErr } = await db.auth.admin.updateUserById(newId, {
       user_metadata: {
+        ...prevMeta,
         nombre,
         apellido,
         dni: dniFinal,
@@ -233,6 +226,37 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "No autorizado a editar este usuario." }, { status: 403 });
   }
 
+  const { data: filaActual, error: curErr } = await db.from("usuarios").select("dni").eq("id", id).maybeSingle();
+  if (curErr) {
+    return NextResponse.json({ error: curErr.message }, { status: 500 });
+  }
+
+  const dniNorm = dniNormalizadoDesdeFormulario(dni);
+  const dniEnBlanco =
+    dni == null ||
+    (typeof dni === "string" && !dni.trim()) ||
+    (typeof dni === "number" && !Number.isFinite(dni));
+
+  let dniFinalPut: string;
+  if (dniNorm) {
+    dniFinalPut = dniNorm;
+  } else if (dniEnBlanco) {
+    const actual = (filaActual?.dni ?? "").trim();
+    dniFinalPut = actual || dniProvisorioUsuario();
+  } else {
+    return NextResponse.json(
+      { error: "DNI: ingresá entre 7 y 10 dígitos (sin puntos ni guiones) o dejá el campo vacío para mantener el actual." },
+      { status: 400 }
+    );
+  }
+
+  if (!dniFinalPut.startsWith("SG")) {
+    const { data: dniOcupado } = await db.from("usuarios").select("id").eq("dni", dniFinalPut).neq("id", id).maybeSingle();
+    if (dniOcupado) {
+      return NextResponse.json({ error: "Ya existe otro usuario con ese DNI." }, { status: 409 });
+    }
+  }
+
   const maxInvPut = tipoFinal === "anfitrion" ? (max_invitados ?? 0) : 0;
 
   const { error: profileError } = await db
@@ -240,7 +264,7 @@ export async function PUT(req: NextRequest) {
     .update({
       nombre,
       apellido,
-      dni,
+      dni: dniFinalPut,
       email,
       tipo: tipoFinal,
       max_invitados: maxInvPut,
@@ -251,7 +275,21 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: profileError.message }, { status: 500 });
   }
 
-  const updateAuthPayload: Record<string, unknown> = { email };
+  const { data: authSnap, error: gAuthErr } = await db.auth.admin.getUserById(id);
+  if (gAuthErr || !authSnap?.user) {
+    return NextResponse.json({ error: gAuthErr?.message ?? "No se pudo leer el usuario en Auth." }, { status: 500 });
+  }
+  const metaPrev = { ...(authSnap.user.user_metadata as Record<string, unknown>) };
+  const updateAuthPayload: Record<string, unknown> = {
+    email,
+    user_metadata: {
+      ...metaPrev,
+      dni: dniFinalPut,
+      nombre,
+      apellido,
+      tipo: tipoFinal,
+    },
+  };
   if (password) updateAuthPayload.password = password;
 
   const { error: authError } = await db.auth.admin.updateUserById(id, updateAuthPayload);

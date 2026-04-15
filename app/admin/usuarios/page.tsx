@@ -270,8 +270,17 @@ export default function UsuariosPage() {
 
               <div>
                 <label className="mb-1 block text-[11px] font-medium text-muted">DNI</label>
-                <input className={inp} placeholder="Ej: 30456789" value={form.dni}
-                  onChange={(e) => f("dni", e.target.value)} />
+                <input
+                  className={inp}
+                  inputMode="numeric"
+                  autoComplete="off"
+                  placeholder="7 a 10 dígitos, sin puntos (opcional)"
+                  value={form.dni}
+                  onChange={(e) => f("dni", e.target.value)}
+                />
+                <p className="mt-1 text-[10px] leading-snug text-muted">
+                  Si lo dejás vacío, el sistema asigna un identificador interno único. Si lo completás, solo dígitos (se ignoran puntos y guiones).
+                </p>
               </div>
 
               <div>
