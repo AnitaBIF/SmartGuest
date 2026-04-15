@@ -1,6 +1,5 @@
 "use client";
 
-import { HostSidebar } from "../components/HostSidebar";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 /* ─── Tipos ─── */
@@ -41,7 +40,6 @@ export default function SmartSeatPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
-  const [userName, setUserName] = useState("Anfitrión");
   /** Evita pisar mesas sin guardar al refrescar en segundo plano. */
   const layoutDirtyRef = useRef(false);
   const savingRef = useRef(false);
@@ -102,17 +100,6 @@ export default function SmartSeatPage() {
       }
 
       setTables(tableDatas);
-
-      try {
-        const resEvt = await fetch("/api/anfitrion/evento");
-        if (resEvt.ok) {
-          const evtData = await resEvt.json();
-          const n = evtData?.usuario?.nombre;
-          if (typeof n === "string" && n.trim()) setUserName(n.trim());
-        }
-      } catch {
-        /* ignore */
-      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -293,17 +280,14 @@ export default function SmartSeatPage() {
   /* ─── Render ─── */
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-foreground">
-        <p className="text-brand text-lg font-semibold animate-pulse">Cargando SmartSeat…</p>
-      </div>
+      <main className="flex min-h-[50vh] min-w-0 flex-1 items-center justify-center pb-8 text-foreground">
+        <p className="animate-pulse text-lg font-semibold text-brand">Cargando SmartSeat…</p>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen text-foreground">
-      <div className="mx-auto max-w-7xl px-6 py-8 text-foreground lg:grid lg:grid-cols-[16rem_1fr] lg:gap-6">
-        <HostSidebar hostName={userName} active="smartseat" />
-        <main className="pb-8">
+    <main className="min-w-0 max-w-7xl flex-1 pb-8">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <div>
               <h1 className="text-2xl font-semibold text-brand">SmartSeat</h1>
@@ -472,8 +456,6 @@ export default function SmartSeatPage() {
               </p>
             </aside>
           </div>
-        </main>
-      </div>
-    </div>
+    </main>
   );
 }

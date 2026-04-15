@@ -55,6 +55,7 @@ export default function Sidebar() {
             <Link
               key={href}
               href={href}
+              prefetch
               onClick={closeOnNavigate ? () => setMenuOpen(false) : undefined}
               className={`block py-1.5 pl-1 pr-2 text-[13px] transition-colors ${active ? "font-semibold text-brand" : "text-foreground hover:text-brand"}`}
             >

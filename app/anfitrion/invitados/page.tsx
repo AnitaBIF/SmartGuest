@@ -9,7 +9,6 @@ import {
   type FormEvent,
 } from "react";
 import { LeyendaObligatorios, Req } from "@/components/FormRequired";
-import { HostSidebar } from "../components/HostSidebar";
 import { downloadInvitadosPlantilla } from "@/lib/invitadosPlantillaExcel";
 import { parseInvitadosExcelFile } from "@/lib/parseInvitadosExcel";
 
@@ -850,11 +849,7 @@ export default function GestionInvitadosPage() {
   };
 
   return (
-    <div className="min-h-screen text-foreground">
-      <div className="mx-auto flex w-full max-w-[min(100%,1680px)] gap-6 px-4 py-8 text-foreground sm:px-6 lg:px-8">
-        <HostSidebar hostName={hostName} active="invitados" />
-
-        <main className="min-w-0 flex-1 pb-8">
+    <main className="min-w-0 flex-1 pb-8">
           <header className="mb-6 flex items-center justify-between md:hidden">
             <Logo />
           </header>
@@ -965,7 +960,7 @@ export default function GestionInvitadosPage() {
                       </div>
                       <div className="space-y-3 text-[11px]">
                         <div>
-                          <label className="mb-1 block font-medium text-[#4b5563]">
+                          <label className="mb-1 block font-medium text-foreground">
                             Asistencia
                           </label>
                           <select
@@ -973,7 +968,7 @@ export default function GestionInvitadosPage() {
                             onChange={(e) =>
                               setFiltroAsistencia((e.target.value || "") as "" | Asistencia)
                             }
-                            className="w-full rounded-xl border border-[#d1d5db] bg-white px-3 py-2 text-xs text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                            className="w-full rounded-xl border border-border bg-input px-3 py-2 text-xs text-foreground outline-none placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/20"
                           >
                             <option value="">Todas</option>
                             <option value="Pendiente">Pendiente</option>
@@ -982,13 +977,13 @@ export default function GestionInvitadosPage() {
                           </select>
                         </div>
                         <div>
-                          <label className="mb-1 block font-medium text-[#4b5563]">
+                          <label className="mb-1 block font-medium text-foreground">
                             Grupo
                           </label>
                           <select
                             value={filtroGrupo}
                             onChange={(e) => setFiltroGrupo(e.target.value)}
-                            className="w-full rounded-xl border border-[#d1d5db] bg-white px-3 py-2 text-xs text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                            className="w-full rounded-xl border border-border bg-input px-3 py-2 text-xs text-foreground outline-none placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/20"
                           >
                             <option value="">Todos</option>
                             {opcionesGrupo.map((g) => (
@@ -999,13 +994,13 @@ export default function GestionInvitadosPage() {
                           </select>
                         </div>
                         <div>
-                          <label className="mb-1 block font-medium text-[#4b5563]">
+                          <label className="mb-1 block font-medium text-foreground">
                             Rango etario
                           </label>
                           <select
                             value={filtroRango}
                             onChange={(e) => setFiltroRango(e.target.value)}
-                            className="w-full rounded-xl border border-[#d1d5db] bg-white px-3 py-2 text-xs text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                            className="w-full rounded-xl border border-border bg-input px-3 py-2 text-xs text-foreground outline-none placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/20"
                           >
                             <option value="">Todos</option>
                             {opcionesRango.map((r) => (
@@ -1016,7 +1011,7 @@ export default function GestionInvitadosPage() {
                           </select>
                         </div>
                         <div>
-                          <label className="mb-1 block font-medium text-[#4b5563]">
+                          <label className="mb-1 block font-medium text-foreground">
                             EcoGuest
                           </label>
                           <select
@@ -1024,7 +1019,7 @@ export default function GestionInvitadosPage() {
                             onChange={(e) =>
                               setFiltroEco((e.target.value || "") as "" | "Sí" | "No")
                             }
-                            className="w-full rounded-xl border border-[#d1d5db] bg-white px-3 py-2 text-xs text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                            className="w-full rounded-xl border border-border bg-input px-3 py-2 text-xs text-foreground outline-none placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/20"
                           >
                             <option value="">Todos</option>
                             <option value="Sí">Sí</option>
@@ -1184,8 +1179,8 @@ export default function GestionInvitadosPage() {
 
           {/* Superposición: Cargar Excel */}
           {openExcel && (
-            <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4">
-              <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl">
+            <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4 dark:bg-black/55">
+              <div className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-xl ring-1 ring-[var(--ring-soft)]">
                 <div className="mb-4 flex items-center justify-between">
                   <h2 className="text-base font-semibold text-brand">
                     Cargar invitados desde Excel
@@ -1193,12 +1188,12 @@ export default function GestionInvitadosPage() {
                   <button
                     type="button"
                     onClick={() => setOpenExcel(false)}
-                    className="text-sm text-[#6b7280] hover:text-foreground"
+                    className="text-sm text-muted hover:text-foreground"
                   >
                     ✕
                   </button>
                 </div>
-                <p className="mb-4 text-xs text-[#4b5563]">
+                <p className="mb-4 text-xs text-muted">
                   Usá la plantilla descargada: columnas obligatorias{" "}
                   <strong>Nombre completo</strong>, <strong>Celular</strong>,{" "}
                   <strong>Grupo</strong> y <strong>Rango etario</strong>. La hoja
@@ -1235,8 +1230,8 @@ export default function GestionInvitadosPage() {
                   }}
                   className={`mb-4 flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-4 py-10 text-center text-xs transition-colors ${
                     excelDragOver
-                      ? "border-brand bg-[#e8f4ec] text-[#166534]"
-                      : "border-[#cbd5e1] bg-[#f9fafb] text-[#6b7280] hover:bg-[#f3f4f6]"
+                      ? "border-brand bg-brand/10 text-brand dark:bg-brand/20"
+                      : "border-border bg-card-muted text-muted hover:bg-card-muted/80"
                   }`}
                 >
                   <span className="mb-2 font-medium text-brand">
@@ -1244,11 +1239,11 @@ export default function GestionInvitadosPage() {
                       ? "Soltá el archivo acá"
                       : "Arrastrá el Excel acá o hacé clic para elegir"}
                   </span>
-                  <span className="text-[#6b7280]">
+                  <span className="text-muted">
                     .xls, .xlsx — máx. 10 MB
                   </span>
                   {excelSelectedFile && (
-                    <span className="mt-3 max-w-full truncate rounded-full bg-white px-3 py-1 text-[11px] font-medium text-foreground ring-1 ring-[#d1d5db]">
+                    <span className="mt-3 max-w-full truncate rounded-full bg-card-muted px-3 py-1 text-[11px] font-medium text-foreground ring-1 ring-border">
                       {excelSelectedFile.name}
                     </span>
                   )}
@@ -1270,7 +1265,7 @@ export default function GestionInvitadosPage() {
                   />
                 </label>
                 {importSummary && (
-                  <p className="mb-3 rounded-xl bg-[#f0fdf4] px-3 py-2 text-[11px] text-[#166534] ring-1 ring-[#bbf7d0]">
+                  <p className="mb-3 rounded-xl bg-emerald-50 px-3 py-2 text-[11px] text-emerald-900 ring-1 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-200 dark:ring-emerald-900/50">
                     {importSummary}
                   </p>
                 )}
@@ -1278,7 +1273,7 @@ export default function GestionInvitadosPage() {
                   <button
                     type="button"
                     onClick={() => setOpenExcel(false)}
-                    className="rounded-full border border-[#d1d5db] px-4 py-1.5 text-xs font-medium text-[#374151] hover:bg-[#f3f4f6]"
+                    className="rounded-full border border-border bg-card-muted px-4 py-1.5 text-xs font-medium text-foreground hover:bg-card-muted/80"
                   >
                     Cancelar
                   </button>
@@ -1297,8 +1292,8 @@ export default function GestionInvitadosPage() {
 
           {/* Superposición: Carga manual */}
           {openManual && (
-            <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4">
-              <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl">
+            <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4 dark:bg-black/55">
+              <div className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-xl ring-1 ring-[var(--ring-soft)]">
                 <div className="mb-4 flex items-center justify-between">
                   <h2 className="text-base font-semibold text-brand">
                     Carga manual de invitado
@@ -1306,15 +1301,15 @@ export default function GestionInvitadosPage() {
                   <button
                     type="button"
                     onClick={() => setOpenManual(false)}
-                    className="text-sm text-[#6b7280] hover:text-foreground"
+                    className="text-sm text-muted hover:text-foreground"
                   >
                     ✕
                   </button>
                 </div>
                 <form onSubmit={(e) => void handleManualSubmit(e)} className="space-y-3">
-                  <LeyendaObligatorios className="text-[11px] text-[#6b7280]" />
+                  <LeyendaObligatorios className="text-[11px] text-muted" />
                   <div>
-                    <label className="block text-[11px] font-medium text-[#4b5563]">
+                    <label className="block text-[11px] font-medium text-foreground">
                       Nombre completo
                       <Req />
                     </label>
@@ -1322,11 +1317,11 @@ export default function GestionInvitadosPage() {
                       name="nombre"
                       type="text"
                       required
-                      className="mt-1 w-full rounded-xl border border-[#d1d5db] px-3 py-2 text-xs text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                      className="mt-1 w-full rounded-xl border border-border bg-input px-3 py-2 text-xs text-foreground outline-none placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/20"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-medium text-[#4b5563]">
+                    <label className="block text-[11px] font-medium text-foreground">
                       Número de celular
                       <Req />
                     </label>
@@ -1334,11 +1329,11 @@ export default function GestionInvitadosPage() {
                       name="celular"
                       type="tel"
                       required
-                      className="mt-1 w-full rounded-xl border border-[#d1d5db] px-3 py-2 text-xs text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                      className="mt-1 w-full rounded-xl border border-border bg-input px-3 py-2 text-xs text-foreground outline-none placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/20"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-medium text-[#4b5563]">
+                    <label className="block text-[11px] font-medium text-foreground">
                       Grupo
                       <Req />
                     </label>
@@ -1346,11 +1341,11 @@ export default function GestionInvitadosPage() {
                       name="grupo"
                       type="text"
                       required
-                      className="mt-1 w-full rounded-xl border border-[#d1d5db] px-3 py-2 text-xs text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                      className="mt-1 w-full rounded-xl border border-border bg-input px-3 py-2 text-xs text-foreground outline-none placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/20"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-medium text-[#4b5563]">
+                    <label className="block text-[11px] font-medium text-foreground">
                       Rango etario
                       <Req />
                     </label>
@@ -1358,11 +1353,11 @@ export default function GestionInvitadosPage() {
                       name="rango"
                       type="text"
                       required
-                      className="mt-1 w-full rounded-xl border border-[#d1d5db] px-3 py-2 text-xs text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                      className="mt-1 w-full rounded-xl border border-border bg-input px-3 py-2 text-xs text-foreground outline-none placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/20"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-medium text-[#4b5563]">
+                    <label className="block text-[11px] font-medium text-foreground">
                       Cupos grupo <span className="font-normal text-[#9ca3af]">(1–20)</span>
                     </label>
                     <input
@@ -1371,7 +1366,7 @@ export default function GestionInvitadosPage() {
                       min={1}
                       max={20}
                       defaultValue={1}
-                      className="mt-1 w-full rounded-xl border border-[#d1d5db] px-3 py-2 text-xs text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                      className="mt-1 w-full rounded-xl border border-border bg-input px-3 py-2 text-xs text-foreground outline-none placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/20"
                     />
                     <p className="mt-0.5 text-[10px] text-[#9ca3af]">
                       Personas cubiertas por esta invitación (default 1). EcoGuest / SmartPool solo si el valor es entre 1
@@ -1379,26 +1374,26 @@ export default function GestionInvitadosPage() {
                     </p>
                   </div>
                   <div>
-                    <label className="block text-[11px] font-medium text-[#4b5563]">
+                    <label className="block text-[11px] font-medium text-foreground">
                       DNI <span className="font-normal text-[#9ca3af]">(opcional)</span>
                     </label>
                     <input
                       name="dni"
                       type="text"
-                      className="mt-1 w-full rounded-xl border border-[#d1d5db] px-3 py-2 text-xs text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                      className="mt-1 w-full rounded-xl border border-border bg-input px-3 py-2 text-xs text-foreground outline-none placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/20"
                     />
                     <p className="mt-0.5 text-[10px] text-[#9ca3af]">
                       Si lo dejás vacío, se genera un código interno hasta que el invitado complete su perfil.
                     </p>
                   </div>
                   <div>
-                    <label className="block text-[11px] font-medium text-[#4b5563]">
+                    <label className="block text-[11px] font-medium text-foreground">
                       Email <span className="font-normal text-[#9ca3af]">(opcional)</span>
                     </label>
                     <input
                       name="email"
                       type="email"
-                      className="mt-1 w-full rounded-xl border border-[#d1d5db] px-3 py-2 text-xs text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                      className="mt-1 w-full rounded-xl border border-border bg-input px-3 py-2 text-xs text-foreground outline-none placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/20"
                     />
                     <p className="mt-0.5 text-[10px] text-[#9ca3af]">
                       Si ya tiene cuenta o querés invitarlo por mail. Si no, se crea un acceso provisional.
@@ -1408,7 +1403,7 @@ export default function GestionInvitadosPage() {
                     <button
                       type="button"
                       onClick={() => setOpenManual(false)}
-                      className="rounded-full border border-[#d1d5db] px-4 py-1.5 text-xs font-medium text-[#374151] hover:bg-[#f3f4f6]"
+                      className="rounded-full border border-border bg-card-muted px-4 py-1.5 text-xs font-medium text-foreground hover:bg-card-muted/80"
                     >
                       Cancelar
                     </button>
@@ -1427,8 +1422,8 @@ export default function GestionInvitadosPage() {
 
           {/* Superposición: Editar / eliminar invitado */}
           {openEdit && invitadoActual && (
-            <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4">
-              <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl">
+            <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4 dark:bg-black/55">
+              <div className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-xl ring-1 ring-[var(--ring-soft)]">
                 <div className="mb-4 flex items-center justify-between">
                   <h2 className="text-base font-semibold text-brand">
                     Editar invitado
@@ -1439,7 +1434,7 @@ export default function GestionInvitadosPage() {
                       setOpenEdit(false);
                       setEditIndex(null);
                     }}
-                    className="text-sm text-[#6b7280] hover:text-foreground"
+                    className="text-sm text-muted hover:text-foreground"
                   >
                     ✕
                   </button>
@@ -1449,30 +1444,30 @@ export default function GestionInvitadosPage() {
                   onSubmit={(e) => void handleEditSubmit(e)}
                   className="space-y-3"
                 >
-                  <LeyendaObligatorios className="text-[11px] text-[#6b7280]" />
+                  <LeyendaObligatorios className="text-[11px] text-muted" />
                   <div>
-                    <label className="block text-[11px] font-medium text-[#4b5563]">
+                    <label className="block text-[11px] font-medium text-foreground">
                       Nombre completo
                       <Req />
                     </label>
                     <input
                       name="nombre"
                       defaultValue={invitadoActual.nombre}
-                      className="mt-1 w-full rounded-xl border border-[#d1d5db] px-3 py-2 text-xs text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                      className="mt-1 w-full rounded-xl border border-border bg-input px-3 py-2 text-xs text-foreground outline-none placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/20"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-medium text-[#4b5563]">
+                    <label className="block text-[11px] font-medium text-foreground">
                       DNI
                     </label>
                     <input
                       name="dni"
                       defaultValue={invitadoActual.dni}
-                      className="mt-1 w-full rounded-xl border border-[#d1d5db] px-3 py-2 text-xs text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                      className="mt-1 w-full rounded-xl border border-border bg-input px-3 py-2 text-xs text-foreground outline-none placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/20"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-medium text-[#4b5563]">
+                    <label className="block text-[11px] font-medium text-foreground">
                       Celular
                       <Req />
                     </label>
@@ -1480,35 +1475,35 @@ export default function GestionInvitadosPage() {
                       name="telefono"
                       type="tel"
                       defaultValue={invitadoActual.telefono}
-                      className="mt-1 w-full rounded-xl border border-[#d1d5db] px-3 py-2 text-xs text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                      className="mt-1 w-full rounded-xl border border-border bg-input px-3 py-2 text-xs text-foreground outline-none placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/20"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[11px] font-medium text-[#4b5563]">
+                      <label className="block text-[11px] font-medium text-foreground">
                         Grupo
                         <Req />
                       </label>
                       <input
                         name="grupo"
                         defaultValue={invitadoActual.grupo}
-                        className="mt-1 w-full rounded-xl border border-[#d1d5db] px-3 py-2 text-xs text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                        className="mt-1 w-full rounded-xl border border-border bg-input px-3 py-2 text-xs text-foreground outline-none placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/20"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-medium text-[#4b5563]">
+                      <label className="block text-[11px] font-medium text-foreground">
                         Rango etario
                         <Req />
                       </label>
                       <input
                         name="rango"
                         defaultValue={invitadoActual.rango}
-                        className="mt-1 w-full rounded-xl border border-[#d1d5db] px-3 py-2 text-xs text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                        className="mt-1 w-full rounded-xl border border-border bg-input px-3 py-2 text-xs text-foreground outline-none placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/20"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-[11px] font-medium text-[#4b5563]">
+                    <label className="block text-[11px] font-medium text-foreground">
                       Cupos máx. grupo familiar <span className="font-normal text-[#9ca3af]">(1–20)</span>
                     </label>
                     <input
@@ -1517,21 +1512,21 @@ export default function GestionInvitadosPage() {
                       min={1}
                       max={20}
                       defaultValue={invitadoActual.grupoCuposMax ?? 1}
-                      className="mt-1 w-full rounded-xl border border-[#d1d5db] px-3 py-2 text-xs text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                      className="mt-1 w-full rounded-xl border border-border bg-input px-3 py-2 text-xs text-foreground outline-none placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/20"
                     />
                     <p className="mt-0.5 text-[10px] text-[#9ca3af]">
                       EcoGuest solo con 1–5. Más de 5: sin insignia ni pool.
                     </p>
                   </div>
                   <div>
-                    <label className="block text-[11px] font-medium text-[#4b5563]">
+                    <label className="block text-[11px] font-medium text-foreground">
                       Restricciones alimentarias
                       <Req />
                     </label>
                     <select
                       name="restriccion"
                       defaultValue={invitadoActual.restriccionSelect}
-                      className="mt-1 w-full rounded-xl border border-[#d1d5db] bg-white px-3 py-2 text-xs text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                      className="mt-1 w-full rounded-xl border border-border bg-input px-3 py-2 text-xs text-foreground outline-none placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/20"
                     >
                       {opcionesRestriccionEdit.map((op) => (
                         <option key={op} value={op}>
@@ -1542,27 +1537,27 @@ export default function GestionInvitadosPage() {
                   </div>
                   {opcionesRestriccionEdit.includes("Otro") && (
                     <div>
-                      <label className="block text-[11px] font-medium text-[#4b5563]">
+                      <label className="block text-[11px] font-medium text-foreground">
                         Detalle si elegís «Otro»
                       </label>
                       <input
                         name="restriccionOtro"
                         defaultValue={invitadoActual.restriccionOtro}
                         placeholder="Especificá la restricción"
-                        className="mt-1 w-full rounded-xl border border-[#d1d5db] px-3 py-2 text-xs text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                        className="mt-1 w-full rounded-xl border border-border bg-input px-3 py-2 text-xs text-foreground outline-none placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/20"
                       />
                     </div>
                   )}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[11px] font-medium text-[#4b5563]">
+                      <label className="block text-[11px] font-medium text-foreground">
                         Asistencia
                         <Req />
                       </label>
                       <select
                         name="asistencia"
                         defaultValue={invitadoActual.asistencia}
-                        className="mt-1 w-full rounded-xl border border-[#d1d5db] bg-white px-3 py-2 text-xs text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                        className="mt-1 w-full rounded-xl border border-border bg-input px-3 py-2 text-xs text-foreground outline-none placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/20"
                       >
                         <option value="Pendiente">Pendiente</option>
                         <option value="Asiste">Asiste</option>
@@ -1570,14 +1565,14 @@ export default function GestionInvitadosPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[11px] font-medium text-[#4b5563]">
+                      <label className="block text-[11px] font-medium text-foreground">
                         EcoGuest
                         <Req />
                       </label>
                       <select
                         name="eco"
                         defaultValue={invitadoActual.eco}
-                        className="mt-1 w-full rounded-xl border border-[#d1d5db] bg-white px-3 py-2 text-xs text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                        className="mt-1 w-full rounded-xl border border-border bg-input px-3 py-2 text-xs text-foreground outline-none placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/20"
                       >
                         <option value="Sí">Sí</option>
                         <option value="No">No</option>
@@ -1600,7 +1595,7 @@ export default function GestionInvitadosPage() {
                           setOpenEdit(false);
                           setEditIndex(null);
                         }}
-                        className="rounded-full border border-[#d1d5db] px-4 py-1.5 text-xs font-medium text-[#374151] hover:bg-[#f3f4f6]"
+                        className="rounded-full border border-border bg-card-muted px-4 py-1.5 text-xs font-medium text-foreground hover:bg-card-muted/80"
                       >
                         Cancelar
                       </button>
@@ -1617,9 +1612,7 @@ export default function GestionInvitadosPage() {
               </div>
             </div>
           )}
-        </main>
-      </div>
-    </div>
+    </main>
   );
 }
 

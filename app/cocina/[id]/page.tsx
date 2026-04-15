@@ -13,9 +13,12 @@ const ESTADOS: { key: Estado; label: string; color: string }[] = [
 ];
 
 const CARD_BG: Record<Estado, string> = {
-  pendiente:   "bg-[#e8f5ed] ring-[#c5dece]",
-  preparacion: "bg-[#fefce8] ring-[#fde68a]",
-  despachado:  "bg-[#d1fae5] ring-[#6ee7b7]",
+  pendiente:
+    "border border-border bg-card ring-1 ring-[var(--ring-soft)]",
+  preparacion:
+    "border border-amber-200/80 bg-amber-50 ring-1 ring-amber-200/60 dark:border-amber-800/50 dark:bg-amber-950/30 dark:ring-amber-900/40",
+  despachado:
+    "border border-emerald-200/80 bg-emerald-50 ring-1 ring-emerald-200/60 dark:border-emerald-800/50 dark:bg-emerald-950/35 dark:ring-emerald-900/40",
 };
 
 function Semaforo({ estado }: { estado: Estado }) {
@@ -38,37 +41,37 @@ function MesaCard({ mesa, estado, onEstado }: { mesa: Mesa; estado: Estado; onEs
   const total = mesa.menus.standard + mesa.menus.celiaco + mesa.menus.vegVeg + mesa.menus.otros;
 
   return (
-    <div className={`flex flex-col rounded-3xl p-5 ring-1 shadow-sm transition-colors duration-300 ${CARD_BG[estado]}`}>
+    <div className={`flex flex-col rounded-3xl p-5 shadow-sm transition-colors duration-300 ${CARD_BG[estado]}`}>
       <div className="mb-3 flex items-start justify-between">
         <div>
-          <h3 className="text-[15px] font-bold text-[#1a3d28]">
+          <h3 className="text-[15px] font-bold text-brand">
             {mesa.numero === 0 ? "Sin mesa asignada" : `Mesa ${mesa.numero}`}
           </h3>
-          <p className="text-[11px] text-[#4b7a5e]">{total} cubiertos</p>
+          <p className="text-[11px] text-muted">{total} cubiertos</p>
         </div>
         <Semaforo estado={estado} />
       </div>
 
-      <ul className="mb-4 space-y-1 text-[13px] text-[#374151]">
+      <ul className="mb-4 space-y-1 text-[13px] text-muted">
         {mesa.menus.standard > 0 && (
-          <li className="flex justify-between"><span>Menú standard</span><span className="font-semibold text-[#1a3d28]">{mesa.menus.standard}</span></li>
+          <li className="flex justify-between"><span>Menú standard</span><span className="font-semibold text-brand">{mesa.menus.standard}</span></li>
         )}
         {mesa.menus.celiaco > 0 && (
-          <li className="flex justify-between"><span>Menú Celíaco</span><span className="font-semibold text-[#1a3d28]">{mesa.menus.celiaco}</span></li>
+          <li className="flex justify-between"><span>Menú Celíaco</span><span className="font-semibold text-brand">{mesa.menus.celiaco}</span></li>
         )}
         {mesa.menus.vegVeg > 0 && (
-          <li className="flex justify-between"><span>Menú Vegetariano/Vegano</span><span className="font-semibold text-[#1a3d28]">{mesa.menus.vegVeg}</span></li>
+          <li className="flex justify-between"><span>Menú Vegetariano/Vegano</span><span className="font-semibold text-brand">{mesa.menus.vegVeg}</span></li>
         )}
         {mesa.menus.otros > 0 && (
           <li className="flex justify-between gap-2">
-            <span className="text-[#6b7280]">{mesa.menus.otrosDetalle ?? "Otros"}</span>
-            <span className="flex-shrink-0 font-semibold text-[#1a3d28]">{mesa.menus.otros}</span>
+            <span>{mesa.menus.otrosDetalle ?? "Otros"}</span>
+            <span className="flex-shrink-0 font-semibold text-brand">{mesa.menus.otros}</span>
           </li>
         )}
-        {total === 0 && <li className="text-[#9ca3af]">Sin invitados asignados</li>}
+        {total === 0 && <li className="text-muted">Sin invitados asignados</li>}
       </ul>
 
-      <div className="mt-auto flex overflow-hidden rounded-2xl border border-[#c5dece]">
+      <div className="mt-auto flex divide-x divide-border overflow-hidden rounded-2xl border border-border">
         {ESTADOS.map(({ key, label, color }) => {
           const active = estado === key;
           return (
@@ -76,13 +79,10 @@ function MesaCard({ mesa, estado, onEstado }: { mesa: Mesa; estado: Estado; onEs
               key={key}
               type="button"
               onClick={() => onEstado(key)}
-              style={{
-                flex: 1,
-                backgroundColor: active ? color : "#ffffff",
-                color: active ? "#ffffff" : "#6b7280",
-                borderRight: key !== "despachado" ? "1px solid #c5dece" : undefined,
-              }}
-              className="py-2 px-1 text-[11px] font-semibold leading-tight transition-colors"
+              style={active ? { backgroundColor: color, color: "#ffffff" } : undefined}
+              className={`flex-1 py-2 px-1 text-[11px] font-semibold leading-tight transition-colors ${
+                active ? "" : "bg-card-muted text-muted hover:text-foreground"
+              }`}
             >
               {label}
             </button>
@@ -118,8 +118,8 @@ export default function EventoDetallePage({ params }: { params: Promise<{ id: st
       .catch(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <div className="flex min-h-screen items-center justify-center"><p className="text-[#9ca3af]">Cargando...</p></div>;
-  if (!evento) return <div className="flex min-h-screen items-center justify-center"><p className="text-[#6b7280]">Evento no encontrado.</p></div>;
+  if (loading) return <div className="flex min-h-screen items-center justify-center"><p className="text-muted">Cargando...</p></div>;
+  if (!evento) return <div className="flex min-h-screen items-center justify-center"><p className="text-muted">Evento no encontrado.</p></div>;
 
   const getEstado = (mesaId: string | number): Estado => estados[mesaId] ?? "pendiente";
   const setEstado = (mesaId: string | number, e: Estado) => {
@@ -179,7 +179,7 @@ export default function EventoDetallePage({ params }: { params: Promise<{ id: st
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button type="button" onClick={handlePrint}
-                className="flex items-center gap-2 rounded-full bg-[#2d5a41] px-5 py-2.5 text-[13px] font-semibold text-white shadow hover:bg-[#24503a] transition-colors">
+                className="flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-[13px] font-semibold text-white shadow transition-colors hover:brightness-95">
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
                   <rect x="6" y="14" width="12" height="8"/>
@@ -189,18 +189,18 @@ export default function EventoDetallePage({ params }: { params: Promise<{ id: st
               <div className="flex items-center gap-3 text-[13px]">
                 <span className="flex items-center gap-1">
                   <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#f59e0b]" />
-                  <span className="text-[#6b7280]">{enPreparacion} en preparación</span>
+                  <span className="text-muted">{enPreparacion} en preparación</span>
                 </span>
                 <span className="flex items-center gap-1">
                   <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#22c55e]" />
-                  <span className="text-[#6b7280]">{despachadas}/{totalMesas} despachadas</span>
+                  <span className="text-muted">{despachadas}/{totalMesas} despachadas</span>
                 </span>
               </div>
             </div>
             <h1 className="text-xl font-bold text-brand">Evento del día {evento.fecha}</h1>
           </div>
 
-          <div className="mb-6 h-2.5 w-full overflow-hidden rounded-full bg-[#e0ede6]">
+          <div className="mb-6 h-2.5 w-full overflow-hidden rounded-full bg-card-muted">
             <div className="flex h-full">
               <div className="h-full rounded-l-full bg-[#22c55e] transition-all duration-500" style={{ width: `${pctDespachado}%` }} />
               <div className={`h-full bg-[#f59e0b] transition-all duration-500 ${pctDespachado === 0 ? "rounded-l-full" : ""}`}

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AdminSidebar } from "../components/AdminSidebar";
 import type { EventoCocina } from "../../cocina/data";
 
 function printReporte(ev: EventoCocina) {
@@ -89,17 +88,13 @@ export default function AdminCocinaPage() {
   }, []);
 
   return (
-    <div className="min-h-screen text-foreground">
-      <div className="mx-auto flex min-h-screen max-w-6xl gap-6 px-4 py-6 text-foreground sm:px-6 lg:px-8">
-        <AdminSidebar active="cocina" />
-
-        <main className="flex-1 pb-8">
+    <main className="min-w-0 flex-1 pb-8">
           <h1 className="mb-8 text-right text-2xl font-bold text-brand">Reporte de Cocina</h1>
 
-          {loading && <p className="text-center text-[#9ca3af]">Cargando eventos...</p>}
+          {loading && <p className="text-center text-muted">Cargando eventos...</p>}
 
           {!loading && eventos.length === 0 && (
-            <p className="text-center text-[#9ca3af]">No hay eventos con mesas creadas.</p>
+            <p className="text-center text-muted">No hay eventos con mesas creadas.</p>
           )}
 
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -107,29 +102,44 @@ export default function AdminCocinaPage() {
               const tot = totalMenus(ev);
               const grand = tot.standard + tot.celiaco + tot.vegVeg + tot.otros;
               return (
-                <div key={ev.id} className="flex flex-col justify-between rounded-3xl bg-[#e8f5ed] p-6 shadow-sm ring-1 ring-[#c5dece]">
+                <div
+                  key={ev.id}
+                  className="flex flex-col justify-between rounded-3xl border border-border bg-card p-6 shadow-sm ring-1 ring-[var(--ring-soft)]"
+                >
                   <div>
-                    <h3 className="mb-0.5 text-[15px] font-bold text-[#1a3d28]">Evento del día {ev.fecha}</h3>
-                    <p className="mb-1 text-[11px] text-[#4b7a5e]">{ev.titulo}</p>
-                    <p className="mb-4 text-[10px] text-[#9ca3af]">{ev.mesas.length} mesas</p>
+                    <h3 className="mb-0.5 text-[15px] font-bold text-brand">Evento del día {ev.fecha}</h3>
+                    <p className="mb-1 text-[11px] text-muted">{ev.titulo}</p>
+                    <p className="mb-4 text-[10px] text-muted/90">{ev.mesas.length} mesas</p>
 
-                    <ul className="space-y-1 text-[13px] text-[#374151]">
-                      <li className="flex justify-between"><span>Menú standard</span>         <span className="font-semibold text-[#1a3d28]">{tot.standard}</span></li>
-                      <li className="flex justify-between"><span>Menú Celíaco</span>           <span className="font-semibold text-[#1a3d28]">{tot.celiaco}</span></li>
-                      <li className="flex justify-between"><span>Menú Vegetariano/Vegano</span><span className="font-semibold text-[#1a3d28]">{tot.vegVeg}</span></li>
-                      <li className="flex justify-between"><span>Otros</span>                  <span className="font-semibold text-[#1a3d28]">{tot.otros}</span></li>
+                    <ul className="space-y-1 text-[13px] text-foreground">
+                      <li className="flex justify-between gap-2">
+                        <span className="text-muted">Menú standard</span>
+                        <span className="font-semibold text-brand">{tot.standard}</span>
+                      </li>
+                      <li className="flex justify-between gap-2">
+                        <span className="text-muted">Menú Celíaco</span>
+                        <span className="font-semibold text-brand">{tot.celiaco}</span>
+                      </li>
+                      <li className="flex justify-between gap-2">
+                        <span className="text-muted">Menú Vegetariano/Vegano</span>
+                        <span className="font-semibold text-brand">{tot.vegVeg}</span>
+                      </li>
+                      <li className="flex justify-between gap-2">
+                        <span className="text-muted">Otros</span>
+                        <span className="font-semibold text-brand">{tot.otros}</span>
+                      </li>
                     </ul>
 
-                    <div className="mt-3 flex items-center justify-between rounded-xl bg-[#2d5a41]/10 px-3 py-2">
-                      <span className="text-[12px] font-semibold text-[#2d5a41]">Total cubiertos</span>
-                      <span className="text-[15px] font-bold text-[#2d5a41]">{grand}</span>
+                    <div className="mt-3 flex items-center justify-between rounded-xl border border-border bg-card-muted px-3 py-2">
+                      <span className="text-[12px] font-semibold text-foreground">Total cubiertos</span>
+                      <span className="text-[15px] font-bold text-brand">{grand}</span>
                     </div>
                   </div>
 
                   <button
                     type="button"
                     onClick={() => printReporte(ev)}
-                    className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-[#2d5a41] py-2.5 text-[13px] font-semibold text-white shadow hover:bg-[#24503a] transition-colors"
+                    className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-brand py-2.5 text-[13px] font-semibold text-white shadow transition-colors hover:brightness-95"
                   >
                     <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
@@ -141,8 +151,6 @@ export default function AdminCocinaPage() {
               );
             })}
           </div>
-        </main>
-      </div>
-    </div>
+    </main>
   );
 }

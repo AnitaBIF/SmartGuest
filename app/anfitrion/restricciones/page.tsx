@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { HostSidebar } from "../components/HostSidebar";
 import { mapUiMenuToInvitadoColumns } from "@/lib/grupoFamiliar";
 
 function Logo() {
@@ -82,20 +81,20 @@ function etiquetaRestriccion(g: GuestApi): string {
 function badgeAsistencia(a: AsistenciaDb) {
   if (a === "confirmado") {
     return (
-      <span className="rounded-full bg-[#dcfce7] px-2 py-0.5 text-[10px] font-semibold text-[#166534]">
+      <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-900 dark:bg-emerald-950/55 dark:text-emerald-200">
         Confirmado
       </span>
     );
   }
   if (a === "rechazado") {
     return (
-      <span className="rounded-full bg-[#fee2e2] px-2 py-0.5 text-[10px] font-semibold text-[#991b1b]">
+      <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-900 dark:bg-red-950/50 dark:text-red-200">
         No asiste
       </span>
     );
   }
   return (
-    <span className="rounded-full bg-[#f3f4f6] px-2 py-0.5 text-[10px] font-semibold text-[#4b5563]">
+    <span className="rounded-full bg-zinc-200 px-2 py-0.5 text-[10px] font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
       Pendiente
     </span>
   );
@@ -104,7 +103,6 @@ function badgeAsistencia(a: AsistenciaDb) {
 export default function RestriccionesPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [userName, setUserName] = useState("Anfitrión");
   const [mesas, setMesas] = useState<MesaApi[]>([]);
   const [guests, setGuests] = useState<GuestApi[]>([]);
 
@@ -112,16 +110,7 @@ export default function RestriccionesPage() {
     setLoading(true);
     setLoadError(null);
     try {
-      const [resSeat, resEvt] = await Promise.all([
-        fetch("/api/anfitrion/smartseat", { cache: "no-store" }),
-        fetch("/api/anfitrion/evento", { cache: "no-store" }),
-      ]);
-
-      if (resEvt.ok) {
-        const evt = await resEvt.json();
-        const n = evt?.usuario?.nombre;
-        if (typeof n === "string" && n.trim()) setUserName(n.trim());
-      }
+      const resSeat = await fetch("/api/anfitrion/smartseat", { cache: "no-store" });
 
       if (!resSeat.ok) {
         const err = await resSeat.json().catch(() => ({}));
@@ -223,11 +212,7 @@ export default function RestriccionesPage() {
   }, [guests, mesaIdsValidas]);
 
   return (
-    <div className="min-h-screen text-foreground">
-      <div className="mx-auto flex max-w-6xl gap-6 px-6 py-8 text-foreground">
-        <HostSidebar hostName={userName} active="restricciones" />
-
-        <main className="flex-1 pb-8">
+    <main className="min-w-0 flex-1 pb-8">
           <header className="mb-6 flex items-center justify-between md:hidden">
             <Logo />
           </header>
@@ -237,43 +222,43 @@ export default function RestriccionesPage() {
           </div>
 
           {loading ? (
-            <p className="text-[13px] text-[#6b7280]">Cargando invitados y mesas…</p>
+            <p className="text-[13px] text-muted">Cargando invitados y mesas…</p>
           ) : loadError ? (
-            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-800">
+            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
               {loadError}
             </div>
           ) : (
             <>
-              <p className="mb-4 text-[12px] text-[#6b7280]">
+              <p className="mb-4 text-[12px] text-muted">
                 Los totales de arriba son solo de invitados con <strong>asistencia confirmada</strong> (igual que en el
                 resumen). Si alguien confirmó un <strong>grupo familiar</strong>, cada menú de cada persona suma al
                 conteo. Abajo ves a todos los invitados agrupados por mesa (SmartSeat).
               </p>
 
               <section className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="rounded-2xl bg-[linear-gradient(135deg,#2d5a41,#3f7a52)] px-5 py-4 text-white shadow-md shadow-brand/40">
+                <div className="rounded-2xl bg-[linear-gradient(135deg,#2d5a41,#3f7a52)] px-5 py-4 text-white shadow-md shadow-brand/40 dark:bg-[linear-gradient(135deg,#1e3d2d,#2a5240)] dark:shadow-black/40">
                   <p className="text-xs font-medium opacity-90">Menú Standard</p>
                   <p className="mt-2 text-2xl font-semibold leading-none">{conteosConfirmados.standard}</p>
                 </div>
-                <div className="rounded-2xl bg-[linear-gradient(135deg,#2d5a41,#3f7a52)] px-5 py-4 text-white shadow-md shadow-brand/40">
+                <div className="rounded-2xl bg-[linear-gradient(135deg,#2d5a41,#3f7a52)] px-5 py-4 text-white shadow-md shadow-brand/40 dark:bg-[linear-gradient(135deg,#1e3d2d,#2a5240)] dark:shadow-black/40">
                   <p className="text-xs font-medium opacity-90">Menú Celíaco</p>
                   <p className="mt-2 text-2xl font-semibold leading-none">{conteosConfirmados.celiaco}</p>
                 </div>
-                <div className="rounded-2xl bg-[linear-gradient(135deg,#2d5a41,#3f7a52)] px-5 py-4 text-white shadow-md shadow-brand/40">
+                <div className="rounded-2xl bg-[linear-gradient(135deg,#2d5a41,#3f7a52)] px-5 py-4 text-white shadow-md shadow-brand/40 dark:bg-[linear-gradient(135deg,#1e3d2d,#2a5240)] dark:shadow-black/40">
                   <p className="text-xs font-medium opacity-90">Menú Vegetariano/Vegano</p>
                   <p className="mt-2 text-2xl font-semibold leading-none">{conteosConfirmados.vegetariano}</p>
                 </div>
-                <div className="rounded-2xl bg-[linear-gradient(135deg,#2d5a41,#3f7a52)] px-5 py-4 text-white shadow-md shadow-brand/40">
+                <div className="rounded-2xl bg-[linear-gradient(135deg,#2d5a41,#3f7a52)] px-5 py-4 text-white shadow-md shadow-brand/40 dark:bg-[linear-gradient(135deg,#1e3d2d,#2a5240)] dark:shadow-black/40">
                   <p className="text-xs font-medium opacity-90">Otro menú especial</p>
                   <p className="mt-2 text-2xl font-semibold leading-none">{conteosConfirmados.otro}</p>
                 </div>
               </section>
 
-              <hr className="mb-6 border-t border-[#d1e3d7]" />
+              <hr className="mb-6 border-t border-border" />
 
               <section className="space-y-8">
                 {mesas.length === 0 && guests.length === 0 ? (
-                  <p className="text-[13px] text-[#6b7280]">Todavía no hay invitados cargados en este evento.</p>
+                  <p className="text-[13px] text-muted">Todavía no hay invitados cargados en este evento.</p>
                 ) : (
                   <>
                     {mesas.map((mesa) => {
@@ -284,22 +269,22 @@ export default function RestriccionesPage() {
                             Mesa {mesa.numero}
                           </h2>
                           {enMesa.length === 0 ? (
-                            <p className="text-[12px] text-[#9ca3af]">Nadie asignado a esta mesa en SmartSeat.</p>
+                            <p className="text-[12px] text-muted">Nadie asignado a esta mesa en SmartSeat.</p>
                           ) : (
                             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                               {enMesa.map((g) => (
                                 <div
                                   key={g.id}
-                                  className="rounded-2xl bg-[#f5fbf7] px-4 py-4 text-left shadow-[0_18px_35px_rgba(0,0,0,0.04)] ring-1 ring-[#e3efe8]"
+                                  className="rounded-2xl border border-border bg-card px-4 py-4 text-left shadow-sm ring-1 ring-[var(--ring-soft)]"
                                 >
                                   <div className="flex flex-wrap items-center justify-between gap-2">
                                     <p className="text-sm font-semibold text-foreground">{g.name}</p>
                                     {badgeAsistencia(g.asistencia)}
                                   </div>
-                                  <p className="mt-2 whitespace-pre-line text-[12px] leading-snug text-[#374151]">
+                                  <p className="mt-2 whitespace-pre-line text-[12px] leading-snug text-muted">
                                     {etiquetaRestriccion(g)}
                                   </p>
-                                  <p className="mt-1 text-[10px] text-[#9ca3af]">Grupo: {g.grupo}</p>
+                                  <p className="mt-1 text-[10px] text-muted">Grupo: {g.grupo}</p>
                                 </div>
                               ))}
                             </div>
@@ -310,20 +295,20 @@ export default function RestriccionesPage() {
 
                     {mesaDesconocida.length > 0 && (
                       <div>
-                        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-amber-800">
+                        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-amber-900 dark:text-amber-200">
                           Mesa no encontrada (revisá SmartSeat)
                         </h2>
                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                           {mesaDesconocida.map((g) => (
                             <div
                               key={g.id}
-                              className="rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-4 text-left"
+                              className="rounded-2xl border border-amber-200 bg-amber-50/90 px-4 py-4 text-left dark:border-amber-800/50 dark:bg-amber-950/35"
                             >
                               <div className="flex flex-wrap items-center justify-between gap-2">
                                 <p className="text-sm font-semibold text-foreground">{g.name}</p>
                                 {badgeAsistencia(g.asistencia)}
                               </div>
-                              <p className="mt-2 whitespace-pre-line text-[12px] text-[#374151]">
+                              <p className="mt-2 whitespace-pre-line text-[12px] text-muted dark:text-amber-100/90">
                                 {etiquetaRestriccion(g)}
                               </p>
                             </div>
@@ -334,26 +319,26 @@ export default function RestriccionesPage() {
 
                     {sinMesa.length > 0 && (
                       <div>
-                        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#6b7280]">
+                        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted">
                           Sin mesa asignada
                         </h2>
-                        <p className="mb-3 text-[11px] text-[#9ca3af]">
+                        <p className="mb-3 text-[11px] text-muted">
                           Asigná mesas desde <Link href="/anfitrion/smartseat" className="font-semibold text-brand underline">SmartSeat</Link>.
                         </p>
                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                           {sinMesa.map((g) => (
                             <div
                               key={g.id}
-                              className="rounded-2xl bg-[#fafafa] px-4 py-4 text-left shadow-sm ring-1 ring-[#e5e7eb]"
+                              className="rounded-2xl border border-border bg-card px-4 py-4 text-left shadow-sm ring-1 ring-[var(--ring-soft)]"
                             >
                               <div className="flex flex-wrap items-center justify-between gap-2">
                                 <p className="text-sm font-semibold text-foreground">{g.name}</p>
                                 {badgeAsistencia(g.asistencia)}
                               </div>
-                              <p className="mt-2 whitespace-pre-line text-[12px] leading-snug text-[#374151]">
+                              <p className="mt-2 whitespace-pre-line text-[12px] leading-snug text-muted">
                                 {etiquetaRestriccion(g)}
                               </p>
-                              <p className="mt-1 text-[10px] text-[#9ca3af]">Grupo: {g.grupo}</p>
+                              <p className="mt-1 text-[10px] text-muted">Grupo: {g.grupo}</p>
                             </div>
                           ))}
                         </div>
@@ -364,8 +349,6 @@ export default function RestriccionesPage() {
               </section>
             </>
           )}
-        </main>
-      </div>
-    </div>
+    </main>
   );
 }

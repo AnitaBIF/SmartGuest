@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { LeyendaObligatorios, Req } from "@/components/FormRequired";
-import { AdminSidebar } from "../components/AdminSidebar";
 
 /* ─── Tipos ─── */
 const TIPOS_DB = ["administrador", "anfitrion", "jefe_cocina", "seguridad"] as const;
@@ -158,11 +157,8 @@ export default function UsuariosPage() {
   const f = (k: keyof FormState, v: string) => setForm((p) => ({ ...p, [k]: v }));
 
   return (
-    <div className="min-h-screen text-foreground">
-      <div className="mx-auto flex min-h-screen max-w-6xl gap-6 px-4 py-6 text-foreground sm:px-6 lg:px-8">
-        <AdminSidebar active="usuarios" />
-
-        <main className="flex-1 pb-8">
+    <>
+    <main className="min-w-0 flex-1 pb-8">
           {/* Header */}
           <div className="mb-8 flex items-center justify-between">
             <button
@@ -232,8 +228,7 @@ export default function UsuariosPage() {
               )}
             </div>
           </section>
-        </main>
-      </div>
+    </main>
 
       {/* ─── Toast ─── */}
       {toast && (
@@ -397,6 +392,6 @@ export default function UsuariosPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

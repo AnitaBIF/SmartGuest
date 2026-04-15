@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { AdminSidebar } from "../components/AdminSidebar";
 import { LeyendaObligatorios, Req } from "@/components/FormRequired";
 import { MENUS_ESPECIALES_CATALOGO } from "@/lib/grupoFamiliar";
 import {
@@ -169,14 +168,9 @@ export default function AdminConfiguracionPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen text-foreground">
-        <div className="mx-auto flex min-h-screen max-w-5xl gap-6 px-4 py-6 sm:px-6">
-          <AdminSidebar active="configuracion" />
-          <main className="flex flex-1 items-center justify-center">
-            <p className="text-muted">Cargando...</p>
-          </main>
-        </div>
-      </div>
+      <main className="flex min-h-[50vh] min-w-0 flex-1 items-center justify-center pb-8">
+        <p className="text-muted">Cargando...</p>
+      </main>
     );
   }
 
@@ -184,11 +178,7 @@ export default function AdminConfiguracionPage() {
   const passwordCambio = newPassword.length > 0 || newPasswordConfirm.length > 0;
 
   return (
-    <div className="min-h-screen text-foreground">
-      <div className="mx-auto flex min-h-screen max-w-5xl gap-6 px-4 py-6 sm:px-6">
-        <AdminSidebar active="configuracion" />
-
-        <main className="flex-1 pb-8">
+    <main className="mx-auto min-w-0 max-w-5xl flex-1 pb-8">
           <h1 className="mb-8 text-right text-2xl font-bold text-brand">Configuración</h1>
 
           <div className="mb-6 rounded-2xl border border-border bg-card-muted px-5 py-4 text-[13px] leading-relaxed text-foreground">
@@ -386,8 +376,6 @@ export default function AdminConfiguracionPage() {
               )}
             </div>
           </div>
-        </main>
-      </div>
-    </div>
+    </main>
   );
 }

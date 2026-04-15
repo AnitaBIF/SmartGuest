@@ -1,11 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { HostSidebar } from "../components/HostSidebar";
 import { LeyendaObligatorios, Req } from "@/components/FormRequired";
 
 const inp =
-  "flex-1 rounded-full border border-[#d1d5db] bg-white px-4 py-2 text-[13px] text-foreground outline-none focus:border-[#2d5a41] focus:ring-2 focus:ring-[#2d5a41]/20";
+  "flex-1 rounded-full border border-border bg-input px-4 py-2 text-[13px] text-foreground outline-none placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/20";
 
 function Field({
   label,
@@ -18,7 +17,7 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-1 sm:flex-row sm:items-center">
-      <label className="w-full text-[13px] text-[#374151] sm:w-52 sm:text-right sm:pr-5">
+      <label className="w-full text-[13px] text-foreground sm:w-52 sm:text-right sm:pr-5">
         {label}
         {required ? <Req /> : null}
       </label>
@@ -28,7 +27,6 @@ function Field({
 }
 
 export default function AnfitrionConfiguracionPage() {
-  const [hostName, setHostName] = useState("Anfitrión");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [guardado, setGuardado] = useState(false);
@@ -60,8 +58,6 @@ export default function AnfitrionConfiguracionPage() {
       const em = typeof data.email === "string" ? data.email : "";
       setEmail(em);
       setEmailInicial(em.trim().toLowerCase());
-      const display = `${data.nombre ?? ""} ${data.apellido ?? ""}`.trim();
-      if (display) setHostName(display);
     } catch {
       setError("Error de conexión.");
     } finally {
@@ -72,16 +68,6 @@ export default function AnfitrionConfiguracionPage() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  useEffect(() => {
-    fetch("/api/anfitrion/evento")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        const n = d?.usuario?.nombre;
-        if (typeof n === "string" && n.trim()) setHostName(n.trim());
-      })
-      .catch(() => {});
-  }, []);
 
   const handleGuardar = async () => {
     setSaving(true);
@@ -113,8 +99,7 @@ export default function AnfitrionConfiguracionPage() {
       setNewPassword("");
       setNewPasswordConfirm("");
       await load();
-      const full = `${nombre.trim()} ${apellido.trim()}`.trim();
-      if (full) setHostName(full);
+      window.dispatchEvent(new Event("smartguest:anfitrion-perfil-actualizado"));
     } catch {
       setError("Error de conexión.");
     } finally {
@@ -124,14 +109,9 @@ export default function AnfitrionConfiguracionPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen text-foreground">
-        <div className="mx-auto flex min-h-screen max-w-5xl gap-6 px-4 py-6 sm:px-6">
-          <HostSidebar hostName={hostName} active="configuracion" />
-          <main className="flex flex-1 items-center justify-center">
-            <p className="text-[#9ca3af]">Cargando...</p>
-          </main>
-        </div>
-      </div>
+      <main className="flex min-h-[50vh] min-w-0 flex-1 items-center justify-center pb-8">
+        <p className="text-muted">Cargando...</p>
+      </main>
     );
   }
 
@@ -139,26 +119,22 @@ export default function AnfitrionConfiguracionPage() {
   const passwordCambio = newPassword.length > 0 || newPasswordConfirm.length > 0;
 
   return (
-    <div className="min-h-screen text-foreground">
-      <div className="mx-auto flex min-h-screen max-w-5xl gap-6 px-4 py-6 sm:px-6">
-        <HostSidebar hostName={hostName} active="configuracion" />
-
-        <main className="flex-1 pb-8">
+    <main className="mx-auto min-w-0 max-w-3xl flex-1 pb-8">
           <h1 className="mb-8 text-right text-2xl font-bold text-brand">Configuración</h1>
 
-          <div className="mb-6 rounded-2xl border border-[#c5dece] bg-[#f0f7f2] px-5 py-4 text-[13px] leading-relaxed text-[#374151]">
-            <p className="font-semibold text-[#2d5a41]">Tu cuenta y datos personales</p>
+          <div className="mb-6 rounded-2xl border border-border bg-card-muted px-5 py-4 text-[13px] leading-relaxed text-muted ring-1 ring-[var(--ring-soft)]">
+            <p className="font-semibold text-brand">Tu cuenta y datos personales</p>
             <p className="mt-2">
               La <strong>fecha, el lugar, los cupos y el contrato del evento</strong> no se modifican desde acá: eso se coordina con el salón.
             </p>
           </div>
 
-          <div className="rounded-3xl bg-white p-8 shadow ring-1 ring-[#e5efe8]">
+          <div className="rounded-3xl border border-border bg-card p-8 shadow ring-1 ring-[var(--ring-soft)]">
             <h2 className="mb-4 text-[18px] font-semibold text-foreground">Datos de acceso y contacto</h2>
-            <LeyendaObligatorios className="mb-6 text-[12px] text-[#6b7280]" />
+            <LeyendaObligatorios className="mb-6 text-[12px] text-muted" />
 
             {error && (
-              <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-800">
+              <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
                 {error}
               </div>
             )}
@@ -177,9 +153,9 @@ export default function AnfitrionConfiguracionPage() {
                 <input className={inp} type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
               </Field>
 
-              <div className="border-t border-[#e5e7eb] pt-6">
+              <div className="border-t border-border pt-6">
                 <p className="mb-4 text-[14px] font-medium text-foreground">Contraseña</p>
-                <p className="mb-4 text-[12px] text-[#6b7280]">
+                <p className="mb-4 text-[12px] text-muted">
                   Para cambiar email o contraseña, completá tu contraseña actual.
                 </p>
                 <div className="space-y-5">
@@ -221,13 +197,12 @@ export default function AnfitrionConfiguracionPage() {
                 type="button"
                 onClick={() => void handleGuardar()}
                 disabled={saving}
-                className="rounded-xl px-12 py-3 text-base font-bold text-white transition-colors disabled:opacity-60"
-                style={{ backgroundColor: "#2d5a41" }}
+                className="rounded-xl bg-brand px-12 py-3 text-base font-bold text-white transition-colors hover:brightness-95 disabled:opacity-60"
               >
                 {saving ? "Guardando..." : "Guardar cambios"}
               </button>
               {guardado && (
-                <p className="flex items-center gap-1.5 text-[13px] font-semibold text-[#16a34a]">
+                <p className="flex items-center gap-1.5 text-[13px] font-semibold text-emerald-600 dark:text-emerald-400">
                   <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="2 8 6 12 14 4" />
                   </svg>
@@ -236,8 +211,6 @@ export default function AnfitrionConfiguracionPage() {
               )}
             </div>
           </div>
-        </main>
-      </div>
-    </div>
+    </main>
   );
 }

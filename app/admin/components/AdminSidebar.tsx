@@ -43,6 +43,7 @@ export function AdminSidebar({ active }: { active: AdminSidebarHighlight }) {
             <Link
               key={key}
               href={href}
+              prefetch
               onClick={closeOnNavigate ? () => setMenuOpen(false) : undefined}
               className="block py-1.5 pl-1 pr-2 text-[13px] text-foreground hover:text-brand"
             >

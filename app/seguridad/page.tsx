@@ -15,21 +15,23 @@ type GuestInfo = {
 type Estado = "scanning" | "valid" | "invalid" | "validating";
 
 /* ─── Logo ─── */
-function Logo({ dark }: { dark?: boolean }) {
-  const c = dark ? "#2d5a41" : "white";
+function Logo({ className = "text-white" }: { className?: string }) {
   return (
-    <span className="text-xl font-extrabold tracking-tight" style={{ color: c }}>
-      SMART<span className="font-normal" style={{ fontFamily: "var(--font-poppins)", color: c }}>GUEST</span>
+    <span className={`text-xl font-extrabold tracking-tight ${className}`}>
+      SMART
+      <span className="font-normal" style={{ fontFamily: "var(--font-poppins)" }}>
+        GUEST
+      </span>
     </span>
   );
 }
 
 function SadFace() {
   return (
-    <svg viewBox="0 0 60 60" className="h-16 w-16" fill="none">
-      <circle cx="20" cy="22" r="4" fill="#2d5a41" />
-      <circle cx="40" cy="22" r="4" fill="#2d5a41" />
-      <path d="M18 44 Q30 34 42 44" stroke="#2d5a41" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+    <svg viewBox="0 0 60 60" className="h-16 w-16 text-brand" fill="none" aria-hidden>
+      <circle cx="20" cy="22" r="4" className="fill-current" />
+      <circle cx="40" cy="22" r="4" className="fill-current" />
+      <path d="M18 44 Q30 34 42 44" className="stroke-current" strokeWidth="3.5" strokeLinecap="round" />
     </svg>
   );
 }
@@ -119,10 +121,10 @@ export default function SeguridadPage() {
 
   if (estado === "validating") {
     return (
-      <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-[#3a3a3a] px-6">
-        <Logo />
-        <p className="mt-8 text-center text-lg font-medium text-white">Verificando código…</p>
-        <p className="mt-2 max-w-xs text-center text-sm text-white/60">Un momento por favor.</p>
+      <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-background px-6 text-foreground">
+        <Logo className="text-brand" />
+        <p className="mt-8 text-center text-lg font-medium">Verificando código…</p>
+        <p className="mt-2 max-w-xs text-center text-sm text-muted">Un momento por favor.</p>
       </div>
     );
   }
@@ -138,7 +140,7 @@ export default function SeguridadPage() {
           >
             Cerrar sesión
           </button>
-          <Logo />
+          <Logo className="text-white" />
         </header>
 
         <div className="flex flex-1 flex-col items-center justify-center px-6 pb-12">
@@ -182,45 +184,45 @@ export default function SeguridadPage() {
 
   if (estado === "valid" && guest) {
     return (
-      <div className="flex min-h-[100dvh] flex-col bg-white">
+      <div className="flex min-h-[100dvh] flex-col bg-background text-foreground">
         <header className="flex items-center justify-between px-6 pt-6 pb-2">
           <button
             type="button"
             onClick={reset}
-            className="rounded-full border border-[#d1d5db] px-4 py-2 text-[13px] font-medium text-[#374151] transition-colors hover:bg-[#f3f4f6]"
+            className="rounded-full border border-border bg-card-muted px-4 py-2 text-[13px] font-medium text-foreground transition-colors hover:bg-card-muted/80"
           >
             ← Volver
           </button>
-          <Logo dark />
+          <Logo className="text-brand" />
         </header>
 
         <div className="flex flex-1 flex-col items-center justify-center px-8 pb-16 text-center">
-          <p className="mb-2 rounded-full bg-[#ecfdf5] px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-[#166534]">
+          <p className="mb-2 rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-900 dark:bg-emerald-950/55 dark:text-emerald-200">
             Verificado
           </p>
-          <h1 className="mb-2 text-4xl font-extrabold" style={{ color: "#2d5a41" }}>
+          <h1 className="mb-2 text-4xl font-extrabold text-brand">
             {guest.nombre}
           </h1>
-          <p className="mb-6 text-sm text-[#6b7280]">{guest.evento}</p>
+          <p className="mb-6 text-sm text-muted">{guest.evento}</p>
 
           <div className="mb-8 space-y-2">
-            <p className="text-lg text-[#4b5563]">
-              DNI: <span className="font-semibold">{guest.dni}</span>
+            <p className="text-lg text-muted">
+              DNI: <span className="font-semibold text-foreground">{guest.dni}</span>
             </p>
-            <p className="text-lg text-[#4b5563]">
+            <p className="text-lg text-muted">
               Mesa:{" "}
-              <span className="font-semibold">{guest.mesa != null ? `N° ${guest.mesa}` : "Sin asignar"}</span>
+              <span className="font-semibold text-foreground">{guest.mesa != null ? `N° ${guest.mesa}` : "Sin asignar"}</span>
             </p>
           </div>
 
-          <p className="mb-4 text-base font-semibold" style={{ color: "#2d5a41" }}>
+          <p className="mb-4 text-base font-semibold text-brand">
             Corroborá el DNI con el documento.
           </p>
           {guest.ingresoAt && (
-            <p className="mb-6 max-w-sm text-[13px] leading-relaxed text-[#4b5563]">
+            <p className="mb-6 max-w-sm text-[13px] leading-relaxed text-muted">
               {guest.primerIngreso ? (
                 <>
-                  <span className="font-semibold text-[#166534]">Ingreso registrado</span> en el sistema (
+                  <span className="font-semibold text-emerald-700 dark:text-emerald-400">Ingreso registrado</span> en el sistema (
                   {new Date(guest.ingresoAt).toLocaleString("es-AR", {
                     day: "numeric",
                     month: "short",
@@ -232,7 +234,7 @@ export default function SeguridadPage() {
                 </>
               ) : (
                 <>
-                  <span className="font-semibold text-[#92400e]">Ya había ingresado antes.</span> Primer registro:{" "}
+                  <span className="font-semibold text-amber-800 dark:text-amber-300">Ya había ingresado antes.</span> Primer registro:{" "}
                   {new Date(guest.ingresoAt).toLocaleString("es-AR", {
                     day: "numeric",
                     month: "short",
@@ -246,12 +248,12 @@ export default function SeguridadPage() {
             </p>
           )}
 
-          <div className="mb-10 flex h-24 w-24 items-center justify-center rounded-full" style={{ backgroundColor: "#dcfce7" }}>
+          <div className="mb-10 flex h-24 w-24 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/50">
             <svg
               viewBox="0 0 24 24"
-              className="h-14 w-14"
+              className="h-14 w-14 text-emerald-600 dark:text-emerald-400"
               fill="none"
-              stroke="#16a34a"
+              stroke="currentColor"
               strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -263,8 +265,7 @@ export default function SeguridadPage() {
           <button
             type="button"
             onClick={reset}
-            className="rounded-full px-10 py-3 text-base font-semibold text-white shadow transition-colors"
-            style={{ backgroundColor: "#2d5a41" }}
+            className="rounded-full bg-brand px-10 py-3 text-base font-semibold text-white shadow transition-colors hover:brightness-95"
           >
             Escanear otro
           </button>
@@ -274,27 +275,27 @@ export default function SeguridadPage() {
   }
 
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-white">
+    <div className="flex min-h-[100dvh] flex-col bg-background text-foreground">
       <header className="flex items-center justify-between px-6 pt-6 pb-2">
         <button
           type="button"
           onClick={reset}
-          className="rounded-full border border-[#d1d5db] px-4 py-2 text-[13px] font-medium text-[#374151] transition-colors hover:bg-[#f3f4f6]"
+          className="rounded-full border border-border bg-card-muted px-4 py-2 text-[13px] font-medium text-foreground transition-colors hover:bg-card-muted/80"
         >
           ← Volver
         </button>
-        <Logo dark />
+        <Logo className="text-brand" />
       </header>
 
       <div className="flex flex-1 flex-col items-center justify-center px-8 pb-16 text-center">
-        <h1 className="mb-4 text-3xl font-extrabold" style={{ color: "#2d5a41" }}>
+        <h1 className="mb-4 text-3xl font-extrabold text-brand">
           Código no válido
         </h1>
-        {invalidMsg && <p className="mb-6 max-w-sm text-sm text-[#6b7280]">{invalidMsg}</p>}
+        {invalidMsg && <p className="mb-6 max-w-sm text-sm text-muted">{invalidMsg}</p>}
 
         <SadFace />
 
-        <div className="my-10 flex h-24 w-24 items-center justify-center rounded-full" style={{ backgroundColor: "#ef4444" }}>
+        <div className="my-10 flex h-24 w-24 items-center justify-center rounded-full bg-red-500">
           <svg viewBox="0 0 24 24" className="h-12 w-12" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
@@ -304,8 +305,7 @@ export default function SeguridadPage() {
         <button
           type="button"
           onClick={reset}
-          className="rounded-full px-10 py-3 text-base font-semibold text-white shadow transition-colors"
-          style={{ backgroundColor: "#2d5a41" }}
+          className="rounded-full bg-brand px-10 py-3 text-base font-semibold text-white shadow transition-colors hover:brightness-95"
         >
           Intentar de nuevo
         </button>

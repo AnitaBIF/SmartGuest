@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { LeyendaObligatorios, Req } from "@/components/FormRequired";
-import { AdminSidebar } from "./components/AdminSidebar";
 import { MENUS_ESPECIALES_CATALOGO } from "@/lib/grupoFamiliar";
 import { parseSalonMenuStandardToOpciones } from "@/lib/salonMenuStandardOpciones";
 import { supabase } from "@/lib/supabase";
@@ -958,11 +957,8 @@ export default function AdminDashboard() {
   const mes2Year  = mes1Month === 11 ? mes1Year + 1 : mes1Year;
 
   return (
-    <div className="min-h-screen text-foreground">
-      <div className="mx-auto flex min-h-screen max-w-6xl gap-6 px-4 py-6 text-foreground sm:px-6 lg:px-8">
-        <AdminSidebar active="dashboard" />
-
-        <main className="min-w-0 flex-1 pb-8">
+    <>
+    <main className="min-w-0 flex-1 pb-8">
           <h1 className="mb-6 text-right text-2xl font-bold text-brand">Dashboard</h1>
 
           {/* Stat cards */}
@@ -1044,8 +1040,7 @@ export default function AdminDashboard() {
               Crear evento nuevo
             </button>
           </div>
-        </main>
-      </div>
+    </main>
 
       {/* Modal crear evento: scroll interno para que todo el formulario sea accesible */}
       {showEventoModal && (
@@ -1332,6 +1327,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

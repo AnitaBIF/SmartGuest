@@ -1,8 +1,6 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
-import { HostSidebar } from "./components/HostSidebar";
 
 function Logo() {
   return (
@@ -139,11 +137,8 @@ type EventoData = {
 };
 
 export default function AnfitrionDashboard() {
-  const [openLink, setOpenLink] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [data, setData] = useState<EventoData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [anfitrionName, setAnfitrionName] = useState("Anfitrión");
 
   useEffect(() => {
     let cancelled = false;
@@ -156,7 +151,6 @@ export default function AnfitrionDashboard() {
           if (cancelled) return;
           if (d) {
             setData(d);
-            setAnfitrionName(d.usuario.nombre || "Anfitrión");
           }
           setLoading(false);
         })
@@ -187,19 +181,6 @@ export default function AnfitrionDashboard() {
     };
   }, []);
 
-  const invitationUrl = data
-    ? `${window.location.origin}/invitacion/${data.evento.id}`
-    : "";
-
-  const handleCopy = () => {
-    if (navigator && "clipboard" in navigator && invitationUrl) {
-      navigator.clipboard.writeText(invitationUrl).then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      }).catch(() => {});
-    }
-  };
-
   const stats = data?.stats ?? {
     confirmados: 0,
     invitacionesConfirmadas: 0,
@@ -224,27 +205,14 @@ export default function AnfitrionDashboard() {
   })();
 
   return (
-    <div className="min-h-screen text-foreground">
-      <div className="mx-auto flex min-h-screen max-w-6xl gap-6 px-4 py-6 sm:px-6 lg:px-8 text-foreground">
-        {/* Sidebar */}
-        <HostSidebar hostName={anfitrionName} active="resumen" />
-
-        {/* Main content */}
-        <main className="flex-1 pb-8">
+    <main className="min-w-0 flex-1 pb-8">
           <header className="mb-6 flex items-center justify-between md:hidden">
             <Logo />
           </header>
 
           {/* Top header */}
-          <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-            <button
-              type="button"
-              onClick={() => setOpenLink(true)}
-              className="rounded-full bg-brand px-6 py-2 text-sm font-medium text-white shadow-md shadow-brand/30"
-            >
-              Link de invitación
-            </button>
-            <h1 className="text-xl font-semibold text-brand sm:text-2xl">
+          <div className="mb-6 flex flex-col items-end justify-between gap-4 sm:flex-row sm:items-center">
+            <h1 className="w-full text-right text-xl font-semibold text-brand sm:text-2xl">
               Resumen de tu evento
             </h1>
           </div>
@@ -353,57 +321,7 @@ export default function AnfitrionDashboard() {
               </ul>
             )}
           </section>
-
-          {/* Superposición: Link de invitación */}
-          {openLink && (
-            <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4 dark:bg-black/55">
-              <div className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-xl ring-1 ring-[var(--ring-soft)]">
-                <div className="mb-4 flex items-center justify-between">
-                  <h2 className="text-base font-semibold text-brand">
-                    Link de invitación
-                  </h2>
-                  <button
-                    type="button"
-                    onClick={() => setOpenLink(false)}
-                    className="text-sm text-muted hover:text-foreground"
-                  >
-                    ✕
-                  </button>
-                </div>
-                <p className="mb-2 text-xs text-muted">
-                  Comparte este enlace con tus invitados para que confirmen su
-                  asistencia al evento.
-                </p>
-                <p className="mb-3 rounded-xl border border-border bg-card-muted px-3 py-2 text-[11px] leading-relaxed text-foreground ring-1 ring-[var(--ring-soft)]">
-                  Si cargaste invitados por Excel o carga manual, enviá a cada uno el{" "}
-                  <strong>enlace personal</strong> desde Gestión de invitados (ícono de enlace en la tabla).
-                  Así la confirmación actualiza su fila (asistencia y restricciones). Este enlace es el genérico del
-                  evento.
-                </p>
-                {loading ? (
-                  <p className="text-[12px] text-muted">Cargando...</p>
-                ) : !invitationUrl ? (
-                  <p className="text-[12px] text-[#ef4444]">No tenés un evento vinculado. Pedile al administrador que te asigne uno.</p>
-                ) : (
-                  <div className="flex items-center gap-2 rounded-2xl border border-border bg-card-muted px-3 py-2">
-                    <span className="truncate text-[11px] text-foreground">
-                      {invitationUrl}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={handleCopy}
-                      className="whitespace-nowrap rounded-full bg-brand px-3 py-1 text-[11px] font-medium text-white hover:bg-brand/90"
-                    >
-                      {copied ? "¡Copiado!" : "Copiar"}
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </main>
-      </div>
-    </div>
+    </main>
   );
 }
 

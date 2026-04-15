@@ -5,7 +5,7 @@ import { CocinaTopBar } from "../components/CocinaTopBar";
 import { LeyendaObligatorios, Req } from "@/components/FormRequired";
 
 const inp =
-  "flex-1 rounded-full border border-[#d1d5db] bg-white px-4 py-2 text-[13px] text-foreground outline-none focus:border-[#2d5a41] focus:ring-2 focus:ring-[#2d5a41]/20";
+  "flex-1 rounded-full border border-border bg-input px-4 py-2 text-[13px] text-foreground outline-none placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/20";
 
 function Field({
   label,
@@ -18,7 +18,7 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-1 sm:flex-row sm:items-center">
-      <label className="w-full text-[13px] text-[#374151] sm:w-52 sm:text-right sm:pr-5">
+      <label className="w-full text-[13px] text-foreground sm:w-52 sm:text-right sm:pr-5">
         {label}
         {required ? <Req /> : null}
       </label>
@@ -113,7 +113,7 @@ export default function CocinaConfiguracionPage() {
         <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
           <CocinaTopBar />
           <main className="flex min-h-[40vh] items-center justify-center">
-            <p className="text-[#9ca3af]">Cargando...</p>
+            <p className="text-muted">Cargando...</p>
           </main>
         </div>
       </div>
@@ -130,20 +130,20 @@ export default function CocinaConfiguracionPage() {
         <main className="pb-8">
           <h1 className="mb-8 text-right text-2xl font-bold text-brand">Configuración</h1>
 
-          <div className="mb-6 rounded-2xl border border-[#c5dece] bg-[#f0f7f2] px-5 py-4 text-[13px] leading-relaxed text-[#374151]">
-            <p className="font-semibold text-[#2d5a41]">Tu cuenta y datos personales</p>
+          <div className="mb-6 rounded-2xl border border-border bg-card-muted px-5 py-4 text-[13px] leading-relaxed text-muted ring-1 ring-[var(--ring-soft)]">
+            <p className="font-semibold text-brand">Tu cuenta y datos personales</p>
             <p className="mt-2">
               Los datos de eventos y menús se gestionan desde el reporte de cocina. Desde acá solo actualizás tu acceso
               (email, contraseña y datos personales).
             </p>
           </div>
 
-          <div className="rounded-3xl bg-white p-8 shadow ring-1 ring-[#e5efe8]">
+          <div className="rounded-3xl border border-border bg-card p-8 shadow ring-1 ring-[var(--ring-soft)]">
             <h2 className="mb-4 text-[18px] font-semibold text-foreground">Datos de acceso y contacto</h2>
-            <LeyendaObligatorios className="mb-6 text-[12px] text-[#6b7280]" />
+            <LeyendaObligatorios className="mb-6 text-[12px] text-muted" />
 
             {error && (
-              <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-800">
+              <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
                 {error}
               </div>
             )}
@@ -187,9 +187,9 @@ export default function CocinaConfiguracionPage() {
                 />
               </Field>
 
-              <div className="border-t border-[#e5e7eb] pt-6">
+              <div className="border-t border-border pt-6">
                 <p className="mb-4 text-[14px] font-medium text-foreground">Contraseña</p>
-                <p className="mb-4 text-[12px] text-[#6b7280]">
+                <p className="mb-4 text-[12px] text-muted">
                   Para cambiar email o contraseña, completá tu contraseña actual (verificación segura, sin guardar sesión
                   extra).
                 </p>
@@ -236,13 +236,12 @@ export default function CocinaConfiguracionPage() {
                 type="button"
                 onClick={() => void handleGuardar()}
                 disabled={saving}
-                className="rounded-xl px-12 py-3 text-base font-bold text-white transition-colors disabled:opacity-60"
-                style={{ backgroundColor: "#2d5a41" }}
+                className="rounded-xl bg-brand px-12 py-3 text-base font-bold text-white transition-colors hover:brightness-95 disabled:opacity-60"
               >
                 {saving ? "Guardando..." : "Guardar cambios"}
               </button>
               {guardado && (
-                <p className="flex items-center gap-1.5 text-[13px] font-semibold text-[#16a34a]">
+                <p className="flex items-center gap-1.5 text-[13px] font-semibold text-emerald-600 dark:text-emerald-400">
                   <svg
                     viewBox="0 0 16 16"
                     className="h-4 w-4"

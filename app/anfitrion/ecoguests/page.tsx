@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { HostSidebar } from "../components/HostSidebar";
 import { downloadEcoGuestsPdf } from "@/lib/ecoguestsReportPdf";
 
 type RolPool = "conductor" | "pasajero" | "no" | null;
@@ -148,11 +147,7 @@ export default function EcoGuestsPage() {
   }, [ecoGuests]);
 
   return (
-    <div className="min-h-screen text-foreground">
-      <div className="mx-auto flex min-h-screen max-w-6xl gap-6 px-4 py-6 text-foreground sm:px-6 lg:px-8">
-        <HostSidebar hostName={userName} active="ecoguests" />
-
-        <main className="flex-1 pb-8">
+    <main className="min-w-0 flex-1 pb-8">
           <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-2xl font-semibold text-brand">EcoGuests</h1>
@@ -254,8 +249,6 @@ export default function EcoGuestsPage() {
               </div>
             </div>
           )}
-        </main>
-      </div>
-    </div>
+    </main>
   );
 }

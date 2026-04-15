@@ -340,13 +340,13 @@ export default function SmartpoolPage() {
     const n = estado.grupoCuposInvitacion;
     return (
       <InvitadoShell mainClassName="flex justify-center">
-            <div className="w-full max-w-md rounded-3xl border border-amber-200 bg-amber-50/90 p-4 text-center shadow ring-1 ring-amber-100 sm:p-8">
-              <div className="relative mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-amber-100 text-4xl">
+            <div className="w-full max-w-md rounded-3xl border border-border bg-card p-4 text-center shadow ring-1 ring-[var(--ring-soft)] sm:p-8 dark:border-amber-900/40 dark:bg-card">
+              <div className="relative mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-amber-100 text-4xl dark:bg-amber-950/50">
                 🚌
               </div>
-              <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.18em] text-amber-900/80">EcoGuest</p>
-              <h2 className="mb-3 text-xl font-extrabold text-amber-950">No disponible para tu invitación</h2>
-              <p className="text-left text-[13px] leading-relaxed text-amber-950/90">
+              <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.18em] text-amber-900/80 dark:text-amber-200/90">EcoGuest</p>
+              <h2 className="mb-3 text-xl font-extrabold text-amber-950 dark:text-amber-100">No disponible para tu invitación</h2>
+              <p className="text-left text-[13px] leading-relaxed text-muted dark:text-amber-50/90">
                 Tu invitación está cargada con{" "}
                 <strong>
                   {typeof n === "number" && n > 0
@@ -356,14 +356,13 @@ export default function SmartpoolPage() {
                 . Las invitaciones de <strong>más de 5 personas</strong> no tienen acceso a la insignia EcoGuest ni al
                 SmartPool (límite del carpooling en la app).
               </p>
-              <p className="mt-4 text-left text-[12px] leading-relaxed text-amber-900/85">
+              <p className="mt-4 text-left text-[12px] leading-relaxed text-muted dark:text-amber-100/85">
                 Si el número no es correcto, pedile al anfitrión que ajuste la columna <strong>Cupos</strong> en tu fila
                 (máximo 5 para poder usar EcoGuest).
               </p>
               <Link
                 href="/invitado"
-                className="mt-8 inline-flex w-full items-center justify-center rounded-xl py-3 text-[14px] font-bold text-white transition hover:brightness-105"
-                style={{ backgroundColor: "#2d5a41" }}
+                className="mt-8 inline-flex w-full items-center justify-center rounded-xl bg-brand py-3 text-[14px] font-bold text-white transition hover:brightness-95"
               >
                 Volver al panel
               </Link>

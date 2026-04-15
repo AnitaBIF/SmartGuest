@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { HostSidebar } from "../components/HostSidebar";
 import { LeyendaObligatorios, Req } from "@/components/FormRequired";
 import { youtubeSearchUrlForSong } from "@/lib/playlistSongKey";
 
@@ -21,7 +20,6 @@ function TrashIcon() {
 }
 
 export default function PlaylistPage() {
-  const [hostName, setHostName] = useState("Anfitrión");
   const [songs, setSongs] = useState<SongRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -61,16 +59,6 @@ export default function PlaylistPage() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  useEffect(() => {
-    fetch("/api/anfitrion/evento")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        const n = d?.usuario?.nombre;
-        if (typeof n === "string" && n.trim()) setHostName(n.trim());
-      })
-      .catch(() => {});
-  }, []);
 
   const addSong = async () => {
     if (!newTitle.trim() || !newArtist.trim() || saving) return;
@@ -173,18 +161,14 @@ export default function PlaylistPage() {
   };
 
   return (
-    <div className="min-h-screen text-foreground">
-      <div className="mx-auto flex min-h-screen max-w-6xl gap-6 px-4 py-6 text-foreground sm:px-6 lg:px-8">
-        <HostSidebar hostName={hostName} active="playlist" />
-
-        <main className="flex-1 pb-8">
+    <main className="min-w-0 flex-1 pb-8">
           <div className="mb-6 flex items-center justify-between">
             <div className="flex flex-wrap gap-3">
               <button
                 type="button"
                 onClick={() => setShowModal(true)}
                 disabled={loading || !!loadError}
-                className="rounded-full bg-brand px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#24503a] disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-full bg-brand px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Añadir canción
               </button>
@@ -192,14 +176,14 @@ export default function PlaylistPage() {
                 type="button"
                 onClick={exportPDF}
                 disabled={songs.length === 0}
-                className="rounded-full bg-brand px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#24503a] disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-full bg-brand px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Exportar PDF
               </button>
               <button
                 type="button"
                 onClick={() => void load()}
-                className="rounded-full border border-[#c5dece] bg-white px-4 py-2 text-sm font-medium text-[#374151] transition-colors hover:bg-[#f6faf7]"
+                className="rounded-full border border-border bg-card-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-card-muted/80"
               >
                 Actualizar lista
               </button>
@@ -207,23 +191,23 @@ export default function PlaylistPage() {
             <h1 className="text-2xl font-bold text-brand">Playlist</h1>
           </div>
 
-          <p className="mb-4 max-w-2xl text-[12px] leading-relaxed text-[#6b7280]">
+          <p className="mb-4 max-w-2xl text-[12px] leading-relaxed text-muted">
             Pedidos de invitados y canciones que agregues vos. Las que son la misma canción (aunque estén escritas distinto)
             se muestran una sola vez. Cada fila incluye un enlace a YouTube (búsqueda automática).
           </p>
 
           {loadError && (
-            <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-900">
+            <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-900 dark:border-amber-800/50 dark:bg-amber-950/40 dark:text-amber-100">
               {loadError}
             </div>
           )}
 
-          <hr className="mb-5 border-[#c5d8cc]" />
+          <hr className="mb-5 border-border" />
 
-          <div className="overflow-hidden rounded-2xl ring-1 ring-[#d7e6dd]">
+          <div className="overflow-hidden rounded-2xl border border-border ring-1 ring-[var(--ring-soft)]">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-white">
+                <tr className="bg-card-muted">
                   <th className="rounded-tl-2xl px-5 py-3 text-left text-[13px] font-semibold text-foreground">Canción</th>
                   <th className="px-5 py-3 text-left text-[13px] font-semibold text-foreground">Artista</th>
                   <th className="px-5 py-3 text-left text-[13px] font-semibold text-foreground">YouTube</th>
@@ -233,7 +217,7 @@ export default function PlaylistPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={4} className="bg-white px-5 py-10 text-center text-[#9ca3af]">
+                    <td colSpan={4} className="bg-card px-5 py-10 text-center text-muted">
                       Cargando playlist…
                     </td>
                   </tr>
@@ -241,19 +225,19 @@ export default function PlaylistPage() {
                   songs.map((song, i) => (
                     <tr
                       key={song.ids.join("-")}
-                      className={`border-t border-[#e5efe8] transition-colors hover:bg-[#e8f4eb] ${
-                        i % 2 === 0 ? "bg-[#f0f7f2]" : "bg-white"
+                      className={`border-t border-border transition-colors hover:bg-card-muted/80 ${
+                        i % 2 === 0 ? "bg-card" : "bg-card-muted/40"
                       }`}
                     >
                       <td className="px-5 py-3 font-medium text-foreground">{song.titulo}</td>
-                      <td className="px-5 py-3 text-[#374151]">{song.artista}</td>
+                      <td className="px-5 py-3 text-muted">{song.artista}</td>
                       <td className="px-5 py-3">
                         {song.youtubeUrl ? (
                           <a
                             href={song.youtubeUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-[13px] font-medium text-[#2563eb] underline decoration-[#93c5fd] underline-offset-2 hover:text-[#1d4ed8]"
+                            className="text-[13px] font-medium text-blue-600 underline decoration-blue-300 underline-offset-2 hover:text-blue-700 dark:text-blue-400 dark:decoration-blue-600 dark:hover:text-blue-300"
                           >
                             Buscar en YouTube
                           </a>
@@ -265,7 +249,7 @@ export default function PlaylistPage() {
                         <button
                           type="button"
                           onClick={() => void deleteSong(song.ids)}
-                          className="inline-flex items-center justify-center rounded-lg p-1.5 text-[#9ca3af] transition-colors hover:bg-[#fee2e2] hover:text-[#dc2626]"
+                          className="inline-flex items-center justify-center rounded-lg p-1.5 text-muted transition-colors hover:bg-red-500/15 hover:text-red-600 dark:hover:text-red-400"
                           title={
                             song.ids.length > 1
                               ? "Quitar esta canción (varios pedidos unificados)"
@@ -280,7 +264,7 @@ export default function PlaylistPage() {
                 )}
                 {!loading && songs.length === 0 && !loadError && (
                   <tr>
-                    <td colSpan={4} className="bg-white px-5 py-8 text-center text-sm text-[#9ca3af]">
+                    <td colSpan={4} className="bg-card px-5 py-8 text-center text-sm text-muted">
                       No hay canciones en la playlist todavía.
                     </td>
                   </tr>
@@ -289,20 +273,17 @@ export default function PlaylistPage() {
             </table>
           </div>
 
-          <p className="mt-3 text-right text-[12px] text-[#6b7280]">
+          <p className="mt-3 text-right text-[12px] text-muted">
             {songs.length} {songs.length === 1 ? "canción" : "canciones"}
           </p>
-        </main>
-      </div>
-
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-3xl bg-white p-7 shadow-xl ring-1 ring-black/5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm dark:bg-black/50">
+          <div className="w-full max-w-sm rounded-3xl border border-border bg-card p-7 shadow-xl ring-1 ring-[var(--ring-soft)]">
             <h2 className="mb-3 text-lg font-semibold text-brand">Añadir canción</h2>
-            <LeyendaObligatorios className="mb-4 text-[11px] text-[#6b7280]" />
+            <LeyendaObligatorios className="mb-4 text-[11px] text-muted" />
             <div className="space-y-4">
               <div>
-                <label className="mb-1 block text-[12px] font-medium text-[#4b5563]">
+                <label className="mb-1 block text-[12px] font-medium text-foreground">
                   Canción
                   <Req />
                 </label>
@@ -311,11 +292,11 @@ export default function PlaylistPage() {
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   placeholder="Nombre de la canción"
-                  className="w-full rounded-xl border border-[#d1d5db] px-3 py-2 text-sm text-foreground outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+                  className="w-full rounded-xl border border-border bg-input px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted focus:border-brand focus:ring-1 focus:ring-brand"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-[12px] font-medium text-[#4b5563]">
+                <label className="mb-1 block text-[12px] font-medium text-foreground">
                   Artista
                   <Req />
                 </label>
@@ -324,7 +305,7 @@ export default function PlaylistPage() {
                   value={newArtist}
                   onChange={(e) => setNewArtist(e.target.value)}
                   placeholder="Nombre del artista"
-                  className="w-full rounded-xl border border-[#d1d5db] px-3 py-2 text-sm text-foreground outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+                  className="w-full rounded-xl border border-border bg-input px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted focus:border-brand focus:ring-1 focus:ring-brand"
                   onKeyDown={(e) => e.key === "Enter" && void addSong()}
                 />
               </div>
@@ -334,7 +315,7 @@ export default function PlaylistPage() {
                 type="button"
                 onClick={() => { setShowModal(false); setNewTitle(""); setNewArtist(""); }}
                 disabled={saving}
-                className="flex-1 rounded-xl border border-[#d1d5db] py-2 text-sm text-[#374151] transition-colors hover:bg-[#f3f4f6] disabled:opacity-50"
+                className="flex-1 rounded-xl border border-border bg-card-muted py-2 text-sm text-foreground transition-colors hover:bg-card-muted/80 disabled:opacity-50"
               >
                 Cancelar
               </button>
@@ -342,7 +323,7 @@ export default function PlaylistPage() {
                 type="button"
                 onClick={() => void addSong()}
                 disabled={saving}
-                className="flex-1 rounded-xl bg-brand py-2 text-sm font-medium text-white transition-colors hover:bg-[#24503a] disabled:opacity-50"
+                className="flex-1 rounded-xl bg-brand py-2 text-sm font-medium text-white transition-colors hover:brightness-95 disabled:opacity-50"
               >
                 {saving ? "Guardando…" : "Añadir"}
               </button>
@@ -350,6 +331,6 @@ export default function PlaylistPage() {
           </div>
         </div>
       )}
-    </div>
+    </main>
   );
 }

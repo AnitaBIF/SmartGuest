@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AdminSidebar } from "../components/AdminSidebar";
 
 type EventoOpt = { id: string; nombre: string; fecha: string };
 
@@ -135,11 +134,7 @@ export default function AdminIngresosPage() {
   }, [eventos, eventoId]);
 
   return (
-    <div className="min-h-screen text-foreground">
-      <div className="mx-auto flex min-h-screen max-w-6xl gap-6 px-4 py-6 text-foreground sm:px-6 lg:px-8">
-        <AdminSidebar active="ingresos" />
-
-        <main className="flex-1 pb-8">
+    <main className="min-w-0 flex-1 pb-8">
           <h1 className="mb-2 text-right text-2xl font-bold text-brand">Ingresos por QR</h1>
           <p className="mb-6 text-right text-[12px] text-muted">
             Quién pasó por puerta (validación de seguridad) y cuántas personas representa cada invitación confirmada.
@@ -268,8 +263,6 @@ export default function AdminIngresosPage() {
           {!eventoId && !loadingLista && (
             <p className="text-center text-[13px] text-muted">Seleccioná un evento para ver el reporte.</p>
           )}
-        </main>
-      </div>
-    </div>
+    </main>
   );
 }
