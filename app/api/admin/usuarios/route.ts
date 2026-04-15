@@ -1,6 +1,21 @@
+import { randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import type { Database, TipoUsuario } from "@/lib/database.types";
 import { adminServiceClient, requireSalonAdmin } from "@/lib/adminSalonAuth";
+import { dniValido, soloDigitos } from "@/lib/registroSalon";
+
+/**
+ * `usuarios.dni` es UNIQUE NOT NULL: varios usuarios con DNI vacío o el mismo valor rompen el trigger.
+ * Si no hay DNI válido, generamos un identificador único (mismo criterio que import de invitados).
+ */
+function dniParaAltaUsuario(input: unknown): string {
+  if (typeof input !== "string") {
+    return `SG${randomUUID().replace(/-/g, "")}`;
+  }
+  const d = soloDigitos(input);
+  if (dniValido(d)) return d;
+  return `SG${randomUUID().replace(/-/g, "")}`;
+}
 
 const TIPOS_SALON: TipoUsuario[] = ["administrador", "anfitrion", "jefe_cocina", "seguridad"];
 
@@ -114,10 +129,19 @@ export async function POST(req: NextRequest) {
   const cuitInv = typeof inviter.cuit === "string" ? inviter.cuit.trim() : "";
   const habInv = typeof inviter.habilitacion_numero === "string" ? inviter.habilitacion_numero.trim() : "";
 
+  const dniFinal = dniParaAltaUsuario(dni);
+
+  if (!dniFinal.startsWith("SG")) {
+    const { data: dniOcupado } = await db.from("usuarios").select("id").eq("dni", dniFinal).maybeSingle();
+    if (dniOcupado) {
+      return NextResponse.json({ error: "Ya existe un usuario con ese DNI." }, { status: 409 });
+    }
+  }
+
   const userMeta: Record<string, unknown> = {
     nombre,
     apellido,
-    dni,
+    dni: dniFinal,
     tipo,
     salon_nombre: salonNombre,
     salon_direccion: salonDireccion,
@@ -145,7 +169,7 @@ export async function POST(req: NextRequest) {
   const maxInv = tipo === "anfitrion" ? (max_invitados ?? 0) : 0;
 
   const patch: Database["public"]["Tables"]["usuarios"]["Update"] = {
-    dni: typeof dni === "string" ? dni : "",
+    dni: dniFinal,
     max_invitados: maxInv,
   };
 
@@ -167,7 +191,7 @@ export async function POST(req: NextRequest) {
       user_metadata: {
         nombre,
         apellido,
-        dni,
+        dni: dniFinal,
         tipo: "administrador",
         salon_nombre: salonNombre,
         salon_direccion: salonDireccion,
