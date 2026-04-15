@@ -204,8 +204,8 @@ export default function PlaylistPage() {
 
           <hr className="mb-5 border-border" />
 
-          <div className="overflow-hidden rounded-2xl border border-border ring-1 ring-[var(--ring-soft)]">
-            <table className="w-full text-sm">
+          <div className="overflow-hidden rounded-2xl border border-border bg-card ring-1 ring-[var(--ring-soft)]">
+            <table className="w-full border-separate border-spacing-0 text-sm">
               <thead>
                 <tr className="bg-card-muted">
                   <th className="rounded-tl-2xl px-5 py-3 text-left text-[13px] font-semibold text-foreground">Canción</th>

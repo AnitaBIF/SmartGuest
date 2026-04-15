@@ -17,6 +17,15 @@
   --ring-soft: rgb(0 0 0 / 0.06);
   --qr-surface: #ffffff;
   --qr-fg: #111827;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-brand: var(--brand);
+  --color-muted: var(--muted);
+  --color-card: var(--card);
+  --color-card-muted: var(--card-muted);
+  --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
+  --color-input: var(--input-bg);
 }
 
 html.dark {
@@ -35,6 +44,20 @@ html.dark {
   --ring-soft: rgb(255 255 255 / 0.06);
   --qr-surface: #ffffff;
   --qr-fg: #111827;
+  /*
+   * Re-enlazar tokens de @theme al mismo elemento que `.dark`, para que utilidades
+   * como `bg-card` / `text-foreground` resuelvan siempre con el set oscuro (evita
+   * superficies claras con texto claro si el orden de capas CSS variara).
+   */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-brand: var(--brand);
+  --color-muted: var(--muted);
+  --color-card: var(--card);
+  --color-card-muted: var(--card-muted);
+  --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
+  --color-input: var(--input-bg);
 }
 
 @theme inline {

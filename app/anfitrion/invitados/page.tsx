@@ -76,7 +76,7 @@ function DniCell({ value }: { value: string }) {
   const label = isImportPlaceholder ? "Provisorio" : value;
   return (
     <span
-      className="block min-w-0 truncate font-mono text-[10px] leading-tight tracking-tight text-[#6b7280]"
+      className="block min-w-0 truncate font-mono text-[10px] leading-tight tracking-tight text-muted"
       title={isImportPlaceholder ? `ID interno: ${value}` : value}
     >
       {label}
@@ -256,7 +256,7 @@ function IconPencil() {
 
 function IconCheck() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden className="shrink-0 text-[#166534]">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden className="shrink-0 text-emerald-600 dark:text-emerald-400">
       <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
@@ -266,10 +266,10 @@ function IconCheck() {
 function FilterTableIcon({ active }: { active?: boolean }) {
   return (
     <span
-      className={`inline-flex h-9 w-9 items-center justify-center rounded-full border-2 bg-white transition-colors ${
+      className={`inline-flex h-9 w-9 items-center justify-center rounded-full border-2 bg-card transition-colors ${
         active
           ? "border-brand text-brand shadow-sm ring-2 ring-brand/15"
-          : "border-[#b8d4c4] text-[#2d5a41] hover:border-[#9dc4ae] hover:bg-[#f7fbf9]"
+          : "border-border text-brand hover:border-brand/50 hover:bg-card-muted"
       }`}
     >
       <svg
@@ -298,20 +298,26 @@ function AsistenciaBadge({ estado, compact }: { estado: Asistencia; compact?: bo
     : "inline-flex rounded-full px-3 py-1 text-xs font-medium border";
   if (estado === "Asiste") {
     return (
-      <span className={`${base} border-[#7ac48e] bg-[#e7f6ec] text-[#166534]`}>
+      <span
+        className={`${base} border-emerald-300/80 bg-emerald-50 text-emerald-900 dark:border-emerald-800/60 dark:bg-emerald-950/50 dark:text-emerald-200`}
+      >
         Asiste
       </span>
     );
   }
   if (estado === "No asiste") {
     return (
-      <span className={`${base} border-[#fca5a5] bg-[#fef2f2] text-[#b91c1c]`}>
+      <span
+        className={`${base} border-red-300/80 bg-red-50 text-red-900 dark:border-red-800/50 dark:bg-red-950/45 dark:text-red-200`}
+      >
         No asiste
       </span>
     );
   }
   return (
-    <span className={`${base} border-[#facc15] bg-[#fef9c3] text-[#854d0e]`}>
+    <span
+      className={`${base} border-amber-300/80 bg-amber-50 text-amber-950 dark:border-amber-800/50 dark:bg-amber-950/40 dark:text-amber-100`}
+    >
       Pendiente
     </span>
   );
@@ -893,7 +899,7 @@ export default function GestionInvitadosPage() {
                 type="button"
                 onClick={() => void handleEliminarTodos()}
                 disabled={deletingAll}
-                className="w-full rounded-full border border-red-200 bg-white px-4 py-2.5 text-xs font-medium text-red-700 shadow-sm transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full rounded-full border border-red-300/80 bg-card-muted px-4 py-2.5 text-xs font-medium text-red-800 shadow-sm transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-800/60 dark:text-red-300 dark:hover:bg-red-950/40"
               >
                 {deletingAll ? "Eliminando…" : "Eliminar todos los invitados"}
               </button>
@@ -901,23 +907,23 @@ export default function GestionInvitadosPage() {
           </section>
 
           {/* Tabla de invitados: ancho completo del contenedor, texto con ajuste de línea */}
-          <section className="relative z-0 mt-2 w-full min-w-0 rounded-3xl bg-white/95 p-3 shadow-[0_18px_45px_rgba(0,0,0,0.06)] ring-1 ring-[#d7e6dd] sm:p-4 md:ml-auto">
+          <section className="relative z-0 mt-2 w-full min-w-0 rounded-3xl border border-border bg-card p-3 shadow-sm ring-1 ring-[var(--ring-soft)] sm:p-4 md:ml-auto">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <div className="min-w-0">
                 <h2 className="text-sm font-semibold text-brand">Invitados</h2>
                 {!loadingInv && invitados.length > 0 && (
-                  <div className="mt-1 max-w-2xl space-y-1 text-[11px] leading-snug text-[#6b7280]">
+                  <div className="mt-1 max-w-2xl space-y-1 text-[11px] leading-snug text-muted">
                     <p>
                       {invitadosFiltrados.length === invitados.length
                         ? `${invitados.length} en total`
                         : `Mostrando ${invitadosFiltrados.length} de ${invitados.length}`}
                       {filtrosActivos ? " · filtros activos" : ""}
                     </p>
-                    <p className="text-[#5a6b62]">
-                      <span className="font-medium text-[#374151]">Cadena:</span> copiar solo el enlace.{" "}
-                      <span className="font-medium text-[#374151]">WhatsApp:</span> abre el chat de esa persona con un
+                    <p>
+                      <span className="font-medium text-foreground">Cadena:</span> copiar solo el enlace.{" "}
+                      <span className="font-medium text-foreground">WhatsApp:</span> abre el chat de esa persona con un
                       mensaje listo que incluye el enlace y las instrucciones. La confirmación siempre actualiza{" "}
-                      <span className="font-medium text-[#374151]">esa misma fila</span>.
+                      <span className="font-medium text-foreground">esa misma fila</span>.
                     </p>
                   </div>
                 )}
@@ -944,7 +950,7 @@ export default function GestionInvitadosPage() {
                     <div
                       role="dialog"
                       aria-label="Filtros de invitados"
-                      className="absolute right-0 top-[calc(100%+0.5rem)] z-40 w-[min(calc(100vw-2rem),18rem)] rounded-2xl border border-[#d1e5d9] bg-white p-4 shadow-[0_16px_40px_rgba(0,0,0,0.12)] ring-1 ring-black/5"
+                      className="absolute right-0 top-[calc(100%+0.5rem)] z-40 w-[min(calc(100vw-2rem),18rem)] rounded-2xl border border-border bg-card p-4 shadow-xl ring-1 ring-[var(--ring-soft)]"
                     >
                       <div className="mb-3 flex items-center justify-between gap-2">
                         <p className="text-xs font-semibold text-brand">Filtrar por</p>
@@ -953,7 +959,7 @@ export default function GestionInvitadosPage() {
                           onClick={() => {
                             limpiarFiltros();
                           }}
-                          className="text-[11px] font-medium text-[#6b7280] underline decoration-[#d1d5db] underline-offset-2 hover:text-brand"
+                          className="text-[11px] font-medium text-muted underline decoration-border underline-offset-2 hover:text-brand"
                         >
                           Limpiar
                         </button>
@@ -1040,13 +1046,13 @@ export default function GestionInvitadosPage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-[#e0efe6] bg-gradient-to-b from-[#f7fbf9] to-white">
+            <div className="overflow-hidden rounded-2xl border border-border bg-card-muted/40 ring-1 ring-[var(--ring-soft)]">
               {loadingInv ? (
-                <p className="py-10 text-center text-sm text-[#6b7280]">
+                <p className="py-10 text-center text-sm text-muted">
                   Cargando invitados…
                 </p>
               ) : invitadosFiltrados.length === 0 && invitados.length > 0 ? (
-                <p className="py-10 px-4 text-center text-sm text-[#6b7280]">
+                <p className="py-10 px-4 text-center text-sm text-muted">
                   Ningún invitado coincide con los filtros.{" "}
                   <button
                     type="button"
@@ -1072,7 +1078,7 @@ export default function GestionInvitadosPage() {
                     <col style={{ width: "17%" }} />
                   </colgroup>
                   <thead>
-                    <tr className="bg-[#e6f1ea] text-[9px] font-semibold uppercase tracking-wide text-[#4b5563] sm:text-[10px]">
+                    <tr className="bg-card-muted text-[9px] font-semibold uppercase tracking-wide text-muted sm:text-[10px]">
                       <th className="rounded-tl-2xl px-2 py-2.5 pl-3 align-middle sm:px-3 sm:py-3 sm:pl-4">
                         Nombre y apellido
                       </th>
@@ -1097,47 +1103,43 @@ export default function GestionInvitadosPage() {
                       return (
                       <tr
                         key={inv.id}
-                        className={
-                          idx % 2 === 0
-                            ? "bg-white/80"
-                            : "bg-[#f5fbf7]"
-                        }
+                        className={idx % 2 === 0 ? "bg-card" : "bg-card-muted/50"}
                       >
-                        <td className="min-w-0 border-t border-[#e8efe9] px-2 py-2 pl-3 align-middle text-foreground sm:px-3 sm:py-2.5 sm:pl-4">
+                        <td className="min-w-0 border-t border-border-subtle px-2 py-2 pl-3 align-middle text-foreground sm:px-3 sm:py-2.5 sm:pl-4">
                           <CellWrap className="font-medium">{inv.nombre}</CellWrap>
                         </td>
-                        <td className="min-w-0 border-t border-[#e8efe9] px-1.5 py-2 align-middle sm:px-2 sm:py-2.5">
+                        <td className="min-w-0 border-t border-border-subtle px-1.5 py-2 align-middle sm:px-2 sm:py-2.5">
                           <DniCell value={inv.dni} />
                         </td>
-                        <td className="min-w-0 border-t border-[#e8efe9] px-2 py-2 align-middle break-all text-[#4b5563] sm:px-3 sm:py-2.5">
+                        <td className="min-w-0 border-t border-border-subtle px-2 py-2 align-middle break-all text-muted sm:px-3 sm:py-2.5">
                           {inv.telefono || "—"}
                         </td>
-                        <td className="border-t border-[#e8efe9] px-1.5 py-2 align-middle sm:px-2 sm:py-2.5">
+                        <td className="border-t border-border-subtle px-1.5 py-2 align-middle sm:px-2 sm:py-2.5">
                           <AsistenciaBadge estado={inv.asistencia} compact />
                         </td>
-                        <td className="min-w-0 border-t border-[#e8efe9] px-1.5 py-2 align-middle text-[#4b5563] sm:px-2 sm:py-2.5">
+                        <td className="min-w-0 border-t border-border-subtle px-1.5 py-2 align-middle text-muted sm:px-2 sm:py-2.5">
                           <span className="block truncate" title={inv.grupo}>
                             {inv.grupo}
                           </span>
                         </td>
-                        <td className="min-w-0 border-t border-[#e8efe9] px-1.5 py-2 align-middle text-[#4b5563] sm:px-2 sm:py-2.5">
+                        <td className="min-w-0 border-t border-border-subtle px-1.5 py-2 align-middle text-muted sm:px-2 sm:py-2.5">
                           <span className="block hyphens-auto break-words text-pretty">{inv.rango}</span>
                         </td>
-                        <td className="border-t border-[#e8efe9] px-1 py-2 text-center align-middle tabular-nums text-[#4b5563] sm:px-2 sm:py-2.5">
+                        <td className="border-t border-border-subtle px-1 py-2 text-center align-middle tabular-nums text-muted sm:px-2 sm:py-2.5">
                           {inv.grupoCuposMax ?? 1}
                         </td>
-                        <td className="min-w-0 border-t border-[#e8efe9] px-2 py-2 align-middle text-[#4b5563] sm:px-3 sm:py-2.5">
+                        <td className="min-w-0 border-t border-border-subtle px-2 py-2 align-middle text-muted sm:px-3 sm:py-2.5">
                           <CellWrap>{inv.restriccion}</CellWrap>
                         </td>
-                        <td className="border-t border-[#e8efe9] px-1 py-2 align-middle text-center text-[#4b5563] sm:px-2 sm:py-2.5">
+                        <td className="border-t border-border-subtle px-1 py-2 align-middle text-center text-muted sm:px-2 sm:py-2.5">
                           {inv.eco}
                         </td>
-                        <td className="border-t border-[#e8efe9] px-1 py-2 align-middle sm:px-2 sm:py-2.5">
+                        <td className="border-t border-border-subtle px-1 py-2 align-middle sm:px-2 sm:py-2.5">
                           <div className="flex flex-wrap items-center justify-center gap-0.5 sm:gap-1">
                             <button
                               type="button"
                               onClick={() => copyInvitacionPersonal(inv.id)}
-                              className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#c7d7ce] bg-white/80 text-[#2d5a41] shadow-sm transition hover:border-[#2d5a41]/30 hover:bg-[#edf6f1] sm:h-8 sm:w-8"
+                              className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-card-muted text-brand shadow-sm transition hover:border-brand/40 hover:bg-card-muted/80 sm:h-8 sm:w-8"
                               title="Copiar enlace personal de invitación"
                               aria-label={`Copiar enlace de invitación para ${inv.nombre}`}
                             >
@@ -1160,7 +1162,7 @@ export default function GestionInvitadosPage() {
                             <button
                               type="button"
                               onClick={() => handleEditarClick(inv.id)}
-                              className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#c7d7ce] bg-white/80 text-brand shadow-sm transition hover:border-brand/35 hover:bg-[#edf6f1] sm:h-8 sm:w-8"
+                              className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-card-muted text-brand shadow-sm transition hover:border-brand/40 hover:bg-card-muted/80 sm:h-8 sm:w-8"
                               aria-label={`Editar ${inv.nombre}`}
                             >
                               <IconPencil />
