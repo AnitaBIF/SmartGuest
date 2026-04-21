@@ -17,6 +17,8 @@ export async function proxy(request: NextRequest) {
   const isPublic =
     pathname === "/" ||
     pathname === "/login" ||
+    pathname === "/icon" ||
+    pathname.startsWith("/apple-icon") ||
     PUBLIC_PATHS.some((p) => pathname.startsWith(p + "/"));
 
   const response = NextResponse.next();
