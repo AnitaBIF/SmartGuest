@@ -23,6 +23,10 @@ export const poppins = Poppins({
 export const metadata: Metadata = {
   title: "SmartGuest",
   description: "Plataforma de logística integral para eventos",
+  icons: {
+    icon: [{ url: "/smartguest-favicon.png", type: "image/png" }],
+    apple: [{ url: "/smartguest-favicon.png", type: "image/png" }],
+  },
 };
 
 export const viewport: Viewport = {
