@@ -6,21 +6,6 @@ import type { GuidedMenuOption, GuidedMenuPayload } from "@/lib/chatRuleBasedRep
 
 type ChatLine = { role: "user" | "assistant"; content: string; displayLabel?: string };
 
-function engineBadgeText(engine: string | null): string {
-  if (engine === "gemini") return "Gemini";
-  if (engine === "groq") return "Groq";
-  if (engine === "openai") return "OpenAI";
-  if (engine === "rules") return "Solo datos (reglas)";
-  return engine ? String(engine) : "…";
-}
-
-function engineSubtitle(engine: string | null): string {
-  if (engine === "gemini" || engine === "groq") return "Modelo externo (clave en servidor).";
-  if (engine === "openai") return "OpenAI (config manual).";
-  if (engine === "rules") return "Reglas + datos del evento (sin API de chat).";
-  return "Datos en vivo.";
-}
-
 function isGuidedMenuPayload(x: unknown): x is GuidedMenuPayload {
   if (!x || typeof x !== "object") return false;
   const o = x as Record<string, unknown>;
@@ -43,7 +28,6 @@ export function AssistantChat() {
   const [digest, setDigest] = useState<string | null>(null);
   const [digestLoading, setDigestLoading] = useState(false);
   const [digestError, setDigestError] = useState("");
-  const [engineLabel, setEngineLabel] = useState<string | null>(null);
   const [guidedMenu, setGuidedMenu] = useState<GuidedMenuPayload | null>(null);
   const [bootReady, setBootReady] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
@@ -82,9 +66,6 @@ export function AssistantChat() {
         const text = typeof d?.digest === "string" ? d.digest : "";
         setDigest(text || null);
         if (!text) setDigestError("Sin datos para mostrar.");
-        const eng = typeof d?.engine === "string" ? d.engine : null;
-        setEngineLabel(eng);
-
         const gm = isGuidedMenuPayload(d?.guidedMenu) ? d.guidedMenu : null;
         if (mode === "digestOnly") {
           if (gm) setGuidedMenu(gm);
@@ -227,18 +208,9 @@ export function AssistantChat() {
             className="pointer-events-auto flex max-h-[min(78dvh,560px)] w-[min(100vw-1.5rem,420px)] flex-col overflow-hidden rounded-2xl border border-border bg-card text-foreground shadow-[0_20px_50px_-12px_rgb(0_0_0/0.35)] ring-1 ring-[var(--ring-soft)] dark:shadow-[0_24px_60px_-12px_rgb(0_0_0/0.55)]"
           >
             <header className="shrink-0 border-b border-border bg-card-muted/80 px-4 py-3">
-              <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="text-[13px] font-bold text-brand">Asistente SmartGuest</p>
-                  <p className="mt-0.5 text-[11px] leading-snug text-muted">
-                    {engineLabel != null ? (
-                      <>
-                        <span className="font-medium text-foreground">{engineBadgeText(engineLabel)}</span>
-                        {" · "}
-                      </>
-                    ) : null}
-                    {engineSubtitle(engineLabel)}
-                  </p>
+                  <p className="text-[13px] font-bold text-brand">Asistente de SmartGuest</p>
                 </div>
                 <button
                   type="button"
