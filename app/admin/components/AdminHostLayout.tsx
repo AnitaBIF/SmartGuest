@@ -1,5 +1,6 @@
 "use client";
 
+import { AssistantChat } from "@/components/AssistantChat";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
 import { AdminSidebar, type AdminSidebarHighlight } from "./AdminSidebar";
@@ -27,6 +28,7 @@ export function AdminHostLayout({ children }: { children: React.ReactNode }) {
         <AdminSidebar active={active} />
         <div className="min-w-0 flex-1">{children}</div>
       </div>
+      <AssistantChat />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { AssistantChat } from "@/components/AssistantChat";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { HostSidebar, type HostSidebarHighlight } from "./HostSidebar";
@@ -51,6 +52,7 @@ export function AnfitrionHostLayout({ children }: { children: React.ReactNode })
         <HostSidebar hostName={hostName} active={active} />
         <div className="min-w-0 flex-1">{children}</div>
       </div>
+      <AssistantChat />
     </div>
   );
 }

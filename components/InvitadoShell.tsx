@@ -1,6 +1,7 @@
 "use client";
 
 import Sidebar from "@/app/invitado/components/Sidebar";
+import { AssistantChat } from "@/components/AssistantChat";
 
 type Props = {
   children: React.ReactNode;
@@ -25,6 +26,7 @@ export function InvitadoShell({ children, mainClassName = "" }: Props) {
         <Sidebar />
         <main className={`min-w-0 flex-1 ${mainClassName}`.trim()}>{children}</main>
       </div>
+      <AssistantChat />
     </div>
   );
 }
