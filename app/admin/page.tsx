@@ -490,6 +490,17 @@ function EventDetailModal({
                   {faltante > 0 ? fmtMoney(faltante) : "✓ Pagado"}
                 </span>
               </div>
+              <Link
+                href={`/admin/mesas?eventoId=${encodeURIComponent(event.id)}`}
+                onClick={onClose}
+                className="mt-2 flex items-center gap-1.5 rounded-full border border-brand px-4 py-1.5 text-[12px] font-medium text-brand transition-colors hover:bg-card-muted"
+              >
+                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="9" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                Ver organización de mesas
+              </Link>
               {editBtn}
             </>
           )}
@@ -789,17 +800,22 @@ export default function AdminDashboard() {
   const fetchData = useCallback(async () => {
     setLoading(true);
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) setAdminId(user.id);
+    /* Disparamos todo en paralelo: son requests independientes. */
+    const [userRes, anfRes, cuRes, evRes, reRes] = await Promise.all([
+      supabase.auth.getUser(),
+      fetch("/api/admin/usuarios", { cache: "no-store" }),
+      fetch("/api/admin/cuenta", { cache: "no-store" }),
+      fetch("/api/admin/eventos", { cache: "no-store" }),
+      fetch("/api/admin/reuniones", { cache: "no-store" }),
+    ]);
 
-    // Cargar anfitriones disponibles
-    const anfRes = await fetch("/api/admin/usuarios");
+    if (userRes.data.user) setAdminId(userRes.data.user.id);
+
     if (anfRes.ok) {
       const users = await anfRes.json();
       setAnfitriones(users.filter((u: { tipo: string }) => u.tipo === "anfitrion"));
     }
 
-    const cuRes = await fetch("/api/admin/cuenta", { cache: "no-store" });
     if (cuRes.ok) {
       const c = await cuRes.json();
       setSalonEventoDefaults({
@@ -811,12 +827,7 @@ export default function AdminDashboard() {
       });
     }
 
-    // Eventos
-    const evRes = await fetch("/api/admin/eventos");
     const eventos = evRes.ok ? await evRes.json() : [];
-
-    // Reuniones
-    const reRes = await fetch("/api/admin/reuniones");
     const reuniones = reRes.ok ? await reRes.json() : [];
 
     // Transformar a CalendarEvent

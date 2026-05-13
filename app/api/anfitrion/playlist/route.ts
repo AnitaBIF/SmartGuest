@@ -3,7 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 import type { Database } from "@/lib/database.types";
 import { eventoCoincideConSalonPerfil } from "@/lib/adminSalonAuth";
-import { syncCancionPlaylist } from "@/lib/cancionPlaylistSync";
+import { syncCancionesPlaylistFaltantes } from "@/lib/cancionPlaylistSync";
 import { mergePlaylistRows, youtubeSearchUrlForSong } from "@/lib/playlistSongKey";
 
 function adminClient() {
@@ -65,35 +65,38 @@ export async function GET(req: NextRequest) {
   const eventoId = await eventoDelAnfitrion(supabase, user.id);
   if (!eventoId) return NextResponse.json({ error: "No tenés un evento asignado" }, { status: 404 });
 
-  let { data: rows, error } = await supabase
-    .from("canciones")
-    .select("id, titulo, artista, pedido_por, created_at")
-    .eq("evento_id", eventoId)
-    .order("created_at", { ascending: true });
+  /* Listo canciones + invitados con canción en paralelo, son independientes. */
+  const [cancionesRes, invitadosRes] = await Promise.all([
+    supabase
+      .from("canciones")
+      .select("id, titulo, artista, pedido_por, created_at")
+      .eq("evento_id", eventoId)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("invitados")
+      .select("usuario_id, cancion")
+      .eq("evento_id", eventoId)
+      .eq("asistencia", "confirmado")
+      .not("cancion", "is", null),
+  ]);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  let list = rows ?? [];
-  const pedidosEnPlaylist = new Set(list.map((r) => r.pedido_por).filter(Boolean) as string[]);
-
-  const { data: invConCancion } = await supabase
-    .from("invitados")
-    .select("usuario_id, cancion")
-    .eq("evento_id", eventoId)
-    .eq("asistencia", "confirmado")
-    .not("cancion", "is", null);
-
-  let refetch = false;
-  for (const inv of invConCancion ?? []) {
-    const uid = inv.usuario_id;
-    const txt = typeof inv.cancion === "string" ? inv.cancion.trim() : "";
-    if (!uid || !txt || pedidosEnPlaylist.has(uid)) continue;
-    await syncCancionPlaylist(supabase, eventoId, uid, inv.cancion);
-    pedidosEnPlaylist.add(uid);
-    refetch = true;
+  if (cancionesRes.error) {
+    return NextResponse.json({ error: cancionesRes.error.message }, { status: 500 });
   }
 
-  if (refetch) {
+  let list = cancionesRes.data ?? [];
+  const pedidosEnPlaylist = new Set(
+    list.map((r) => r.pedido_por).filter((x): x is string => typeof x === "string" && x.length > 0),
+  );
+
+  const inserto = await syncCancionesPlaylistFaltantes(
+    supabase,
+    eventoId,
+    invitadosRes.data ?? [],
+    pedidosEnPlaylist,
+  );
+
+  if (inserto) {
     const second = await supabase
       .from("canciones")
       .select("id, titulo, artista, pedido_por, created_at")
@@ -118,7 +121,10 @@ export async function GET(req: NextRequest) {
     youtubeUrl: youtubeSearchUrlForSong(m.titulo, m.artista),
   }));
 
-  return NextResponse.json({ canciones });
+  return NextResponse.json(
+    { canciones },
+    { headers: { "Cache-Control": "private, no-store, max-age=0" } },
+  );
 }
 
 export async function POST(req: NextRequest) {

@@ -14,6 +14,7 @@ export const MENUS_ESPECIALES_CATALOGO = [
   "Sin lactosa",
   "Halal",
   "Kosher",
+  "Menú infantil",
   "Otro",
 ] as const;
 

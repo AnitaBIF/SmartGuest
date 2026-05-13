@@ -3,6 +3,7 @@
 import { AssistantChat } from "@/components/AssistantChat";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { useSidebarCollapsed } from "@/lib/useSidebarCollapsed";
 import { HostSidebar, type HostSidebarHighlight } from "./HostSidebar";
 
 function activeFromPath(path: string): HostSidebarHighlight {
@@ -24,6 +25,7 @@ export function AnfitrionHostLayout({ children }: { children: React.ReactNode })
   const path = usePathname() ?? "";
   const active = useMemo(() => activeFromPath(path), [path]);
   const [hostName, setHostName] = useState("Anfitrión");
+  const [desktopCollapsed, setDesktopCollapsed] = useSidebarCollapsed("anfitrion.sidebar.collapsed");
 
   useEffect(() => {
     let cancelled = false;
@@ -48,8 +50,13 @@ export function AnfitrionHostLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="min-h-screen text-foreground">
-      <div className="mx-auto flex min-h-screen w-full max-w-[min(100%,1680px)] gap-6 px-4 py-6 text-foreground sm:px-6 lg:px-8">
-        <HostSidebar hostName={hostName} active={active} />
+      <div className="flex min-h-screen w-full gap-6 px-4 py-6 text-foreground sm:px-6 lg:px-8">
+        <HostSidebar
+          hostName={hostName}
+          active={active}
+          desktopCollapsed={desktopCollapsed}
+          onToggleDesktop={setDesktopCollapsed}
+        />
         <div className="min-w-0 flex-1">{children}</div>
       </div>
       <AssistantChat />

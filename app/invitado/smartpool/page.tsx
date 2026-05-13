@@ -214,8 +214,19 @@ export default function SmartpoolPage() {
   useEffect(() => {
     if (!enrolled) return;
     if (estado?.rol === "pasajero" && estado?.pareja?.mutuo) return;
-    const id = setInterval(() => void cargar(), 12_000);
-    return () => clearInterval(id);
+    const tick = () => {
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      void cargar();
+    };
+    const id = window.setInterval(tick, 12_000);
+    const onVis = () => {
+      if (document.visibilityState === "visible") tick();
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", onVis);
+    };
   }, [enrolled, estado?.rol, estado?.pareja?.mutuo, cargar]);
 
   const handleGuardar = async () => {

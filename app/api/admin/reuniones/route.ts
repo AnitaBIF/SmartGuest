@@ -10,14 +10,16 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await db
     .from("reuniones")
-    .select("*")
+    .select("id, titulo, fecha, hora, participantes, notas, creado_por")
     .eq("creado_por", userId)
     .order("fecha", { ascending: true });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-  return NextResponse.json(data ?? []);
+  return NextResponse.json(data ?? [], {
+    headers: { "Cache-Control": "private, no-store, max-age=0" },
+  });
 }
 
 export async function POST(req: NextRequest) {

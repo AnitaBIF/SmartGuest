@@ -73,9 +73,9 @@ function Donut({
           <div className="pointer-events-none absolute inset-6 rounded-full bg-card/95 ring-1 ring-border backdrop-blur-sm dark:bg-card" />
         </div>
         <ul className="min-w-0 flex-1 space-y-1.5 text-[13px]">
-          {items.map((item) => (
+          {items.map((item, idx) => (
             <li
-              key={item.label}
+              key={`${item.label}-${idx}`}
               className="flex items-center justify-between gap-3 rounded-full bg-card-muted px-3 py-1.5"
             >
               <div className="flex min-w-0 items-center gap-2">
@@ -142,6 +142,8 @@ export default function AnfitrionDashboard() {
 
   useEffect(() => {
     let cancelled = false;
+    let lastLoadAt = 0;
+    let pendingTimeout: number | null = null;
 
     const load = (opts?: { silent?: boolean }) => {
       if (!opts?.silent) setLoading(true);
@@ -149,9 +151,7 @@ export default function AnfitrionDashboard() {
         .then((r) => (r.ok ? r.json() : null))
         .then((d) => {
           if (cancelled) return;
-          if (d) {
-            setData(d);
-          }
+          if (d) setData(d);
           setLoading(false);
         })
         .catch(() => {
@@ -159,15 +159,27 @@ export default function AnfitrionDashboard() {
         });
     };
 
+    /** Debounce: focus, visibilitychange y pageshow pueden dispararse en cadena al volver a la pestaña. */
+    const refreshDebounced = () => {
+      const now = Date.now();
+      if (now - lastLoadAt < 2000) return;
+      lastLoadAt = now;
+      if (pendingTimeout != null) window.clearTimeout(pendingTimeout);
+      pendingTimeout = window.setTimeout(() => {
+        pendingTimeout = null;
+        load({ silent: true });
+      }, 150);
+    };
+
     load();
 
     const onVis = () => {
-      if (document.visibilityState === "visible") load({ silent: true });
+      if (document.visibilityState === "visible") refreshDebounced();
     };
-    const onFocus = () => load({ silent: true });
+    const onFocus = () => refreshDebounced();
     /** Tras SmartSeat + “atrás”, bfcache puede restaurar la página sin remount → gráfico viejo. */
     const onPageShow = (e: PageTransitionEvent) => {
-      if (e.persisted) load({ silent: true });
+      if (e.persisted) refreshDebounced();
     };
     document.addEventListener("visibilitychange", onVis);
     window.addEventListener("focus", onFocus);
@@ -175,6 +187,7 @@ export default function AnfitrionDashboard() {
 
     return () => {
       cancelled = true;
+      if (pendingTimeout != null) window.clearTimeout(pendingTimeout);
       document.removeEventListener("visibilitychange", onVis);
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("pageshow", onPageShow);

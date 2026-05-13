@@ -48,7 +48,7 @@ export default function SmartSeatPage() {
     if (opts?.silent && layoutDirtyRef.current) return;
     if (!opts?.silent) setLoading(true);
     try {
-      const res = await fetch("/api/anfitrion/smartseat");
+      const res = await fetch("/api/anfitrion/smartseat", { cache: "no-store" });
       if (!res.ok) throw new Error("Error al cargar");
       const data = await res.json();
 

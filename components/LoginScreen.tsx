@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { translateAuthError } from "@/lib/translateAuthError";
 
 function NotchedField({
   id,
@@ -80,24 +81,36 @@ export default function LoginScreen({ signOutOnMount = false }: LoginScreenProps
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+
+    /* Validaciones del lado del cliente (en español, antes de pegarle a Supabase). */
+    const em = email.trim();
+    const pwd = password;
+    if (!em && !pwd) {
+      setError("Ingresá tu email y contraseña para iniciar sesión.");
+      return;
+    }
+    if (!em) {
+      setError("Ingresá tu email para iniciar sesión.");
+      return;
+    }
+    if (!pwd) {
+      setError("Ingresá tu contraseña para iniciar sesión.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) {
+      setError("El email no parece válido. Revisalo y probá de nuevo.");
+      return;
+    }
+
     setLoading(true);
     try {
       const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: em.toLowerCase(),
+        password: pwd,
       });
 
       if (authError || !data.user) {
-        const raw = authError?.message ?? "";
-        if (raw.toLowerCase().includes("email not confirmed")) {
-          setError("Debés confirmar tu email antes de ingresar. Revisá tu casilla de correo.");
-        } else if (raw.toLowerCase().includes("fetch") || raw === "Failed to fetch") {
-          setError(
-            "No hay conexión con Supabase. Revisá .env.local (NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY), reiniciá el servidor con npm run dev y que el proyecto en supabase.com no esté pausado."
-          );
-        } else {
-          setError(raw || "Email o contraseña incorrectos.");
-        }
+        setError(translateAuthError(authError?.message, "Email o contraseña incorrectos."));
         return;
       }
 
@@ -108,14 +121,12 @@ export default function LoginScreen({ signOutOnMount = false }: LoginScreenProps
         .single();
 
       if (userError || !usuario) {
-        const umsg = userError?.message ?? "error desconocido";
-        if (umsg.toLowerCase().includes("fetch") || umsg === "Failed to fetch") {
-          setError(
-            "No hay conexión con Supabase al cargar tu perfil. Misma revisión que arriba: URL, anon key y proyecto activo."
-          );
-        } else {
-          setError("No se pudo obtener el perfil: " + umsg);
-        }
+        setError(
+          translateAuthError(
+            userError?.message,
+            "No pudimos cargar tu perfil. Reintentá en unos segundos.",
+          ),
+        );
         return;
       }
 
@@ -123,13 +134,7 @@ export default function LoginScreen({ signOutOnMount = false }: LoginScreenProps
       window.location.href = ruta;
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      if (msg.toLowerCase().includes("fetch") || err instanceof TypeError) {
-        setError(
-          "No se pudo conectar con Supabase (red o configuración). Verificá .env.local, reiniciá npm run dev y tu conexión a internet."
-        );
-      } else {
-        setError(msg || "Error al iniciar sesión.");
-      }
+      setError(translateAuthError(msg, "No pudimos iniciar sesión. Intentá de nuevo."));
     } finally {
       setLoading(false);
     }
@@ -150,7 +155,7 @@ export default function LoginScreen({ signOutOnMount = false }: LoginScreenProps
     });
     setForgotLoading(false);
     if (fe) {
-      setForgotMsg(fe.message);
+      setForgotMsg(translateAuthError(fe.message, "No pudimos enviar el enlace. Probá de nuevo."));
       return;
     }
     setForgotMsg("Si ese email está registrado, recibirás un enlace para elegir una nueva contraseña.");

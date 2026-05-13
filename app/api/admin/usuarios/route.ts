@@ -72,7 +72,9 @@ export async function GET(req: NextRequest) {
   );
 
   const out = merged.map(({ created_at: _c, ...rest }) => rest);
-  return NextResponse.json(out);
+  return NextResponse.json(out, {
+    headers: { "Cache-Control": "private, no-store, max-age=0" },
+  });
 }
 
 // ─── POST: crear usuario (mismo salón que el admin) ─────────────────────────

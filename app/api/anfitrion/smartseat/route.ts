@@ -195,42 +195,43 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "Falta assignments." }, { status: 400 });
   }
 
-  const idsEnPayload = [
-    ...new Set(
-      assignments
-        .map((a) => (typeof a?.invitadoId === "string" ? a.invitadoId.trim() : ""))
-        .filter(Boolean)
-    ),
-  ];
-
-  /* Quitar mesa solo a las filas que este guardado toca (confirmados y pendientes en SmartSeat). */
-  if (idsEnPayload.length > 0) {
-    const { error: clearErr } = await supabase
-      .from("invitados")
-      .update({ mesa_id: null })
-      .eq("evento_id", evento.id)
-      .in("id", idsEnPayload);
-
-    if (clearErr) {
-      return NextResponse.json({ error: clearErr.message }, { status: 500 });
-    }
-  }
-
+  /* Normalizamos y deduplicamos por invitadoId (último gana). */
+  const normalizados = new Map<string, string | null>();
   for (const a of assignments) {
     if (!a?.invitadoId || typeof a.invitadoId !== "string") continue;
-    const mesaId = a.mesaId === null || a.mesaId === undefined || a.mesaId === "" ? null : String(a.mesaId);
-    const { error: upErr } = await supabase
-      .from("invitados")
-      .update({ mesa_id: mesaId })
-      .eq("id", a.invitadoId.trim())
-      .eq("evento_id", evento.id);
-
-    if (upErr) {
-      return NextResponse.json({ error: upErr.message }, { status: 500 });
-    }
+    const id = a.invitadoId.trim();
+    if (!id) continue;
+    const mesaId =
+      a.mesaId === null || a.mesaId === undefined || a.mesaId === "" ? null : String(a.mesaId);
+    normalizados.set(id, mesaId);
   }
 
-  return NextResponse.json({ ok: true });
+  if (normalizados.size === 0) {
+    return NextResponse.json({ ok: true, updated: 0 });
+  }
+
+  /* Agrupamos por mesa para hacer un solo UPDATE por grupo (incluyendo el grupo de "sin mesa"). */
+  const porMesa = new Map<string | null, string[]>();
+  for (const [invId, mesaId] of normalizados) {
+    if (!porMesa.has(mesaId)) porMesa.set(mesaId, []);
+    porMesa.get(mesaId)!.push(invId);
+  }
+
+  const updates = Array.from(porMesa.entries()).map(([mesaId, ids]) =>
+    supabase
+      .from("invitados")
+      .update({ mesa_id: mesaId })
+      .eq("evento_id", evento.id)
+      .in("id", ids),
+  );
+
+  const results = await Promise.all(updates);
+  const firstErr = results.find((r) => r.error)?.error;
+  if (firstErr) {
+    return NextResponse.json({ error: firstErr.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true, updated: normalizados.size });
 }
 
 // POST: ejecutar clustering y devolver sugerencia

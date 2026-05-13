@@ -120,6 +120,7 @@ export function AssistantChat() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "same-origin",
+      cache: "no-store",
       body: JSON.stringify({ messages: history }),
     });
     const data = (await r.json().catch(() => ({}))) as Record<string, unknown>;

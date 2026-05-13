@@ -15,7 +15,9 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await db
     .from("eventos")
-    .select("*")
+    .select(
+      "id, nombre, tipo, fecha, horario, salon, direccion, anfitrion1_nombre, anfitrion2_nombre, anfitrion_id, cant_invitados, cant_mesas, menu_standard, monto_total, sena, dress_code, menus_especiales, menus_especiales_otro",
+    )
     .eq("salon", salonNombre)
     .eq("direccion", salonDireccion)
     .order("fecha", { ascending: true });
@@ -23,7 +25,9 @@ export async function GET(req: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-  return NextResponse.json(data ?? []);
+  return NextResponse.json(data ?? [], {
+    headers: { "Cache-Control": "private, no-store, max-age=0" },
+  });
 }
 
 export async function POST(req: NextRequest) {

@@ -343,15 +343,21 @@ export async function GET(req: NextRequest) {
 
   const menuOpciones = menuOpcionesParaEvento(evento.menus_especiales);
 
-  return NextResponse.json({ invitados, menuOpciones });
+  return NextResponse.json(
+    { invitados, menuOpciones },
+    { headers: { "Cache-Control": "private, no-store, max-age=0" } },
+  );
 }
 
 export async function POST(req: NextRequest) {
   const user = await getSessionUser(req);
   if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
 
-  const body = await req.json();
-  const guests = body.guests as GuestInput[] | undefined;
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== "object") {
+    return NextResponse.json({ error: "Cuerpo inválido. Envía JSON válido." }, { status: 400 });
+  }
+  const guests = (body as { guests?: GuestInput[] }).guests;
   if (!Array.isArray(guests) || guests.length === 0) {
     return NextResponse.json({ error: "Enviá al menos un invitado en «guests»." }, { status: 400 });
   }
@@ -428,29 +434,43 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ deleted: 0 });
   }
 
-  const usuarioIds = [...new Set(list.map((r) => r.usuario_id))];
+  const usuarioIds = [...new Set(list.map((r) => r.usuario_id).filter(Boolean) as string[])];
 
   const { error: delErr } = await supabase.from("invitados").delete().eq("evento_id", evento.id);
   if (delErr) return NextResponse.json({ error: delErr.message }, { status: 500 });
 
-  for (const usuarioId of usuarioIds) {
-    const { data: rest } = await supabase
-      .from("invitados")
-      .select("id")
-      .eq("usuario_id", usuarioId)
-      .limit(1);
+  /*
+   * Limpieza de cuentas auth "sintéticas" sin invitaciones restantes:
+   * 1) De una sola query: usuarios sintéticos del set inicial.
+   * 2) De una sola query: cuáles de esos aún tienen otras invitaciones (anti-join en JS).
+   * 3) Borramos en auth los que quedaron huérfanos (limite de concurrencia para no saturar).
+   */
+  if (usuarioIds.length > 0) {
+    const [{ data: sinteticos }, { data: restantes }] = await Promise.all([
+      supabase
+        .from("usuarios")
+        .select("id, email")
+        .in("id", usuarioIds)
+        .like("email", `%${SYNTHETIC_EMAIL_SUFFIX}`),
+      supabase
+        .from("invitados")
+        .select("usuario_id")
+        .in("usuario_id", usuarioIds),
+    ]);
 
-    if (rest && rest.length > 0) continue;
+    const conInvitacionesVivas = new Set(
+      (restantes ?? []).map((r) => r.usuario_id).filter(Boolean) as string[],
+    );
+    const aBorrar = (sinteticos ?? [])
+      .map((u) => u.id)
+      .filter((id) => !conInvitacionesVivas.has(id));
 
-    const { data: usuario } = await supabase
-      .from("usuarios")
-      .select("email")
-      .eq("id", usuarioId)
-      .maybeSingle();
-
-    const email = usuario?.email ?? "";
-    if (email.endsWith(SYNTHETIC_EMAIL_SUFFIX)) {
-      await supabase.auth.admin.deleteUser(usuarioId);
+    if (aBorrar.length > 0) {
+      const CONCURRENCY = 5;
+      for (let i = 0; i < aBorrar.length; i += CONCURRENCY) {
+        const chunk = aBorrar.slice(i, i + CONCURRENCY);
+        await Promise.all(chunk.map((id) => supabase.auth.admin.deleteUser(id)));
+      }
     }
   }
 

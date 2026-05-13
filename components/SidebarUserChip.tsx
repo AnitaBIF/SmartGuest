@@ -35,11 +35,24 @@ export function SidebarUserChip({
         <button
           type="button"
           onClick={onLogout}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border text-muted hover:bg-card-muted"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border text-muted transition-colors hover:bg-card hover:text-brand"
           aria-label="Cerrar sesión"
           title="Cerrar sesión"
         >
-          ↪
+          <svg
+            className="h-4 w-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.8}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <path d="M15 17l5-5-5-5" />
+            <path d="M20 12H9" />
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+          </svg>
         </button>
       </div>
     </div>

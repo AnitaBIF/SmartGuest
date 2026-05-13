@@ -121,7 +121,10 @@ async function deleteAuthUserIfOrphaned(
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== "object") {
+    return NextResponse.json({ error: "Cuerpo inválido. Envía JSON válido." }, { status: 400 });
+  }
   const {
     evento_id,
     invitado_id: invitadoIdRaw,

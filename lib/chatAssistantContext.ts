@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
 import { eventoCoincideConSalonPerfil } from "@/lib/adminSalonAuth";
 import { buildAdminSalonChatEnrichment } from "@/lib/adminSalonChatData";
-import { syncCancionPlaylist } from "@/lib/cancionPlaylistSync";
+import { syncCancionesPlaylistFaltantes } from "@/lib/cancionPlaylistSync";
 import { fetchInvitacionPriorizada } from "@/lib/invitacionUsuarioPriorizada";
 import { emptyMenuBuckets, mergeMenuBuckets, menuBucketsFromInvitado, type MenuBuckets } from "@/lib/cocinaConteos";
 import { menuOpcionesParaEvento } from "@/lib/grupoFamiliar";
@@ -15,39 +15,37 @@ async function playlistResumenParaEventoAnfitrion(
   db: Db,
   eventoId: string
 ): Promise<{ total: number; muestra: { titulo: string; artista: string }[] }> {
-  const { data: firstRows, error } = await db
-    .from("canciones")
-    .select("id, titulo, artista, pedido_por, created_at")
-    .eq("evento_id", eventoId)
-    .order("created_at", { ascending: true });
+  const [cancionesRes, invitadosRes] = await Promise.all([
+    db
+      .from("canciones")
+      .select("id, titulo, artista, pedido_por, created_at")
+      .eq("evento_id", eventoId)
+      .order("created_at", { ascending: true }),
+    db
+      .from("invitados")
+      .select("usuario_id, cancion")
+      .eq("evento_id", eventoId)
+      .eq("asistencia", "confirmado")
+      .not("cancion", "is", null),
+  ]);
 
-  if (error) {
+  if (cancionesRes.error) {
     return { total: 0, muestra: [] };
   }
 
-  let list = firstRows ?? [];
+  let list = cancionesRes.data ?? [];
   const pedidosEnPlaylist = new Set(
     list.map((r) => r.pedido_por).filter((x): x is string => typeof x === "string" && x.length > 0)
   );
 
-  const { data: invConCancion } = await db
-    .from("invitados")
-    .select("usuario_id, cancion")
-    .eq("evento_id", eventoId)
-    .eq("asistencia", "confirmado")
-    .not("cancion", "is", null);
+  const inserto = await syncCancionesPlaylistFaltantes(
+    db,
+    eventoId,
+    invitadosRes.data ?? [],
+    pedidosEnPlaylist,
+  );
 
-  let refetch = false;
-  for (const inv of invConCancion ?? []) {
-    const uid = inv.usuario_id;
-    const txt = typeof inv.cancion === "string" ? inv.cancion.trim() : "";
-    if (!uid || !txt || pedidosEnPlaylist.has(uid)) continue;
-    await syncCancionPlaylist(db, eventoId, uid, inv.cancion);
-    pedidosEnPlaylist.add(uid);
-    refetch = true;
-  }
-
-  if (refetch) {
+  if (inserto) {
     const second = await db
       .from("canciones")
       .select("id, titulo, artista, pedido_por, created_at")
