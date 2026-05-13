@@ -147,7 +147,7 @@ export default function EcoGuestsPage() {
   }, [ecoGuests]);
 
   return (
-    <main className="min-w-0 flex-1 pb-8">
+    <main className="mx-auto min-w-0 max-w-4xl flex-1 pb-8">
           <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-2xl font-semibold text-brand">EcoGuests</h1>
@@ -219,7 +219,7 @@ export default function EcoGuestsPage() {
               </p>
             </div>
           ) : (
-            <div className="max-w-3xl space-y-4">
+            <div className="space-y-4">
               <div className="flex flex-wrap items-center gap-2 text-[12px] text-muted">
                 <span className="rounded-full border border-border bg-card px-3 py-1 font-medium shadow-sm ring-1 ring-[var(--ring-soft)]">
                   {conteo.total} {conteo.total === 1 ? "EcoGuest" : "EcoGuests"}
