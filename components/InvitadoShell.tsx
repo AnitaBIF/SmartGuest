@@ -27,7 +27,13 @@ export function InvitadoShell({ children, mainClassName = "" }: Props) {
         }
       >
         <Sidebar desktopCollapsed={desktopCollapsed} onToggleDesktop={setDesktopCollapsed} />
-        <main className={`min-w-0 flex-1 ${mainClassName}`.trim()}>{children}</main>
+        <main
+          className={`min-w-0 flex-1 transition-[padding] duration-300 ease-out ${
+            desktopCollapsed ? "md:pl-14" : "md:pl-0"
+          } ${mainClassName}`.trim()}
+        >
+          {children}
+        </main>
       </div>
       <AssistantChat />
     </div>

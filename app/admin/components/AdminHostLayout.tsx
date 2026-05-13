@@ -33,7 +33,13 @@ export function AdminHostLayout({ children }: { children: React.ReactNode }) {
           desktopCollapsed={desktopCollapsed}
           onToggleDesktop={setDesktopCollapsed}
         />
-        <div className="min-w-0 flex-1">{children}</div>
+        <div
+          className={`min-w-0 flex-1 transition-[padding] duration-300 ease-out ${
+            desktopCollapsed ? "md:pl-14" : "md:pl-0"
+          }`}
+        >
+          {children}
+        </div>
       </div>
       <AssistantChat />
     </div>
