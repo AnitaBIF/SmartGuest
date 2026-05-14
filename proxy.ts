@@ -33,7 +33,21 @@ export async function proxy(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set(name, value, options);
+            // Convertimos las cookies de auth a "session cookies": al cerrar
+            // el navegador, el browser las borra solo. Sólo respetamos
+            // expiraciones que sean borrados intencionales (maxAge === 0 o
+            // fecha pasada) para no romper logout/expiración real.
+            const sessionOptions = { ...options };
+            if (typeof sessionOptions.maxAge === "number" && sessionOptions.maxAge > 0) {
+              delete sessionOptions.maxAge;
+            }
+            if (
+              sessionOptions.expires instanceof Date &&
+              sessionOptions.expires.getTime() > Date.now()
+            ) {
+              delete sessionOptions.expires;
+            }
+            response.cookies.set(name, value, sessionOptions);
           });
         },
       },

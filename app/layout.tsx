@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Poppins } from "next/font/google";
 import { AppThemeProvider } from "@/components/AppThemeProvider";
+import SessionWatchdog from "@/components/SessionWatchdog";
 import { ThemeToggleGate } from "@/components/ThemeToggleGate";
 import "./globals.css";
 
@@ -49,6 +50,7 @@ export default function RootLayout({
       <body className="flex min-h-full flex-col">
         <AppThemeProvider>
           <ThemeToggleGate />
+          <SessionWatchdog />
           {children}
         </AppThemeProvider>
       </body>
