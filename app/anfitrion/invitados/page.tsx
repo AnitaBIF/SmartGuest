@@ -1141,19 +1141,6 @@ export default function GestionInvitadosPage() {
                         </>
                       )}
                     </p>
-                    <p>
-                      <span className="font-medium text-foreground">Cadena:</span> copiar solo el enlace.{" "}
-                      <span className="font-medium text-foreground">WhatsApp:</span> abre el chat de esa persona con un
-                      mensaje listo que incluye el enlace y las instrucciones. La confirmación siempre actualiza{" "}
-                      <span className="font-medium text-foreground">esa misma fila</span>.
-                    </p>
-                    <p>
-                      Cuando hacés clic en el botón verde y se abre WhatsApp, el sistema marca esa fila con un{" "}
-                      <span className="font-medium text-emerald-700 dark:text-emerald-300">tilde verde</span>.
-                      Podés volver a clickear para reenviar, o usar el botón{" "}
-                      <span className="font-mono font-semibold text-foreground">↺</span> de al lado si finalmente no la
-                      mandaste y querés que vuelva a aparecer como pendiente.
-                    </p>
                   </div>
                 )}
               </div>
