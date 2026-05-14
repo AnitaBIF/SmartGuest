@@ -693,6 +693,8 @@ export default function AdminDashboard() {
   const [adminId, setAdminId]     = useState<string | null>(null);
   const [calEvents, setCalEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading]     = useState(true);
+  /** Offset (en meses) sobre el mes actual: 0 = vista por defecto (mes actual + siguiente). */
+  const [monthOffset, setMonthOffset] = useState(0);
 
   const [showReunionModal, setShowReunionModal] = useState(false);
   const [reunion, setReunion] = useState({ titulo: "", fecha: "", hora: "", participantes: "" });
@@ -1032,22 +1034,61 @@ export default function AdminDashboard() {
     fetchData();
   };
 
-  // Stats dinámicos
-  const totalEventos   = calEvents.filter((e) => e.tipo === "evento").length;
-  const totalReuniones = calEvents.filter((e) => e.tipo === "reunion").length;
-  const proximoEvento  = calEvents
+  // Stats dinámicos: contemplamos TODOS los eventos/reuniones futuros del salón,
+  // no solo los visibles en los dos meses del calendario. Así, si el próximo evento
+  // está dentro de un año, igual aparece reflejado acá.
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const eventosOrdenados = calEvents
     .filter((e) => e.tipo === "evento")
     .sort((a, b) => {
       const da = new Date(a.year, a.month, a.day);
       const db = new Date(b.year, b.month, b.day);
       return da.getTime() - db.getTime();
-    })
-    .find((e) => new Date(e.year, e.month, e.day) >= today);
+    });
+  const reunionesOrdenadas = calEvents
+    .filter((e) => e.tipo === "reunion")
+    .sort((a, b) => {
+      const da = new Date(a.year, a.month, a.day);
+      const db = new Date(b.year, b.month, b.day);
+      return da.getTime() - db.getTime();
+    });
+  const eventosFuturos = eventosOrdenados.filter(
+    (e) => new Date(e.year, e.month, e.day) >= startOfToday,
+  );
+  const reunionesFuturas = reunionesOrdenadas.filter(
+    (r) => new Date(r.year, r.month, r.day) >= startOfToday,
+  );
+  const totalEventos   = eventosFuturos.length;
+  const totalReuniones = reunionesFuturas.length;
+  const proximoEvento  = eventosFuturos[0];
+  const proximaReunion = reunionesFuturas[0];
 
-  const mes1Year  = today.getFullYear();
-  const mes1Month = today.getMonth();
-  const mes2Month = (mes1Month + 1) % 12;
-  const mes2Year  = mes1Month === 11 ? mes1Year + 1 : mes1Year;
+  const fmtFechaCorta = (ev: CalendarEvent) =>
+    new Date(ev.year, ev.month, ev.day).toLocaleDateString("es-AR", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+
+  const mes1Date  = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
+  const mes2Date  = new Date(today.getFullYear(), today.getMonth() + monthOffset + 1, 1);
+  const mes1Year  = mes1Date.getFullYear();
+  const mes1Month = mes1Date.getMonth();
+  const mes2Year  = mes2Date.getFullYear();
+  const mes2Month = mes2Date.getMonth();
+  const rangoLabel = `${mes1Date.toLocaleString("es-AR", { month: "long", year: "numeric" })} – ${mes2Date.toLocaleString("es-AR", { month: "long", year: "numeric" })}`;
+
+  // Offset (en meses) entre hoy y el mes del próximo evento, para poder saltar
+  // el calendario directamente a ese par de meses.
+  const proximoEventoOffset = proximoEvento
+    ? (proximoEvento.year - today.getFullYear()) * 12 + (proximoEvento.month - today.getMonth())
+    : null;
+  const proximoEventoVisible =
+    proximoEventoOffset !== null &&
+    (proximoEventoOffset === monthOffset || proximoEventoOffset === monthOffset + 1);
+  const irAlProximoEvento = () => {
+    if (proximoEventoOffset !== null) setMonthOffset(proximoEventoOffset);
+  };
 
   return (
     <>
@@ -1057,12 +1098,31 @@ export default function AdminDashboard() {
           {/* Stat cards */}
           <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
             {[
-              { label: "Próximos Eventos",   value: loading ? "..." : String(totalEventos) },
-              { label: "Próximas reuniones", value: loading ? "..." : String(totalReuniones) },
+              {
+                label: "Próximos Eventos",
+                value: loading ? "..." : String(totalEventos),
+                hint: loading
+                  ? ""
+                  : proximoEvento
+                    ? `Próximo: ${fmtFechaCorta(proximoEvento)}`
+                    : "Sin eventos a futuro",
+              },
+              {
+                label: "Próximas reuniones",
+                value: loading ? "..." : String(totalReuniones),
+                hint: loading
+                  ? ""
+                  : proximaReunion
+                    ? `Próxima: ${fmtFechaCorta(proximaReunion)}`
+                    : "Sin reuniones a futuro",
+              },
             ].map((card) => (
               <div key={card.label} className="rounded-2xl bg-[linear-gradient(135deg,#2d5a41,#3d7a56)] px-5 py-4 shadow-sm">
                 <p className="text-[12px] font-medium text-[#a8d5b5]">{card.label}</p>
                 <p className="mt-1 text-2xl font-bold text-white">{card.value}</p>
+                {card.hint && (
+                  <p className="mt-0.5 text-[11px] font-medium text-[#a8d5b5]">{card.hint}</p>
+                )}
               </div>
             ))}
           </div>
@@ -1085,6 +1145,61 @@ export default function AdminDashboard() {
               Agendar reunión
             </button>
           </div>
+
+          {/* Navegación entre pares de meses */}
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={() => setMonthOffset((o) => o - 2)}
+              aria-label="Ver dos meses anteriores"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm transition-colors hover:border-brand hover:bg-card-muted hover:text-brand"
+            >
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
+
+            <div className="flex flex-1 flex-col items-center justify-center gap-1">
+              <div className="flex items-center gap-2">
+                <span className="text-center text-[12px] font-semibold uppercase tracking-wide text-muted sm:text-[13px]">
+                  {rangoLabel}
+                </span>
+                {monthOffset !== 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setMonthOffset(0)}
+                    className="rounded-full border border-brand px-3 py-1 text-[11px] font-medium text-brand transition-colors hover:bg-card-muted"
+                  >
+                    Hoy
+                  </button>
+                )}
+              </div>
+              {proximoEvento && !proximoEventoVisible && (
+                <button
+                  type="button"
+                  onClick={irAlProximoEvento}
+                  className="flex items-center gap-1 text-[11px] font-medium text-brand underline decoration-brand/30 underline-offset-2 transition-colors hover:decoration-brand"
+                >
+                  Ir al próximo evento ({fmtFechaCorta(proximoEvento)})
+                  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </button>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setMonthOffset((o) => o + 2)}
+              aria-label="Ver dos meses siguientes"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm transition-colors hover:border-brand hover:bg-card-muted hover:text-brand"
+            >
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+          </div>
+
           <div className="mb-8 flex min-w-0 flex-col gap-8 sm:flex-row">
             <MiniCalendar year={mes1Year} month={mes1Month} events={calEvents} onDayClick={setSelectedEvent} todayYear={today.getFullYear()} todayMonth={today.getMonth()} todayDay={today.getDate()} />
             <MiniCalendar year={mes2Year} month={mes2Month} events={calEvents} onDayClick={setSelectedEvent} todayYear={today.getFullYear()} todayMonth={today.getMonth()} todayDay={today.getDate()} />
