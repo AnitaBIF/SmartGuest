@@ -262,6 +262,75 @@ function IconCheck() {
   );
 }
 
+/** Tilde pequeño para superponer al ícono de WhatsApp cuando la invitación ya fue enviada. */
+function IconSentBadge() {
+  return (
+    <svg
+      width="11"
+      height="11"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+      className="shrink-0"
+    >
+      <circle cx="12" cy="12" r="11" fill="#15803d" />
+      <path
+        d="M7 12.5l3.2 3.2L17 9"
+        stroke="white"
+        strokeWidth="2.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+/** Clave de localStorage para recordar qué invitaciones se dispararon por WhatsApp. */
+const INVITACIONES_ENVIADAS_LS_KEY = "smartguest:invitaciones-enviadas:v1";
+
+function leerInvitacionesEnviadas(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(INVITACIONES_ENVIADAS_LS_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as unknown;
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      const out: Record<string, string> = {};
+      for (const [k, v] of Object.entries(parsed as Record<string, unknown>)) {
+        if (typeof v === "string") out[k] = v;
+      }
+      return out;
+    }
+  } catch {
+    /* localStorage corrupto: lo ignoramos */
+  }
+  return {};
+}
+
+function guardarInvitacionesEnviadas(map: Record<string, string>) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(INVITACIONES_ENVIADAS_LS_KEY, JSON.stringify(map));
+  } catch {
+    /* almacenamiento lleno o bloqueado: ignorar */
+  }
+}
+
+function formatearEnvioFecha(iso: string): string {
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "fecha desconocida";
+    return d.toLocaleString("es-AR", {
+      day: "2-digit",
+      month: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return "fecha desconocida";
+  }
+}
+
 /** Icono embudo (filtro) en círculo — abre el panel de filtros de la tabla. */
 function FilterTableIcon({ active }: { active?: boolean }) {
   return (
@@ -351,6 +420,14 @@ export default function GestionInvitadosPage() {
   const [filtroGrupo, setFiltroGrupo] = useState("");
   const [filtroRango, setFiltroRango] = useState("");
   const [filtroEco, setFiltroEco] = useState<"" | "Sí" | "No">("");
+  const [filtroEnvio, setFiltroEnvio] = useState<"" | "enviada" | "no_enviada">("");
+
+  /**
+   * Mapa local id → ISO timestamp del último click en "Enviar por WhatsApp".
+   * Vive en localStorage para que el anfitrión recuerde a quiénes ya intentó invitar
+   * sin perder la posibilidad de reenviar (apretar otra vez actualiza el timestamp).
+   */
+  const [invitacionesEnviadas, setInvitacionesEnviadas] = useState<Record<string, string>>({});
 
   const excelInputRef = useRef<HTMLInputElement>(null);
   const excelDragDepth = useRef(0);
@@ -370,7 +447,7 @@ export default function GestionInvitadosPage() {
   }, [menuOpciones, invitadoActual?.restriccionSelect]);
 
   const filtrosActivos = Boolean(
-    filtroAsistencia || filtroGrupo || filtroRango || filtroEco,
+    filtroAsistencia || filtroGrupo || filtroRango || filtroEco || filtroEnvio,
   );
 
   const invitadosFiltrados = useMemo(() => {
@@ -379,9 +456,26 @@ export default function GestionInvitadosPage() {
       if (filtroGrupo && inv.grupo !== filtroGrupo) return false;
       if (filtroRango && inv.rango !== filtroRango) return false;
       if (filtroEco && inv.eco !== filtroEco) return false;
+      if (filtroEnvio === "enviada" && !invitacionesEnviadas[inv.id]) return false;
+      if (filtroEnvio === "no_enviada" && invitacionesEnviadas[inv.id]) return false;
       return true;
     });
-  }, [invitados, filtroAsistencia, filtroGrupo, filtroRango, filtroEco]);
+  }, [invitados, filtroAsistencia, filtroGrupo, filtroRango, filtroEco, filtroEnvio, invitacionesEnviadas]);
+
+  /**
+   * Cuántos invitados (con celular WhatsApp válido) ya tienen una invitación marcada
+   * como enviada. Para mostrar el progreso "X de Y" arriba de la tabla.
+   */
+  const enviosResumen = useMemo(() => {
+    let conWa = 0;
+    let enviados = 0;
+    for (const inv of invitados) {
+      if (!digitosTelefonoWhatsApp(inv.telefono)) continue;
+      conWa += 1;
+      if (invitacionesEnviadas[inv.id]) enviados += 1;
+    }
+    return { conWa, enviados };
+  }, [invitados, invitacionesEnviadas]);
 
   const opcionesGrupo = useMemo(() => {
     const set = new Set<string>();
@@ -415,7 +509,31 @@ export default function GestionInvitadosPage() {
     setFiltroGrupo("");
     setFiltroRango("");
     setFiltroEco("");
+    setFiltroEnvio("");
   };
+
+  // Cargar el registro de invitaciones enviadas desde localStorage al montar.
+  useEffect(() => {
+    setInvitacionesEnviadas(leerInvitacionesEnviadas());
+  }, []);
+
+  const marcarInvitacionEnviada = useCallback((invitadoId: string) => {
+    setInvitacionesEnviadas((prev) => {
+      const next = { ...prev, [invitadoId]: new Date().toISOString() };
+      guardarInvitacionesEnviadas(next);
+      return next;
+    });
+  }, []);
+
+  const desmarcarInvitacionEnviada = useCallback((invitadoId: string) => {
+    setInvitacionesEnviadas((prev) => {
+      if (!prev[invitadoId]) return prev;
+      const next = { ...prev };
+      delete next[invitadoId];
+      guardarInvitacionesEnviadas(next);
+      return next;
+    });
+  }, []);
 
   const urlInvitacionPersonal = (invitadoId: string) =>
     `${typeof window !== "undefined" ? window.location.origin : ""}/invitacion/${invitadoId}`;
@@ -464,7 +582,11 @@ export default function GestionInvitadosPage() {
       tutorialVideoUrl: INVITADO_TUTORIAL_VIDEO_URL,
     });
     const href = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
-    window.open(href, "_blank", "noopener,noreferrer");
+    const opened = window.open(href, "_blank", "noopener,noreferrer");
+    // Solo dejamos marca si efectivamente se abrió la pestaña de WhatsApp.
+    // (Si el navegador bloquea pop-ups, el anfitrión podrá reintentar y la fila
+    // sigue marcada como "no enviada" hasta que el chat se abra de verdad.)
+    if (opened) marcarInvitacionEnviada(inv.id);
   };
 
   const loadInvitados = useCallback(async (opts?: { silent?: boolean }) => {
@@ -918,12 +1040,27 @@ export default function GestionInvitadosPage() {
                         ? `${invitados.length} en total`
                         : `Mostrando ${invitadosFiltrados.length} de ${invitados.length}`}
                       {filtrosActivos ? " · filtros activos" : ""}
+                      {enviosResumen.conWa > 0 && (
+                        <>
+                          {" · "}
+                          <span className="font-medium text-foreground">
+                            Invitaciones enviadas: {enviosResumen.enviados} / {enviosResumen.conWa}
+                          </span>
+                        </>
+                      )}
                     </p>
                     <p>
                       <span className="font-medium text-foreground">Cadena:</span> copiar solo el enlace.{" "}
                       <span className="font-medium text-foreground">WhatsApp:</span> abre el chat de esa persona con un
                       mensaje listo que incluye el enlace y las instrucciones. La confirmación siempre actualiza{" "}
                       <span className="font-medium text-foreground">esa misma fila</span>.
+                    </p>
+                    <p>
+                      Cuando hacés clic en el botón verde y se abre WhatsApp, el sistema marca esa fila con un{" "}
+                      <span className="font-medium text-emerald-700 dark:text-emerald-300">tilde verde</span>.
+                      Podés volver a clickear para reenviar, o usar el botón{" "}
+                      <span className="font-mono font-semibold text-foreground">↺</span> de al lado si finalmente no la
+                      mandaste y querés que vuelva a aparecer como pendiente.
                     </p>
                   </div>
                 )}
@@ -1032,6 +1169,24 @@ export default function GestionInvitadosPage() {
                             <option value="No">No</option>
                           </select>
                         </div>
+                        <div>
+                          <label className="mb-1 block font-medium text-foreground">
+                            Estado de invitación
+                          </label>
+                          <select
+                            value={filtroEnvio}
+                            onChange={(e) =>
+                              setFiltroEnvio(
+                                (e.target.value || "") as "" | "enviada" | "no_enviada",
+                              )
+                            }
+                            className="w-full rounded-xl border border-border bg-input px-3 py-2 text-xs text-foreground outline-none placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/20"
+                          >
+                            <option value="">Todas</option>
+                            <option value="enviada">Ya enviadas</option>
+                            <option value="no_enviada">No enviadas</option>
+                          </select>
+                        </div>
                       </div>
                       <button
                         type="button"
@@ -1100,6 +1255,8 @@ export default function GestionInvitadosPage() {
                   <tbody>
                     {invitadosFiltrados.map((inv, idx) => {
                       const waOk = Boolean(digitosTelefonoWhatsApp(inv.telefono));
+                      const enviadoEnIso = invitacionesEnviadas[inv.id];
+                      const yaEnviada = Boolean(enviadoEnIso);
                       return (
                       <tr
                         key={inv.id}
@@ -1149,16 +1306,42 @@ export default function GestionInvitadosPage() {
                               type="button"
                               disabled={!waOk}
                               onClick={() => enviarInvitacionWhatsApp(inv)}
-                              className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#25D366]/50 bg-[#25D366]/12 text-[#128C7E] shadow-sm transition enabled:hover:border-[#25D366] enabled:hover:bg-[#25D366]/22 disabled:cursor-not-allowed disabled:opacity-35 sm:h-8 sm:w-8"
+                              className={`relative inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border shadow-sm transition disabled:cursor-not-allowed disabled:opacity-35 sm:h-8 sm:w-8 ${
+                                yaEnviada
+                                  ? "border-emerald-500/70 bg-emerald-100 text-emerald-800 enabled:hover:bg-emerald-200 dark:border-emerald-500/60 dark:bg-emerald-900/40 dark:text-emerald-200"
+                                  : "border-[#25D366]/50 bg-[#25D366]/12 text-[#128C7E] enabled:hover:border-[#25D366] enabled:hover:bg-[#25D366]/22"
+                              }`}
                               title={
-                                waOk
-                                  ? "Enviar invitación por WhatsApp"
-                                  : "Agregá un celular válido (editar invitado)"
+                                !waOk
+                                  ? "Agregá un celular válido (editar invitado)"
+                                  : yaEnviada
+                                    ? `Invitación enviada el ${formatearEnvioFecha(enviadoEnIso!)} — clic para reenviar`
+                                    : "Enviar invitación por WhatsApp"
                               }
-                              aria-label={`Enviar invitación por WhatsApp a ${inv.nombre}`}
+                              aria-label={
+                                yaEnviada
+                                  ? `Reenviar invitación por WhatsApp a ${inv.nombre} (ya enviada)`
+                                  : `Enviar invitación por WhatsApp a ${inv.nombre}`
+                              }
                             >
                               <IconWhatsApp />
+                              {yaEnviada && (
+                                <span className="pointer-events-none absolute -bottom-0.5 -right-0.5 rounded-full bg-card p-0.5 shadow ring-1 ring-emerald-700/30">
+                                  <IconSentBadge />
+                                </span>
+                              )}
                             </button>
+                            {yaEnviada && (
+                              <button
+                                type="button"
+                                onClick={() => desmarcarInvitacionEnviada(inv.id)}
+                                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-card-muted text-[10px] font-bold text-muted shadow-sm transition hover:border-amber-400 hover:bg-amber-50 hover:text-amber-700 dark:hover:bg-amber-950/40 dark:hover:text-amber-300 sm:h-8 sm:w-8"
+                                title="Marcar como NO enviada (no la mandaste finalmente)"
+                                aria-label={`Marcar la invitación de ${inv.nombre} como no enviada`}
+                              >
+                                ↺
+                              </button>
+                            )}
                             <button
                               type="button"
                               onClick={() => handleEditarClick(inv.id)}
