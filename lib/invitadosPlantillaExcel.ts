@@ -1,18 +1,21 @@
 import * as XLSX from "xlsx";
 
-const HEADERS = ["Nombre completo", "Celular", "Grupo", "Rango etario"] as const;
+const HEADERS = ["Nombre completo", "Celular", "Grupo", "Rango etario", "Cupos"] as const;
 
 /** Descarga la plantilla .xlsx con columnas obligatorias por invitado. */
 export function downloadInvitadosPlantilla() {
-  const emptyRows = Array.from({ length: 50 }, () => ["", "", "", ""]);
-  const mainData: string[][] = [Array.from(HEADERS), ...emptyRows];
+  // Sugerimos 1 cupo por defecto en cada fila vacía: el anfitrión solo cambia
+  // las filas en las que la invitación cubre a más de una persona (familias).
+  const emptyRows = Array.from({ length: 50 }, () => ["", "", "", "", 1]);
+  const mainData: (string | number)[][] = [Array.from(HEADERS), ...emptyRows];
   const ws = XLSX.utils.aoa_to_sheet(mainData);
-  ws["!cols"] = [{ wch: 32 }, { wch: 20 }, { wch: 28 }, { wch: 18 }];
+  ws["!cols"] = [{ wch: 32 }, { wch: 20 }, { wch: 28 }, { wch: 18 }, { wch: 10 }];
 
   const instr: string[][] = [
     ["Plantilla SmartGuest — invitados"],
     [""],
-    ["Todas las columnas de la hoja «Invitados» son obligatorias para cada fila que agregues."],
+    ["«Nombre completo», «Celular», «Grupo» y «Rango etario» son obligatorios para cada fila que agregues."],
+    ["«Cupos» es opcional: si lo dejás vacío se asume 1 (invitación individual)."],
     [""],
     ["Nombre completo", "Nombre y apellido del invitado."],
     ["Celular", "Incluir código de área (ej. +54 9 11 1234-5678)."],
@@ -23,6 +26,10 @@ export function downloadInvitadosPlantilla() {
     [
       "Rango etario",
       "Valores sugeridos: Niño, Adolescente, Joven, Adulto, Mayor (coinciden con SmartSeat).",
+    ],
+    [
+      "Cupos",
+      "Número entero entre 1 y 20. Indica a cuántas personas cubre esta única invitación (ej.: 4 si invitás a una familia de 4). Por defecto 1.",
     ],
   ];
   const wsInstr = XLSX.utils.aoa_to_sheet(instr);

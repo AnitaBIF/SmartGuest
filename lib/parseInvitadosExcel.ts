@@ -5,6 +5,11 @@ export type ParsedInvitadoRow = {
   celular: string;
   grupo: string;
   rangoEtario: string;
+  /**
+   * Cantidad de personas cubiertas por esta invitación (1–20).
+   * `null` si la columna no existe o está vacía: el backend asume 1.
+   */
+  grupoCuposMax: number | null;
   rowNumber: number;
 };
 
@@ -61,7 +66,7 @@ function sheetToMatrix(ws: XLSX.WorkSheet): string[][] {
   });
 }
 
-/** Fila de encabezados: debe tener indicios de las 4 columnas (evita la hoja Instrucciones). */
+/** Fila de encabezados: debe tener indicios de las 4 columnas obligatorias (evita la hoja Instrucciones). */
 function findHeaderRowAndCols(data: string[][]) {
   for (let r = 0; r < data.length; r++) {
     const row = data[r] ?? [];
@@ -90,12 +95,35 @@ function findHeaderRowAndCols(data: string[][]) {
     const iCel = colIndex(headers, "celular", "telefono", "teléfono", "movil", "móvil");
     const iGrupo = colIndex(headers, "grupo");
     const iRango = colIndex(headers, "rango etario", "rango");
+    // "Cupos" / "Personas" / "Cupo invitación" — columna opcional.
+    const iCupos = colIndex(
+      headers,
+      "cupos",
+      "cupo",
+      "cantidad de personas",
+      "personas",
+      "personas invitacion",
+      "personas invitación",
+    );
 
     if (iNombre < 0 || iCel < 0 || iGrupo < 0 || iRango < 0) continue;
     if (iNombre === iCel || iNombre === iGrupo || iNombre === iRango) continue;
-    return { headerRowIdx: r, headers, iNombre, iCel, iGrupo, iRango };
+    return { headerRowIdx: r, headers, iNombre, iCel, iGrupo, iRango, iCupos };
   }
   return null;
+}
+
+/** Convierte el contenido de la celda "Cupos" a un entero 1–20, o null si está vacío. */
+function parseCuposCelda(raw: unknown): number | null {
+  if (raw === null || raw === undefined) return null;
+  const txt = cellToString(raw).trim();
+  if (!txt) return null;
+  const cleaned = txt.replace(/[^\d-]/g, "");
+  if (!cleaned) return null;
+  const n = Number.parseInt(cleaned, 10);
+  if (!Number.isFinite(n) || n < 1) return 1;
+  if (n > 20) return 20;
+  return n;
 }
 
 function pickWorksheet(wb: XLSX.WorkBook): { ws: XLSX.WorkSheet; sheetLabel: string } | null {
@@ -150,8 +178,8 @@ export async function parseInvitadosExcelFile(file: File): Promise<{
     };
   }
 
-  const { headerRowIdx, iNombre, iCel, iGrupo, iRango } = found;
-  const maxCol = Math.max(iNombre, iCel, iGrupo, iRango);
+  const { headerRowIdx, iNombre, iCel, iGrupo, iRango, iCupos } = found;
+  const maxCol = Math.max(iNombre, iCel, iGrupo, iRango, iCupos);
 
   const rows: ParsedInvitadoRow[] = [];
   for (let r = headerRowIdx + 1; r < data.length; r++) {
@@ -163,12 +191,14 @@ export async function parseInvitadosExcelFile(file: File): Promise<{
     const celular = cellToString(row[iCel]).trim();
     const grupo = cellToString(row[iGrupo]).trim();
     const rangoEtario = cellToString(row[iRango]).trim();
+    const grupoCuposMax = iCupos >= 0 ? parseCuposCelda(row[iCupos]) : null;
     if (!nombreCompleto && !celular && !grupo && !rangoEtario) continue;
     rows.push({
       nombreCompleto,
       celular,
       grupo,
       rangoEtario,
+      grupoCuposMax,
       rowNumber: r + 1,
     });
   }

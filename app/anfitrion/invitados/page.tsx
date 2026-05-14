@@ -804,6 +804,10 @@ export default function GestionInvitadosPage() {
           celular: r.celular,
           grupo: r.grupo,
           rangoEtario: r.rangoEtario,
+          // Si la fila viene sin valor de Cupos, lo omitimos: el backend
+          // aplicará el default (1). Si viene con valor, lo enviamos para que
+          // se respete por fila.
+          ...(typeof r.grupoCuposMax === "number" ? { grupoCuposMax: r.grupoCuposMax } : {}),
           rowNumber: r.rowNumber,
         }));
       const skipped = rows.length - guests.length;
@@ -1381,8 +1385,10 @@ export default function GestionInvitadosPage() {
                 <p className="mb-4 text-xs text-muted">
                   Usá la plantilla descargada: columnas obligatorias{" "}
                   <strong>Nombre completo</strong>, <strong>Celular</strong>,{" "}
-                  <strong>Grupo</strong> y <strong>Rango etario</strong>. La hoja
-                  «Instrucciones» del mismo archivo explica cada campo.
+                  <strong>Grupo</strong> y <strong>Rango etario</strong>. La columna{" "}
+                  <strong>Cupos</strong> es opcional: indica a cuántas personas cubre
+                  la invitación (1–20). Si la dejás vacía se asume 1. La hoja
+                  «Instrucciones» del archivo explica cada campo.
                 </p>
                 <label
                   htmlFor="excel-upload-anfitrion"
