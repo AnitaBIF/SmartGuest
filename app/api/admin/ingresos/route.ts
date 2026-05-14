@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
   const { data: rows, error: rErr } = await supabase
     .from("invitados")
     .select(
-      "id, asistencia, ingresado, ingreso_at, grupo, grupo_cupos_max, grupo_personas_confirmadas, mesa_id, usuario_id"
+      "id, asistencia, ingresado, ingreso_at, grupo, grupo_cupos_max, grupo_personas_confirmadas, mesa_id, usuario_id, pending_import_nombre, pending_import_dni"
     )
     .eq("evento_id", eventoId);
 
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
   }
 
   const list = rows ?? [];
-  const userIds = [...new Set(list.map((r) => r.usuario_id))];
+  const userIds = [...new Set(list.map((r) => r.usuario_id).filter(Boolean))] as string[];
   const { data: usrs } =
     userIds.length > 0
       ? await supabase.from("usuarios").select("id, nombre, apellido, dni").in("id", userIds)
@@ -66,8 +66,12 @@ export async function GET(req: NextRequest) {
   let personasIngresadas = 0;
 
   const filas = list.map((r) => {
-    const u = byUser[r.usuario_id];
-    const nombre = u ? `${u.nombre} ${u.apellido}`.trim() : "—";
+    const ext = r as typeof r & { pending_import_nombre?: string | null; pending_import_dni?: string | null };
+    const u = r.usuario_id ? byUser[r.usuario_id] : undefined;
+    const nombreFromUser = u ? `${u.nombre} ${u.apellido}`.trim() : "";
+    const nombre = nombreFromUser || ext.pending_import_nombre?.trim() || "—";
+    const dniPend = ext.pending_import_dni?.trim() ?? "";
+    const dni = u?.dni?.trim() ? u.dni : dniPend || "—";
     const plazas = plazasSmartseatPorInvitado({
       asistencia: r.asistencia,
       grupo_cupos_max: r.grupo_cupos_max,

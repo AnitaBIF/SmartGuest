@@ -185,7 +185,11 @@ export async function buildChatRoleContext(
         .select("usuario_id, smartpool_acepto")
         .eq("smartpool_pareja_invitado_id", inv.id)
         .order("created_at", { ascending: true });
-      const uids = [...new Set((paxRows ?? []).map((r) => r.usuario_id))];
+      const uids = [
+        ...new Set(
+          (paxRows ?? []).map((r) => r.usuario_id).filter((id): id is string => !!id),
+        ),
+      ];
       const { data: usPax } =
         uids.length > 0
           ? await db.from("usuarios").select("id, nombre, apellido").in("id", uids)
@@ -197,7 +201,7 @@ export async function buildChatRoleContext(
         ])
       );
       smartpoolMatch.pasajeros_vinculados = (paxRows ?? []).map((r) => ({
-        nombre: byUid[r.usuario_id] ?? "Invitado/a",
+        nombre: r.usuario_id ? (byUid[r.usuario_id] ?? "Invitado/a") : "Invitado/a",
         acepto: !!r.smartpool_acepto,
       }));
     }
@@ -289,7 +293,9 @@ export async function buildChatRoleContext(
       }
     }
 
-    const uidsRest = [...new Set(muestraRest.map((m) => m.usuario_id))];
+    const uidsRest = [
+      ...new Set(muestraRest.map((m) => m.usuario_id).filter((id): id is string => !!id)),
+    ];
     let usrsRest: { id: string; nombre: string | null; apellido: string | null }[] = [];
     if (uidsRest.length > 0) {
       const { data } = await db.from("usuarios").select("id, nombre, apellido").in("id", uidsRest.slice(0, 50));
@@ -313,7 +319,11 @@ export async function buildChatRoleContext(
       .eq("asistencia", "confirmado")
       .limit(80);
 
-    const uidsOrdered = [...new Set((confInvRows ?? []).map((x) => x.usuario_id))];
+    const uidsOrdered = [
+      ...new Set(
+        (confInvRows ?? []).map((x) => x.usuario_id).filter((id): id is string => !!id),
+      ),
+    ];
     let confirmados_nombres_muestra: string[] = [];
     if (uidsOrdered.length > 0) {
       const { data: usrs } = await db

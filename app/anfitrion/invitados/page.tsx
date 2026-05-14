@@ -392,7 +392,24 @@ function AsistenciaBadge({ estado, compact }: { estado: Asistencia; compact?: bo
   );
 }
 
-const MAX_EXCEL_BYTES = 10 * 1024 * 1024;
+const MAX_EXCEL_BYTES = 50 * 1024 * 1024;
+
+/**
+ * Tamaño de cada chunk al subir la planilla al backend.
+ * 25 filas por request es un balance entre:
+ *  - Cada request mantiene la respuesta del server <5–8 s (no asusta a Vercel
+ *    edge timeouts ni al usuario que ve "no responde").
+ *  - Permite mostrar progreso en vivo en el modal (Procesando 50/200…).
+ */
+const IMPORT_CHUNK_SIZE = 25;
+
+/**
+ * Cantidad de chunks a procesar en paralelo. 2 es el sweet spot:
+ *  - El server ya hace concurrencia interna de ~15 al crear cuentas auth.
+ *  - Más paralelismo del lado cliente dispara rate-limits del admin API
+ *    de Supabase (≈ 30 req/s en plan free, 100 en plan pro).
+ */
+const IMPORT_PARALLEL_CHUNKS = 2;
 
 function isExcelFileName(name: string) {
   return /\.(xlsx|xls)$/i.test(name);
@@ -434,6 +451,8 @@ export default function GestionInvitadosPage() {
   const [excelDragOver, setExcelDragOver] = useState(false);
   const [excelSelectedFile, setExcelSelectedFile] = useState<File | null>(null);
   const [excelFileError, setExcelFileError] = useState<string | null>(null);
+  /** Progreso "X de Y" visible mientras corre la importación en chunks. */
+  const [importProgress, setImportProgress] = useState<{ done: number; total: number } | null>(null);
   const [copiedInvitadoId, setCopiedInvitadoId] = useState<string | null>(null);
   const [menuOpciones, setMenuOpciones] = useState<string[]>(["Ninguna"]);
 
@@ -710,7 +729,7 @@ export default function GestionInvitadosPage() {
       return;
     }
     if (file.size > MAX_EXCEL_BYTES) {
-      setExcelFileError("El archivo supera el máximo de 10 MB.");
+      setExcelFileError("El archivo supera el máximo de 50 MB.");
       return;
     }
     setExcelFileError(null);
@@ -772,11 +791,22 @@ export default function GestionInvitadosPage() {
     }
   };
 
+  /**
+   * Importación en chunks paralelos.
+   *
+   * En vez de una única request gigante (que se sentía como "se colgó"
+   * durante 3 min para 100+ filas), partimos los invitados en chunks de
+   * IMPORT_CHUNK_SIZE y disparamos IMPORT_PARALLEL_CHUNKS en paralelo. El
+   * server procesa cada chunk con bulk operations (ya optimizado en
+   * /api/anfitrion/invitados POST). Entre chunks actualizamos el progreso
+   * visible para que el usuario vea avance en vivo.
+   */
   const handleImportExcel = async () => {
     if (!excelSelectedFile) return;
     setImporting(true);
     setExcelFileError(null);
     setImportSummary(null);
+    setImportProgress(null);
 
     let refreshListAfter = false;
     let closeModalAfter = false;
@@ -804,9 +834,6 @@ export default function GestionInvitadosPage() {
           celular: r.celular,
           grupo: r.grupo,
           rangoEtario: r.rangoEtario,
-          // Si la fila viene sin valor de Cupos, lo omitimos: el backend
-          // aplicará el default (1). Si viene con valor, lo enviamos para que
-          // se respete por fila.
           ...(typeof r.grupoCuposMax === "number" ? { grupoCuposMax: r.grupoCuposMax } : {}),
           rowNumber: r.rowNumber,
         }));
@@ -820,55 +847,116 @@ export default function GestionInvitadosPage() {
         return;
       }
 
-      const controller = new AbortController();
-      const timeoutMs = 240_000;
-      const timeoutId = globalThis.setTimeout(() => controller.abort(), timeoutMs);
+      // Particionamos en chunks
+      const chunks: typeof guests[] = [];
+      for (let i = 0; i < guests.length; i += IMPORT_CHUNK_SIZE) {
+        chunks.push(guests.slice(i, i + IMPORT_CHUNK_SIZE));
+      }
 
-      let res: Response;
-      try {
-        res = await fetch("/api/anfitrion/invitados", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ guests }),
-          signal: controller.signal,
-        });
-      } catch (e) {
-        if (e instanceof Error && e.name === "AbortError") {
-          setExcelFileError(
-            `La importación superó ${timeoutMs / 60000} minutos. Probá con menos filas o revisá tu conexión.`,
-          );
-        } else {
-          setExcelFileError("No se pudo conectar con el servidor.");
+      setImportProgress({ done: 0, total: guests.length });
+
+      const allErrors: { row?: number; message: string }[] = [];
+      let totalCreated = 0;
+      let fatalError: string | null = null;
+      let doneCount = 0;
+
+      // Worker que toma el siguiente chunk pendiente y lo procesa.
+      // Manejamos las requests con un mini pool de IMPORT_PARALLEL_CHUNKS.
+      let nextChunkIdx = 0;
+      const sendOne = async (chunk: typeof guests): Promise<void> => {
+        const controller = new AbortController();
+        const timeoutMs = 120_000;
+        const timeoutId = globalThis.setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          const res = await fetch("/api/anfitrion/invitados", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ guests: chunk, bulkImport: true }),
+            signal: controller.signal,
+          });
+          const data = await res.json().catch(() => ({}));
+          if (res.status === 401) {
+            fatalError = "Sesión vencida. Volvé a iniciar sesión e intentá de nuevo.";
+            return;
+          }
+          if (!res.ok) {
+            const msg = typeof data.error === "string" ? data.error : "Error al importar.";
+            // Para los errores 400 de límite de capacidad o JSON inválido,
+            // los marcamos como fatales (no tiene sentido seguir).
+            if (res.status === 400 || res.status === 403 || res.status === 404) {
+              fatalError = msg;
+              return;
+            }
+            // Para otros, los añadimos como error pero seguimos.
+            for (const g of chunk) {
+              allErrors.push({ row: g.rowNumber, message: msg });
+            }
+            return;
+          }
+          totalCreated += data.created ?? 0;
+          if (Array.isArray(data.errors)) {
+            for (const e of data.errors) {
+              if (e && typeof e === "object" && typeof e.message === "string") {
+                allErrors.push({ row: e.row, message: e.message });
+              }
+            }
+          }
+        } catch (e) {
+          if (e instanceof Error && e.name === "AbortError") {
+            for (const g of chunk) {
+              allErrors.push({
+                row: g.rowNumber,
+                message: "Tiempo de espera agotado para este lote.",
+              });
+            }
+          } else {
+            for (const g of chunk) {
+              allErrors.push({
+                row: g.rowNumber,
+                message: "No se pudo conectar con el servidor para este lote.",
+              });
+            }
+          }
+        } finally {
+          globalThis.clearTimeout(timeoutId);
+          doneCount += chunk.length;
+          setImportProgress({ done: doneCount, total: guests.length });
         }
+      };
+
+      const worker = async () => {
+        while (true) {
+          if (fatalError) return;
+          const idx = nextChunkIdx++;
+          if (idx >= chunks.length) return;
+          await sendOne(chunks[idx]!);
+        }
+      };
+
+      await Promise.all(
+        Array.from({ length: Math.min(IMPORT_PARALLEL_CHUNKS, chunks.length) }, () => worker()),
+      );
+
+      if (fatalError) {
+        setExcelFileError(fatalError);
         return;
-      } finally {
-        globalThis.clearTimeout(timeoutId);
       }
 
-      const data = await res.json().catch(() => ({}));
-      if (res.status === 401) {
-        setExcelFileError("Sesión vencida. Volvé a iniciar sesión e intentá de nuevo.");
-        return;
-      }
-      if (!res.ok) {
-        setExcelFileError(typeof data.error === "string" ? data.error : "Error al importar.");
-        return;
-      }
-      const errList = (data.errors ?? []) as { row?: number; message: string }[];
-      let msg = `Importados: ${data.created ?? 0} de ${data.total ?? guests.length}.`;
+      let msg = `Importados: ${totalCreated} de ${guests.length}.`;
       if (skipped > 0) msg += ` Filas incompletas omitidas: ${skipped}.`;
-      if (errList.length) {
-        msg += ` Errores: ${errList
+      if (allErrors.length) {
+        msg += ` Errores: ${allErrors
           .slice(0, 5)
           .map((e) => (e.row ? `fila ${e.row}` : "—") + `: ${e.message}`)
-          .join("; ")}${errList.length > 5 ? "…" : ""}`;
+          .join("; ")}${allErrors.length > 5 ? "…" : ""}`;
       }
       setImportSummary(msg);
       refreshListAfter = true;
-      closeModalAfter = errList.length === 0 && skipped === 0;
+      closeModalAfter = allErrors.length === 0 && skipped === 0;
     } finally {
       setImporting(false);
+      setImportProgress(null);
     }
 
     if (refreshListAfter) {
@@ -1431,7 +1519,7 @@ export default function GestionInvitadosPage() {
                       : "Arrastrá el Excel acá o hacé clic para elegir"}
                   </span>
                   <span className="text-muted">
-                    .xls, .xlsx — máx. 10 MB
+                    .xls, .xlsx — máx. 50 MB
                   </span>
                   {excelSelectedFile && (
                     <span className="mt-3 max-w-full truncate rounded-full bg-card-muted px-3 py-1 text-[11px] font-medium text-foreground ring-1 ring-border">
@@ -1455,6 +1543,22 @@ export default function GestionInvitadosPage() {
                     }}
                   />
                 </label>
+                {importing && importProgress && (
+                  <div className="mb-3 rounded-xl bg-card-muted px-3 py-2 ring-1 ring-border">
+                    <p className="text-[11px] text-foreground">
+                      Importando… <span className="font-semibold">{importProgress.done}</span> de{" "}
+                      <span className="font-semibold">{importProgress.total}</span>
+                    </p>
+                    <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-card">
+                      <div
+                        className="h-full bg-brand transition-[width] duration-200"
+                        style={{
+                          width: `${importProgress.total > 0 ? Math.min(100, Math.round((importProgress.done / importProgress.total) * 100)) : 0}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
                 {importSummary && (
                   <p className="mb-3 rounded-xl bg-emerald-50 px-3 py-2 text-[11px] text-emerald-900 ring-1 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-200 dark:ring-emerald-900/50">
                     {importSummary}

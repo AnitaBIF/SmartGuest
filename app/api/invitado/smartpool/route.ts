@@ -362,7 +362,7 @@ export async function GET(req: NextRequest) {
         }),
       0
     );
-    const userIds = [...new Set(rows.map((r) => r.usuario_id))];
+    const userIds = [...new Set(rows.map((r) => r.usuario_id).filter((id): id is string => !!id))];
     const { data: usrs } =
       userIds.length > 0
         ? await supabase.from("usuarios").select("id, nombre, apellido").in("id", userIds)
@@ -370,7 +370,7 @@ export async function GET(req: NextRequest) {
     const byUser = Object.fromEntries((usrs ?? []).map((u) => [u.id, u]));
 
     const pasajeros = rows.map((r) => {
-      const u = byUser[r.usuario_id];
+      const u = r.usuario_id ? byUser[r.usuario_id] : undefined;
       const nombre = u ? `${u.nombre} ${u.apellido}`.trim() : "Invitado/a";
       const elAcepto = !!r.smartpool_acepto;
       const plazasPersonas = plazasPersonasPasajeroPool({
@@ -449,11 +449,13 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  const { data: u } = await supabase
-    .from("usuarios")
-    .select("nombre, apellido")
-    .eq("id", partnerInv.usuario_id)
-    .single();
+  const { data: u } = partnerInv.usuario_id
+    ? await supabase
+        .from("usuarios")
+        .select("nombre, apellido")
+        .eq("id", partnerInv.usuario_id)
+        .single()
+    : { data: null };
 
   const nombrePareja = u ? `${u.nombre} ${u.apellido}`.trim() : "Invitado/a";
   const partnerEsConductor = partnerInv.rol_smartpool === "conductor";

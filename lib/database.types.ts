@@ -77,7 +77,8 @@ export interface Database {
       invitados: {
         Row: {
           id: string;
-          usuario_id: string;
+          /** Null hasta que el invitado se registra vía /invitacion (import diferido). */
+          usuario_id: string | null;
           evento_id: string;
           mesa_id: string | null;
           asistencia: EstadoAsistencia;
@@ -103,6 +104,10 @@ export interface Database {
           qr_expires_at: string | null;
           ingresado: boolean;
           ingreso_at: string | null;
+          /** Datos del Excel hasta que el invitado confirma y se asigna `usuario_id`. */
+          pending_import_nombre: string | null;
+          pending_import_email: string | null;
+          pending_import_dni: string | null;
           created_at: string;
         };
         Insert: Omit<
@@ -126,6 +131,9 @@ export interface Database {
           grupo_menus_json?: unknown;
           ingresado?: boolean;
           ingreso_at?: string | null;
+          pending_import_nombre?: string | null;
+          pending_import_email?: string | null;
+          pending_import_dni?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["invitados"]["Insert"]>;
         Relationships: [];

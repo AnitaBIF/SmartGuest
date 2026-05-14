@@ -10,6 +10,7 @@ import {
   parseGrupoMenusJson,
   plazasSmartseatPorInvitado,
 } from "@/lib/grupoFamiliar";
+import { nombreDisplayInvitado } from "@/lib/invitadosImport";
 
 function adminClient() {
   return createClient<Database>(
@@ -73,7 +74,7 @@ export async function GET(req: NextRequest) {
     supabase
       .from("invitados")
       .select(
-        "id, asistencia, restriccion_alimentaria, restriccion_otro, rol_smartpool, mesa_id, usuario_id, created_at, grupo_menus_json, grupo_cupos_max, grupo_personas_confirmadas",
+        "id, asistencia, restriccion_alimentaria, restriccion_otro, rol_smartpool, mesa_id, usuario_id, created_at, grupo_menus_json, grupo_cupos_max, grupo_personas_confirmadas, pending_import_nombre",
       )
       .eq("evento_id", evento.id),
     supabase.from("mesas").select("id, numero").eq("evento_id", evento.id).order("numero", { ascending: true }),
@@ -168,7 +169,7 @@ export async function GET(req: NextRequest) {
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
   );
   const recentSlice = sortedByRecent.slice(0, 12);
-  const userIds = [...new Set(recentSlice.map((i) => i.usuario_id))];
+  const userIds = [...new Set(recentSlice.map((i) => i.usuario_id).filter(Boolean))] as string[];
   let nameByUser: Record<string, string> = {};
   if (userIds.length > 0) {
     const { data: usrs } = await supabase
@@ -186,7 +187,10 @@ export async function GET(req: NextRequest) {
   }
 
   const actividadReciente = recentSlice.map((inv) => {
-    const nombre = nameByUser[inv.usuario_id] ?? "Invitado";
+    const nombre = nombreDisplayInvitado({
+      nombreUsuario: inv.usuario_id ? nameByUser[inv.usuario_id] : null,
+      pendingImportNombre: (inv as { pending_import_nombre?: string | null }).pending_import_nombre,
+    });
     const r = inv.restriccion_alimentaria?.toLowerCase() ?? "";
     const otro = inv.restriccion_otro?.trim();
 

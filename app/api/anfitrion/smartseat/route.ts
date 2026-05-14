@@ -5,6 +5,7 @@ import type { Database } from "@/lib/database.types";
 import { eventoCoincideConSalonPerfil } from "@/lib/adminSalonAuth";
 import { ensureMesasForEvento } from "@/lib/ensureEventoMesas";
 import { parseGrupoMenusJson, plazasSmartseatPorInvitado } from "@/lib/grupoFamiliar";
+import { nombreDisplayInvitado } from "@/lib/invitadosImport";
 
 function adminClient() {
   return createClient<Database>(
@@ -114,7 +115,7 @@ export async function GET(req: NextRequest) {
   const { data: invitadosRaw } = await supabase
     .from("invitados")
     .select(
-      "id, usuario_id, mesa_id, asistencia, restriccion_alimentaria, restriccion_otro, grupo, rango_etario, grupo_menus_json, grupo_cupos_max, grupo_personas_confirmadas"
+      "id, usuario_id, mesa_id, asistencia, restriccion_alimentaria, restriccion_otro, grupo, rango_etario, grupo_menus_json, grupo_cupos_max, grupo_personas_confirmadas, pending_import_nombre"
     )
     .eq("evento_id", evento.id);
 
@@ -122,7 +123,7 @@ export async function GET(req: NextRequest) {
   const invitados = (invitadosRaw ?? []).filter((i) => i.asistencia !== "rechazado");
 
   // Nombres de los invitados
-  const userIds = invitados.map((i) => i.usuario_id).filter(Boolean);
+  const userIds = [...new Set(invitados.map((i) => i.usuario_id).filter((id): id is string => !!id))];
   const userNames: Record<string, string> = {};
   if (userIds.length > 0) {
     const { data: usuarios } = await supabase
@@ -146,7 +147,10 @@ export async function GET(req: NextRequest) {
     });
     return {
       id: i.id,
-      name: userNames[i.usuario_id] || "Invitado",
+      name: nombreDisplayInvitado({
+        nombreUsuario: i.usuario_id ? userNames[i.usuario_id] ?? null : null,
+        pendingImportNombre: (i as { pending_import_nombre?: string | null }).pending_import_nombre,
+      }),
       mesaId: i.mesa_id,
       asistencia: i.asistencia,
       restriccion: i.restriccion_alimentaria,

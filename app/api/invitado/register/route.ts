@@ -176,9 +176,6 @@ export async function POST(req: NextRequest) {
     if (invDecl.asistencia !== "pendiente") {
       return NextResponse.json({ error: "Esta invitación ya fue respondida." }, { status: 409 });
     }
-    if (!invDecl.usuario_id) {
-      return NextResponse.json({ error: "Invitación no válida." }, { status: 404 });
-    }
 
     const builtDecline = await buildInvitadoUpdatePayload(supabase, {
       asiste: false,
@@ -205,7 +202,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: declineUpErr.message }, { status: 500 });
     }
 
-    await syncCancionPlaylist(supabase, evento_id, invDecl.usuario_id, null);
+    if (invDecl.usuario_id) {
+      await syncCancionPlaylist(supabase, evento_id, invDecl.usuario_id, null);
+    }
     return NextResponse.json({ ok: true });
   }
 
@@ -307,10 +306,7 @@ export async function POST(req: NextRequest) {
         .eq("id", invitado_id)
         .single();
 
-      const oldUid = invBefore?.usuario_id;
-      if (!oldUid) {
-        return NextResponse.json({ error: "Invitación no válida." }, { status: 404 });
-      }
+      const oldUid = invBefore?.usuario_id ?? null;
 
       if (oldUid !== userId) {
         const { data: dupe } = await supabase
@@ -343,6 +339,9 @@ export async function POST(req: NextRequest) {
         .update({
           ...invPayload,
           usuario_id: userId,
+          pending_import_nombre: null,
+          pending_import_email: null,
+          pending_import_dni: null,
         } as InvitadoUpdate)
         .eq("id", invitado_id);
 
@@ -355,7 +354,7 @@ export async function POST(req: NextRequest) {
         .update({ nombre: firstName, apellido: lastName, dni: dniStored } as UsuarioUpdate)
         .eq("id", userId);
 
-      if (oldUid !== userId) {
+      if (oldUid && oldUid !== userId) {
         await deleteAuthUserIfOrphaned(supabase, oldUid);
       }
 
@@ -436,11 +435,7 @@ export async function POST(req: NextRequest) {
       .eq("id", invitado_id)
       .single();
 
-    const oldUid = invBefore?.usuario_id;
-    if (!oldUid) {
-      await supabase.auth.admin.deleteUser(userId);
-      return NextResponse.json({ error: "Invitación no válida." }, { status: 404 });
-    }
+    const oldUid = invBefore?.usuario_id ?? null;
 
     const { data: dupe } = await supabase
       .from("invitados")
@@ -462,6 +457,9 @@ export async function POST(req: NextRequest) {
       .update({
         ...invPayload,
         usuario_id: userId,
+        pending_import_nombre: null,
+        pending_import_email: null,
+        pending_import_dni: null,
       } as InvitadoUpdate)
       .eq("id", invitado_id);
 
@@ -470,7 +468,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: upErr.message }, { status: 500 });
     }
 
-    if (oldUid !== userId) {
+    if (oldUid && oldUid !== userId) {
       await deleteAuthUserIfOrphaned(supabase, oldUid);
     }
   } else {

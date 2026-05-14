@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { eventoPerteneceAlSalon, requireSalonSeguridad } from "@/lib/adminSalonAuth";
 import { isQrReplay } from "@/lib/qr-replay-guard";
 import { verifyRollingQrToken } from "@/lib/secure-qr-token";
+import { nombreDisplayInvitado } from "@/lib/invitadosImport";
 
 type ValidarQrResponse = {
   nombre: string;
@@ -52,7 +53,9 @@ export async function POST(req: NextRequest) {
 
   const { data: inv } = await supabase
     .from("invitados")
-    .select("id, evento_id, usuario_id, mesa_id, asistencia, ingresado, ingreso_at")
+    .select(
+      "id, evento_id, usuario_id, mesa_id, asistencia, ingresado, ingreso_at, pending_import_nombre, pending_import_dni"
+    )
     .eq("id", verified.invitadoId)
     .single();
 
@@ -81,14 +84,29 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { data: usuario } = await supabase
-    .from("usuarios")
-    .select("nombre, apellido, dni")
-    .eq("id", inv.usuario_id)
-    .single();
+  let nombreResp: string;
+  let dniResp: string;
 
-  if (!usuario) {
-    return NextResponse.json({ error: "Usuario no encontrado." }, { status: 404 });
+  if (inv.usuario_id) {
+    const { data: usuario } = await supabase
+      .from("usuarios")
+      .select("nombre, apellido, dni")
+      .eq("id", inv.usuario_id)
+      .single();
+
+    if (!usuario) {
+      return NextResponse.json({ error: "Usuario no encontrado." }, { status: 404 });
+    }
+
+    nombreResp = `${usuario.nombre} ${usuario.apellido}`.trim();
+    dniResp = usuario.dni;
+  } else {
+    const pend = inv as typeof inv & {
+      pending_import_nombre?: string | null;
+      pending_import_dni?: string | null;
+    };
+    nombreResp = nombreDisplayInvitado({ pendingImportNombre: pend.pending_import_nombre });
+    dniResp = pend.pending_import_dni?.trim() ?? "";
   }
 
   let mesaNumero: number | null = null;
@@ -122,8 +140,8 @@ export async function POST(req: NextRequest) {
   }
 
   const payload: ValidarQrResponse = {
-    nombre: `${usuario.nombre} ${usuario.apellido}`.trim(),
-    dni: usuario.dni,
+    nombre: nombreResp,
+    dni: dniResp,
     mesa: mesaNumero,
     evento: eventoRow.nombre ?? "Evento",
     verified: "rolling-hmac",

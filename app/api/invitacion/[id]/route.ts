@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import type { Database } from "@/lib/database.types";
 import { clampCuposMax, menuOpcionesParaEvento } from "@/lib/grupoFamiliar";
+import { nombreDisplayInvitado } from "@/lib/invitadosImport";
 import { dniValido } from "@/lib/registroSalon";
 
 function adminClient() {
@@ -31,7 +32,9 @@ export async function GET(
 
   const { data: invRow } = await supabase
     .from("invitados")
-    .select("id, evento_id, telefono, usuario_id, grupo_cupos_max")
+    .select(
+      "id, evento_id, telefono, usuario_id, grupo_cupos_max, pending_import_nombre, pending_import_email, pending_import_dni"
+    )
     .eq("id", id)
     .maybeSingle();
 
@@ -39,14 +42,26 @@ export async function GET(
     eventoId = invRow.evento_id;
     invitadoId = invRow.id;
 
-    const { data: u } = await supabase
-      .from("usuarios")
-      .select("nombre, apellido, dni")
-      .eq("id", invRow.usuario_id)
-      .maybeSingle();
+    let nombreCompleto = "";
+    let dniRaw = "";
 
-    const nombreCompleto = u ? `${u.nombre ?? ""} ${u.apellido ?? ""}`.trim() : "";
-    const dniRaw = (u?.dni ?? "").trim();
+    if (invRow.usuario_id) {
+      const { data: u } = await supabase
+        .from("usuarios")
+        .select("nombre, apellido, dni")
+        .eq("id", invRow.usuario_id)
+        .maybeSingle();
+
+      nombreCompleto = u ? `${u.nombre ?? ""} ${u.apellido ?? ""}`.trim() : "";
+      dniRaw = (u?.dni ?? "").trim();
+    } else {
+      const pend = invRow as typeof invRow & {
+        pending_import_nombre?: string | null;
+        pending_import_dni?: string | null;
+      };
+      nombreCompleto = nombreDisplayInvitado({ pendingImportNombre: pend.pending_import_nombre });
+      dniRaw = (pend.pending_import_dni ?? "").trim();
+    }
     const dniEsProvisorioSmartguest = /^sg[0-9a-f]+$/i.test(dniRaw.replace(/\s/g, ""));
     /** Solo precargamos DNI si es un documento argentino típico (7–8 dígitos), no provisorio SG… */
     const dniParaPrecarga =

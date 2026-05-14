@@ -119,18 +119,6 @@ export async function PATCH(
 
   const leg = mapUiMenuToInvitadoColumns(restriccionUi, restriccionOtroIn || null);
 
-  const { error: uErr } = await supabase
-    .from("usuarios")
-    .update({ nombre, apellido, dni })
-    .eq("id", owned.inv.usuario_id);
-
-  if (uErr) {
-    if (uErr.message.includes("unique") || uErr.code === "23505") {
-      return NextResponse.json({ error: "Ese DNI ya está en uso por otro usuario." }, { status: 409 });
-    }
-    return NextResponse.json({ error: uErr.message }, { status: 500 });
-  }
-
   const prevRol = owned.inv.rol_smartpool;
   /** Eco Sí desde el panel no debe pisar la elección del invitado en SmartPool (conductor / pasajero). */
   let rolSmartpool: string | null;
@@ -157,6 +145,27 @@ export async function PATCH(
     const n = clampCuposMax(grupoCuposMaxRaw as number | string, 1);
     invUpdate.grupo_cupos_max = n;
     invUpdate.smartpool_cupos_max = plazasSmartpoolPasajeros(n);
+  }
+
+  if (!owned.inv.usuario_id) {
+    invUpdate.pending_import_nombre = nombreFull;
+    invUpdate.pending_import_dni = dni;
+  } else {
+    const { error: uErr } = await supabase
+      .from("usuarios")
+      .update({ nombre, apellido, dni })
+      .eq("id", owned.inv.usuario_id);
+
+    if (uErr) {
+      if (uErr.message.includes("unique") || uErr.code === "23505") {
+        return NextResponse.json({ error: "Ese DNI ya está en uso por otro usuario." }, { status: 409 });
+      }
+      return NextResponse.json({ error: uErr.message }, { status: 500 });
+    }
+
+    invUpdate.pending_import_nombre = null;
+    invUpdate.pending_import_email = null;
+    invUpdate.pending_import_dni = null;
   }
 
   const { error: iErr } = await supabase
@@ -187,14 +196,18 @@ export async function DELETE(
 
   const usuarioId = owned.inv.usuario_id;
 
+  const { error: delErr } = await supabase.from("invitados").delete().eq("id", id);
+  if (delErr) return NextResponse.json({ error: delErr.message }, { status: 500 });
+
+  if (!usuarioId) {
+    return NextResponse.json({ ok: true });
+  }
+
   const { data: usuario } = await supabase
     .from("usuarios")
     .select("email")
     .eq("id", usuarioId)
     .single();
-
-  const { error: delErr } = await supabase.from("invitados").delete().eq("id", id);
-  if (delErr) return NextResponse.json({ error: delErr.message }, { status: 500 });
 
   const { data: rest } = await supabase
     .from("invitados")

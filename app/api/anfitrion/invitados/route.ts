@@ -12,6 +12,7 @@ import {
 import {
   generateImportDni,
   generateSyntheticEmail,
+  nombreDisplayInvitado,
   normalizeDniInput,
   splitNombreCompleto,
 } from "@/lib/invitadosImport";
@@ -107,9 +108,9 @@ export async function GET(req: NextRequest) {
   const eventoId = evento.id;
 
   const selectWithPhone =
-    "id, usuario_id, asistencia, restriccion_alimentaria, restriccion_otro, grupo, rango_etario, telefono, rol_smartpool, grupo_cupos_max, grupo_personas_confirmadas" as const;
+    "id, usuario_id, asistencia, restriccion_alimentaria, restriccion_otro, grupo, rango_etario, telefono, rol_smartpool, grupo_cupos_max, grupo_personas_confirmadas, pending_import_nombre, pending_import_email, pending_import_dni" as const;
   const selectNoPhone =
-    "id, usuario_id, asistencia, restriccion_alimentaria, restriccion_otro, grupo, rango_etario, rol_smartpool, grupo_cupos_max, grupo_personas_confirmadas" as const;
+    "id, usuario_id, asistencia, restriccion_alimentaria, restriccion_otro, grupo, rango_etario, rol_smartpool, grupo_cupos_max, grupo_personas_confirmadas, pending_import_nombre, pending_import_email, pending_import_dni" as const;
 
   let first = await supabase
     .from("invitados")
@@ -134,7 +135,7 @@ export async function GET(req: NextRequest) {
 
   const rows = invsList ?? [];
 
-  const userIds = [...new Set(rows.map((i) => i.usuario_id))];
+  const userIds = [...new Set(rows.map((i) => i.usuario_id).filter(Boolean) as string[])];
   let userMap: Record<
     string,
     { nombre: string; apellido: string; dni: string; email: string }
@@ -156,8 +157,16 @@ export async function GET(req: NextRequest) {
   }
 
   const invitados = rows.map((inv) => {
-    const u = userMap[inv.usuario_id];
-    const nombre = `${u?.nombre ?? ""} ${u?.apellido ?? ""}`.trim() || "—";
+    const ext = inv as typeof inv & {
+      pending_import_nombre?: string | null;
+      pending_import_email?: string | null;
+      pending_import_dni?: string | null;
+    };
+    const u = inv.usuario_id ? userMap[inv.usuario_id] : undefined;
+    const nombre = nombreDisplayInvitado({
+      nombreUsuario: u ? `${u.nombre ?? ""} ${u.apellido ?? ""}`.trim() : null,
+      pendingImportNombre: ext.pending_import_nombre,
+    });
     let asistencia: "Pendiente" | "Asiste" | "No asiste" = "Pendiente";
     if (inv.asistencia === "confirmado") asistencia = "Asiste";
     else if (inv.asistencia === "rechazado") asistencia = "No asiste";
@@ -185,12 +194,16 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    const dniPend = ext.pending_import_dni?.trim() ?? "";
+    const dniShow = u?.dni?.trim() ? u.dni : dniPend || "—";
+    const emailShow = u?.email?.trim() ? u.email : ext.pending_import_email?.trim() ?? "";
+
     return {
       id: inv.id,
       usuarioId: inv.usuario_id,
       nombre,
-      dni: u?.dni ?? "—",
-      email: u?.email ?? "",
+      dni: dniShow,
+      email: emailShow,
       telefono: inv.telefono ?? "",
       asistencia,
       grupo: inv.grupo ?? "—",
@@ -214,25 +227,21 @@ export async function GET(req: NextRequest) {
 }
 
 /**
- * Importación masiva de invitados optimizada.
+ * Alta de invitados (manual o por lote / Excel).
  *
- * En lugar de procesar fila por fila (que hacía 4 queries secuenciales por
- * invitado + crear cuenta auth + insert), agrupamos las operaciones:
+ * Cuerpo típico: `{ guests: GuestInput[], bulkImport?: boolean }`.
  *
- *  1. Validamos y normalizamos en memoria (sin tocar la DB).
- *  2. Bulk lookup: una query a `usuarios` por email y otra por DNI para
- *     todos los invitados a la vez.
- *  3. Bulk lookup: una query a `invitados` para detectar duplicados en el
- *     evento.
- *  4. Para los que necesitan cuenta nueva (la mayoría en imports masivos),
- *     creamos cuentas auth en paralelo con concurrencia alta. Esa es la
- *     parte más lenta de Supabase (≈ 300–800 ms cada una) y nada se puede
- *     hacer en bulk a nivel API.
- *  5. Bulk update de `usuarios` para asentar dni/nombre/apellido.
- *  6. Bulk insert en `invitados` (con fallback sin columna `telefono` para
- *     compatibilidad con bases que aún no la tengan).
+ * **`bulkImport: true`** (usado por la importación Excel): no crea usuarios de Auth
+ * por fila. Inserta `invitados` con `usuario_id` null y datos en
+ * `pending_import_*`; la cuenta se crea cuando el invitado completa
+ * `POST /api/invitado/register` desde su enlace personal.
  *
- * Resultado típico: 100 invitados pasan de ~3 min a ~15–25 s.
+ * **Sin `bulkImport` o `false`** (alta manual desde el panel): comportamiento
+ * anterior — se crean cuentas Auth en paralelo según corresponda; suele ser lo
+ * más lento de la operación (~300–800 ms por alta nueva).
+ *
+ * En ambos modos se agrupan lookups (usuarios por email/DNI, duplicados en el
+ * evento) y el insert de invitados en bulk donde aplica.
  */
 export async function POST(req: NextRequest) {
   const user = await getSessionUser(req);
@@ -284,7 +293,7 @@ export async function POST(req: NextRequest) {
       continue;
     }
 
-    let dni = normalizeDniInput(g.dni);
+    let dni = normalizeDniInput(String(g.dni ?? ""));
     if (!dni) dni = generateImportDni();
 
     const emailInput = g.email?.trim();
@@ -386,6 +395,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const bulkImport = (body as { bulkImport?: boolean }).bulkImport === true;
+
   /* ────────────────── 6. Separar duplicados, existentes y nuevos ────────────────── */
 
   const conUsuarioExistente: Resolved[] = [];
@@ -404,64 +415,6 @@ export async function POST(req: NextRequest) {
     else aCrearCuenta.push(r);
   }
 
-  /* ────────────────── 7. Crear cuentas auth en paralelo ────────────────── */
-  /*
-   * `auth.admin.createUser` no soporta bulk. Lo más rápido es paralelizar.
-   * Concurrencia 10 es un buen balance: más rápido que antes (5) sin disparar
-   * rate-limit en proyectos Supabase típicos.
-   */
-  const AUTH_CONCURRENCY = 10;
-  const cuentasCreadas: { resolved: Resolved; usuarioId: string }[] = [];
-  for (let i = 0; i < aCrearCuenta.length; i += AUTH_CONCURRENCY) {
-    const chunk = aCrearCuenta.slice(i, i + AUTH_CONCURRENCY);
-    const outcomes = await Promise.all(
-      chunk.map(async (r) => {
-        const { nombre, apellido } = splitNombreCompleto(r.nombreCompleto);
-        const password = randomBytes(18).toString("base64url");
-        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-          email: r.emailFinal,
-          password,
-          email_confirm: true,
-          user_metadata: { nombre, apellido, dni: r.dniFinal, tipo: "invitado" },
-        });
-        if (authError || !authData.user) {
-          return {
-            ok: false as const,
-            resolved: r,
-            message: authError?.message ?? "No se pudo crear el usuario.",
-          };
-        }
-        return { ok: true as const, resolved: r, usuarioId: authData.user.id };
-      }),
-    );
-    for (const o of outcomes) {
-      if (o.ok) cuentasCreadas.push({ resolved: o.resolved, usuarioId: o.usuarioId });
-      else errors.push({ row: o.resolved.rowNumber, message: o.message });
-    }
-  }
-
-  /* ────────────────── 8. Bulk update de usuarios recién creados ────────────────── */
-  /*
-   * El trigger de la DB puede no copiar dni/nombre/apellido desde
-   * user_metadata, así que aseguramos los valores con un update por usuario.
-   * Lo hacemos en paralelo con concurrencia 20.
-   */
-  const UPDATE_CONCURRENCY = 20;
-  for (let i = 0; i < cuentasCreadas.length; i += UPDATE_CONCURRENCY) {
-    const chunk = cuentasCreadas.slice(i, i + UPDATE_CONCURRENCY);
-    await Promise.all(
-      chunk.map(({ resolved: r, usuarioId }) => {
-        const { nombre, apellido } = splitNombreCompleto(r.nombreCompleto);
-        return supabase
-          .from("usuarios")
-          .update({ dni: r.dniFinal, nombre, apellido })
-          .eq("id", usuarioId);
-      }),
-    );
-  }
-
-  /* ────────────────── 9. Bulk insert en `invitados` ────────────────── */
-
   const buildInvitadoRow = (r: Resolved, usuarioId: string): InvitadoInsert => {
     const n = clampCuposMax(r.grupoCuposMax, INV_ROW_BASE.grupo_cupos_max);
     return {
@@ -473,26 +426,142 @@ export async function POST(req: NextRequest) {
       telefono: r.celular,
       grupo_cupos_max: n,
       smartpool_cupos_max: plazasSmartpoolPasajeros(n),
+      pending_import_nombre: null,
+      pending_import_email: null,
+      pending_import_dni: null,
     } as InvitadoInsert;
   };
 
-  type InsertableRow = { row: InvitadoInsert; meta: Resolved; usuarioId: string };
-  const aInsertar: InsertableRow[] = [
-    ...conUsuarioExistente.map((r) => ({
-      row: buildInvitadoRow(r, r.usuarioId!),
-      meta: r,
-      usuarioId: r.usuarioId!,
-    })),
-    ...cuentasCreadas.map(({ resolved: r, usuarioId }) => ({
-      row: buildInvitadoRow(r, usuarioId),
-      meta: r,
-      usuarioId,
-    })),
-  ];
+  /** Fila sin cuenta Auth: se completa cuando el invitado abre `/invitacion/:id`. */
+  const buildInvitadoRowDeferred = (r: Resolved): InvitadoInsert => {
+    const n = clampCuposMax(r.grupoCuposMax, INV_ROW_BASE.grupo_cupos_max);
+    return {
+      ...INV_ROW_BASE,
+      usuario_id: null,
+      evento_id: eventoId,
+      grupo: r.grupo,
+      rango_etario: r.rangoEtario,
+      telefono: r.celular,
+      grupo_cupos_max: n,
+      smartpool_cupos_max: plazasSmartpoolPasajeros(n),
+      pending_import_nombre: r.nombreCompleto,
+      pending_import_email: r.emailFinal,
+      pending_import_dni: r.dniFinal,
+    } as InvitadoInsert;
+  };
+
+  type InsertableRow = { row: InvitadoInsert; meta: Resolved; usuarioId: string | null };
+  let aInsertar: InsertableRow[] = [];
+  /** Solo en import no masivo: UIDs creados en esta request (para rollback si falla el INSERT). */
+  let usuarioIdsParaRollback = new Set<string>();
+
+  if (bulkImport) {
+    aInsertar = [
+      ...conUsuarioExistente.map((r) => ({
+        row: buildInvitadoRow(r, r.usuarioId!),
+        meta: r,
+        usuarioId: r.usuarioId!,
+      })),
+      ...aCrearCuenta.map((r) => ({
+        row: buildInvitadoRowDeferred(r),
+        meta: r,
+        usuarioId: null,
+      })),
+    ];
+  } else {
+    /* ────────────────── 7b. Crear cuentas auth (carga manual / 1 fila) ────────────────── */
+    const AUTH_CONCURRENCY = 15;
+
+    const isTransientAuthError = (msg: string | undefined): boolean => {
+      if (!msg) return false;
+      const m = msg.toLowerCase();
+      return (
+        m.includes("rate") ||
+        m.includes("429") ||
+        m.includes("timeout") ||
+        m.includes("temporar") ||
+        m.includes("transient") ||
+        m.includes("retry") ||
+        m.includes("unexpected_failure") ||
+        m.includes("internal") ||
+        m.includes("upstream") ||
+        m.includes("connection")
+      );
+    };
+
+    const crearCuentaConRetry = async (
+      r: Resolved,
+    ): Promise<{ ok: true; usuarioId: string } | { ok: false; message: string }> => {
+      const { nombre, apellido } = splitNombreCompleto(r.nombreCompleto);
+      const MAX_INTENTOS = 3;
+      let lastError = "No se pudo crear el usuario.";
+      for (let intento = 0; intento < MAX_INTENTOS; intento++) {
+        const password = randomBytes(18).toString("base64url");
+        const { data, error } = await supabase.auth.admin.createUser({
+          email: r.emailFinal,
+          password,
+          email_confirm: true,
+          user_metadata: { nombre, apellido, dni: r.dniFinal, tipo: "invitado" },
+        });
+        if (!error && data.user) return { ok: true, usuarioId: data.user.id };
+        lastError = error?.message ?? lastError;
+        if (!isTransientAuthError(lastError)) break;
+        const delayMs = 250 * Math.pow(3, intento);
+        await new Promise((res) => setTimeout(res, delayMs));
+      }
+      return { ok: false, message: lastError };
+    };
+
+    const cuentasCreadas: { resolved: Resolved; usuarioId: string }[] = [];
+    for (let i = 0; i < aCrearCuenta.length; i += AUTH_CONCURRENCY) {
+      const chunk = aCrearCuenta.slice(i, i + AUTH_CONCURRENCY);
+      const outcomes = await Promise.all(
+        chunk.map(async (r) => {
+          const res = await crearCuentaConRetry(r);
+          if (res.ok) return { ok: true as const, resolved: r, usuarioId: res.usuarioId };
+          return { ok: false as const, resolved: r, message: res.message };
+        }),
+      );
+      for (const o of outcomes) {
+        if (o.ok) cuentasCreadas.push({ resolved: o.resolved, usuarioId: o.usuarioId });
+        else errors.push({ row: o.resolved.rowNumber, message: o.message });
+      }
+    }
+
+    const UPDATE_CONCURRENCY = 20;
+    for (let i = 0; i < cuentasCreadas.length; i += UPDATE_CONCURRENCY) {
+      const chunk = cuentasCreadas.slice(i, i + UPDATE_CONCURRENCY);
+      await Promise.all(
+        chunk.map(({ resolved: r, usuarioId }) => {
+          const { nombre, apellido } = splitNombreCompleto(r.nombreCompleto);
+          return supabase
+            .from("usuarios")
+            .update({ dni: r.dniFinal, nombre, apellido })
+            .eq("id", usuarioId);
+        }),
+      );
+    }
+
+    aInsertar = [
+      ...conUsuarioExistente.map((r) => ({
+        row: buildInvitadoRow(r, r.usuarioId!),
+        meta: r,
+        usuarioId: r.usuarioId!,
+      })),
+      ...cuentasCreadas.map(({ resolved: r, usuarioId }) => ({
+        row: buildInvitadoRow(r, usuarioId),
+        meta: r,
+        usuarioId,
+      })),
+    ];
+    usuarioIdsParaRollback = new Set(cuentasCreadas.map((c) => c.usuarioId));
+  }
+
+  /* ────────────────── 8. Bulk insert en `invitados` ────────────────── */
 
   let created = 0;
+
   if (aInsertar.length > 0) {
-    // Intentamos insertar todo de un solo viaje.
     const filas = aInsertar.map((x) => x.row);
     let insertErr: { message: string } | null = null;
     {
@@ -500,7 +569,6 @@ export async function POST(req: NextRequest) {
       insertErr = resp.error;
     }
 
-    // Compat: bases viejas sin columna `telefono`. Reintentamos sin esa columna.
     if (insertErr?.message?.toLowerCase().includes("telefono")) {
       const filasSinTel = filas.map((row) => {
         const copy = { ...(row as Record<string, unknown>) };
@@ -512,8 +580,6 @@ export async function POST(req: NextRequest) {
     }
 
     if (insertErr) {
-      // El bulk falló completo: hacemos fallback fila por fila para identificar
-      // cuáles entraron y cuáles no, y reportar errores por fila.
       for (const x of aInsertar) {
         let rowErr: { message: string } | null = null;
         {
@@ -528,14 +594,11 @@ export async function POST(req: NextRequest) {
         }
         if (rowErr) {
           errors.push({ row: x.meta.rowNumber, message: rowErr.message });
-          // Si esta fila había creado una cuenta nueva, mejor limpiarla para no
-          // dejar usuarios huérfanos en auth.
-          const eraCuentaNueva = cuentasCreadas.find((c) => c.usuarioId === x.usuarioId);
-          if (eraCuentaNueva) {
+          if (!bulkImport && x.usuarioId && usuarioIdsParaRollback.has(x.usuarioId)) {
             try {
               await supabase.auth.admin.deleteUser(x.usuarioId);
             } catch {
-              /* ignoramos: queda como huérfano */
+              /* ignoramos */
             }
           }
         } else {

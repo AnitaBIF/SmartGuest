@@ -19,9 +19,18 @@ export function generateImportDni() {
   return `SG${randomUUID().replace(/-/g, "").slice(0, 20)}`;
 }
 
-export function normalizeDniInput(dni: string | undefined | null): string {
-  const t = (dni ?? "").trim();
-  if (!t) return "";
-  const digits = t.replace(/\D/g, "");
-  return digits || t;
+/** Solo dígitos para comparar / guardar DNI (quita puntos, espacios y letras). */
+export function normalizeDniInput(input: string): string {
+  return String(input ?? "").replace(/\D/g, "");
+}
+
+export function nombreDisplayInvitado(opts: {
+  nombreUsuario?: string | null;
+  pendingImportNombre?: string | null;
+}): string {
+  const u = opts.nombreUsuario?.trim();
+  if (u) return u;
+  const p = opts.pendingImportNombre?.trim();
+  if (p) return p;
+  return "Invitado";
 }
