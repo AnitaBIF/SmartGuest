@@ -481,21 +481,6 @@ export default function GestionInvitadosPage() {
     });
   }, [invitados, filtroAsistencia, filtroGrupo, filtroRango, filtroEco, filtroEnvio, invitacionesEnviadas]);
 
-  /**
-   * Cuántos invitados (con celular WhatsApp válido) ya tienen una invitación marcada
-   * como enviada. Para mostrar el progreso "X de Y" arriba de la tabla.
-   */
-  const enviosResumen = useMemo(() => {
-    let conWa = 0;
-    let enviados = 0;
-    for (const inv of invitados) {
-      if (!digitosTelefonoWhatsApp(inv.telefono)) continue;
-      conWa += 1;
-      if (invitacionesEnviadas[inv.id]) enviados += 1;
-    }
-    return { conWa, enviados };
-  }, [invitados, invitacionesEnviadas]);
-
   const opcionesGrupo = useMemo(() => {
     const set = new Set<string>();
     for (const inv of invitados) {
@@ -1132,14 +1117,6 @@ export default function GestionInvitadosPage() {
                         ? `${invitados.length} en total`
                         : `Mostrando ${invitadosFiltrados.length} de ${invitados.length}`}
                       {filtrosActivos ? " · filtros activos" : ""}
-                      {enviosResumen.conWa > 0 && (
-                        <>
-                          {" · "}
-                          <span className="font-medium text-foreground">
-                            Invitaciones enviadas: {enviosResumen.enviados} / {enviosResumen.conWa}
-                          </span>
-                        </>
-                      )}
                     </p>
                   </div>
                 )}

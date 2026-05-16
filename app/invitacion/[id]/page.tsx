@@ -9,7 +9,6 @@ import {
   ECOGUEST_MAX_PERSONAS_INVITACION,
   MENU_FORM_OPTIONS,
   ecoGuestPermitidoPorCuposInvitacion,
-  plazasSmartpoolPasajeros,
 } from "@/lib/grupoFamiliar";
 
 function Logo() {
@@ -459,14 +458,6 @@ export default function InvitacionPage({ params }: { params: Promise<{ id: strin
               invitación. Indicá cuántas personas van en total (incluyéndote).
             </p>
 
-            {ecoGuestPermitidoPorCuposInvitacion(evento.grupoCuposMax) && (
-              <div className="rounded-2xl border border-[#b8d4c4] bg-[#e8f5ed] px-4 py-3 text-[12px] leading-relaxed text-[#1e4629] sm:ml-[calc(11rem+1rem)]">
-                <strong>EcoGuest:</strong> tu invitación contempla hasta <strong>{evento.grupoCuposMax}</strong>{" "}
-                persona(s). Si elegís ser conductor, podés ofrecer hasta{" "}
-                <strong>{plazasSmartpoolPasajeros(evento.grupoCuposMax)}</strong> plaza(s) a otros invitados del pool (hasta{" "}
-                <strong>5</strong> personas en total entre tu grupo y el carpooling).
-              </div>
-            )}
             {!ecoGuestPermitidoPorCuposInvitacion(evento.grupoCuposMax) && (
               <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-[12px] leading-relaxed text-amber-950 sm:ml-[calc(11rem+1rem)]">
                 Esta invitación supera las <strong>{ECOGUEST_MAX_PERSONAS_INVITACION}</strong> personas permitidas para
