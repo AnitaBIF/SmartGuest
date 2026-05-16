@@ -109,11 +109,14 @@ export interface Database {
           pending_import_email: string | null;
           pending_import_dni: string | null;
           created_at: string;
+          /** Última modificación de la fila (confirmación RSVP, edición, etc.). */
+          updated_at: string;
         };
         Insert: Omit<
           Database["public"]["Tables"]["invitados"]["Row"],
           | "id"
           | "created_at"
+          | "updated_at"
           | "smartpool_acepto"
           | "smartpool_pareja_invitado_id"
           | "smartpool_cupos_max"

@@ -74,7 +74,7 @@ export async function GET(req: NextRequest) {
     supabase
       .from("invitados")
       .select(
-        "id, asistencia, restriccion_alimentaria, restriccion_otro, rol_smartpool, mesa_id, usuario_id, created_at, grupo_menus_json, grupo_cupos_max, grupo_personas_confirmadas, pending_import_nombre",
+        "id, asistencia, restriccion_alimentaria, restriccion_otro, rol_smartpool, mesa_id, usuario_id, created_at, updated_at, grupo_menus_json, grupo_cupos_max, grupo_personas_confirmadas, pending_import_nombre",
       )
       .eq("evento_id", evento.id),
     supabase.from("mesas").select("id, numero").eq("evento_id", evento.id).order("numero", { ascending: true }),
@@ -164,10 +164,11 @@ export async function GET(req: NextRequest) {
     else stats.mesasIncompletas++;
   }
 
-  const sortedByRecent = [...(invitados ?? [])].sort(
-    (a, b) =>
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-  );
+  const sortedByRecent = [...(invitados ?? [])].sort((a, b) => {
+    const ta = new Date(a.updated_at).getTime();
+    const tb = new Date(b.updated_at).getTime();
+    return tb - ta;
+  });
   const recentSlice = sortedByRecent.slice(0, 12);
   const userIds = [...new Set(recentSlice.map((i) => i.usuario_id).filter(Boolean))] as string[];
   let nameByUser: Record<string, string> = {};
