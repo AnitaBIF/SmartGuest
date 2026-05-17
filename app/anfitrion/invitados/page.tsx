@@ -62,7 +62,7 @@ function CellWrap({
 }) {
   return (
     <span
-      className={`block whitespace-normal break-words text-pretty leading-snug ${className}`}
+      className={`block whitespace-normal break-words hyphens-auto text-pretty leading-snug ${className}`}
     >
       {children}
     </span>
@@ -1277,16 +1277,16 @@ export default function GestionInvitadosPage() {
               <div className="w-full rounded-b-2xl">
                 <table className="table-fixed w-full border-separate border-spacing-0 text-left text-[11px] leading-snug text-foreground sm:text-[12px]">
                   <colgroup>
-                    <col style={{ width: "18%" }} />
+                    <col style={{ width: "15%" }} />
                     <col style={{ width: "7%" }} />
                     <col style={{ width: "10%" }} />
                     <col style={{ width: "9%" }} />
-                    <col style={{ width: "8%" }} />
+                    <col style={{ width: "14%" }} />
                     <col style={{ width: "7%" }} />
                     <col style={{ width: "6%" }} />
                     <col style={{ width: "14%" }} />
                     <col style={{ width: "4%" }} />
-                    <col style={{ width: "17%" }} />
+                    <col style={{ width: "14%" }} />
                   </colgroup>
                   <thead>
                     <tr className="bg-card-muted text-[9px] font-semibold uppercase tracking-wide text-muted sm:text-[10px]">
@@ -1331,9 +1331,7 @@ export default function GestionInvitadosPage() {
                           <AsistenciaBadge estado={inv.asistencia} compact />
                         </td>
                         <td className="min-w-0 border-t border-border-subtle px-1.5 py-2 align-middle text-muted sm:px-2 sm:py-2.5">
-                          <span className="block truncate" title={inv.grupo}>
-                            {inv.grupo}
-                          </span>
+                          <CellWrap>{inv.grupo}</CellWrap>
                         </td>
                         <td className="min-w-0 border-t border-border-subtle px-1.5 py-2 align-middle text-muted sm:px-2 sm:py-2.5">
                           <span className="block hyphens-auto break-words text-pretty">{inv.rango}</span>

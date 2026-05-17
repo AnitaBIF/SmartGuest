@@ -405,7 +405,14 @@ export default function InvitacionPage({ params }: { params: Promise<{ id: strin
             </div>
           )}
 
-          <div className="space-y-4">
+          <form
+            className="space-y-4"
+            autoComplete="off"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void handleConfirmar();
+            }}
+          >
             {ocultarNombre ? (
               <div className="rounded-2xl border border-[#c5dece] bg-white/90 px-4 py-3">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-[#2d5a41]">
@@ -535,22 +542,38 @@ export default function InvitacionPage({ params }: { params: Promise<{ id: strin
               <input className={inp} type="text" value={form.cancion} onChange={set("cancion")} />
             </Field>
             <Field label="Email" required>
-              <input className={inp} type="email" value={form.email} onChange={set("email")} />
+              <input
+                className={inp}
+                type="email"
+                name="smartguest-invitacion-email"
+                id="smartguest-invitacion-email"
+                inputMode="email"
+                autoComplete="email"
+                value={form.email}
+                onChange={set("email")}
+              />
             </Field>
             <Field label="Contraseña" required>
-              <input className={inp} type="password" value={form.contrasena} onChange={set("contrasena")} />
+              <input
+                className={inp}
+                type="password"
+                name="smartguest-invitacion-nueva-clave"
+                id="smartguest-invitacion-nueva-clave"
+                autoComplete="new-password"
+                value={form.contrasena}
+                onChange={set("contrasena")}
+              />
             </Field>
-          </div>
 
-          <button
-            type="button"
-            onClick={handleConfirmar}
-            disabled={saving}
-            className="mt-8 w-full rounded-xl py-3 text-base font-bold text-white transition-colors disabled:opacity-60"
-            style={{ backgroundColor: "#2d5a41" }}
-          >
-            {saving ? "Registrando..." : "Confirmo"}
-          </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="mt-8 w-full rounded-xl py-3 text-base font-bold text-white transition-colors disabled:opacity-60"
+              style={{ backgroundColor: "#2d5a41" }}
+            >
+              {saving ? "Registrando..." : "Confirmo"}
+            </button>
+          </form>
         </Card>
       </Page>
     );
