@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { translateAuthError } from "@/lib/translateAuthError";
 
@@ -65,6 +66,7 @@ type LoginScreenProps = {
 };
 
 export default function LoginScreen({ signOutOnMount = false }: LoginScreenProps) {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -77,6 +79,12 @@ export default function LoginScreen({ signOutOnMount = false }: LoginScreenProps
     if (!signOutOnMount) return;
     void supabase.auth.signOut();
   }, [signOutOnMount]);
+
+  useEffect(() => {
+    for (const ruta of Object.values(ROLE_ROUTES)) {
+      void router.prefetch(ruta);
+    }
+  }, [router]);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -103,6 +111,7 @@ export default function LoginScreen({ signOutOnMount = false }: LoginScreenProps
     }
 
     setLoading(true);
+    let navigated = false;
     try {
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email: em.toLowerCase(),
@@ -131,12 +140,13 @@ export default function LoginScreen({ signOutOnMount = false }: LoginScreenProps
       }
 
       const ruta = ROLE_ROUTES[usuario.tipo] ?? "/";
-      window.location.href = ruta;
+      navigated = true;
+      router.replace(ruta);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setError(translateAuthError(msg, "No pudimos iniciar sesión. Intentá de nuevo."));
     } finally {
-      setLoading(false);
+      if (!navigated) setLoading(false);
     }
   }
 

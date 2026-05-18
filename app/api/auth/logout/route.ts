@@ -6,11 +6,9 @@ import { cookies } from "next/headers";
  * Cierre de sesión server-side: invalida los tokens de Supabase y borra todas
  * las cookies `sb-*` del navegador.
  *
- * Lo llaman dos consumidores:
- *  - `lib/supabase.ts#logout()` (botón "cerrar sesión" del usuario).
- *  - `components/SessionWatchdog.tsx` cuando detecta que todas las pestañas
- *    estuvieron muertas más de 30 s y la cookie de sesión seguía viva (caso
- *    "cerré la pestaña y volví más tarde" → consideramos sesión expirada).
+ * Lo dispara el cliente con POST + `keepalive` (no bloquea el cierre) desde:
+ *  - `lib/supabase.ts` (`logout` / `logoutCleanupFast`).
+ *  - `components/SessionWatchdog.tsx` (sesión vencida / inactividad).
  *
  * Aceptamos `POST` y `GET` para poder usarlo también con
  * `navigator.sendBeacon` o `<img src>` como último recurso en `pagehide`.

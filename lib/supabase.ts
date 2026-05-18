@@ -89,32 +89,29 @@ export const supabase = createBrowserClient<Database>(supabaseUrl, supabaseAnonK
   },
 });
 
-/** Tiempo máximo de espera a red / servidor en logout (evita botón “muerto”). */
-const LOGOUT_NETWORK_CAP_MS = 4000;
-
 /**
- * POST `/api/auth/logout` con tope de tiempo. Usada también desde
- * `SessionWatchdog` para no duplicar la lógica de abort.
+ * Objetivo ~500 ms percibidos: el POST al servidor no bloquea la navegación
+ * (`keepalive` sigue en vuelo durante el unload). Lo crítico es `signOut` local
+ * + barrido de cookies `sb-*` en el cliente.
  */
-export async function requestServerLogout(maxMs: number = LOGOUT_NETWORK_CAP_MS): Promise<void> {
+const LOGOUT_UI_CAP_MS = 500;
+
+/** Aviso al servidor sin await (sobrevive al cambio de página). */
+export function notifyServerLogoutKeepalive(): void {
   if (typeof window === "undefined") return;
-  const ctrl = new AbortController();
-  const tid = setTimeout(() => ctrl.abort(), maxMs);
   try {
-    await fetch("/api/auth/logout", {
+    void fetch("/api/auth/logout", {
       method: "POST",
       credentials: "include",
       cache: "no-store",
-      signal: ctrl.signal,
+      keepalive: true,
     });
   } catch {
-    /* timeout, red u error: seguimos con signOut + limpieza local */
-  } finally {
-    clearTimeout(tid);
+    /* */
   }
 }
 
-export async function signOutLocalCapped(maxMs: number = LOGOUT_NETWORK_CAP_MS): Promise<void> {
+export async function signOutLocalCapped(maxMs: number = LOGOUT_UI_CAP_MS): Promise<void> {
   try {
     await Promise.race([
       supabase.auth.signOut(),
@@ -125,27 +122,36 @@ export async function signOutLocalCapped(maxMs: number = LOGOUT_NETWORK_CAP_MS):
   }
 }
 
-export async function logout() {
-  /* En paralelo: no encadenar fetch y signOut (si uno cuelga, el otro igual avanza). */
-  await Promise.all([
-    requestServerLogout(LOGOUT_NETWORK_CAP_MS),
-    signOutLocalCapped(LOGOUT_NETWORK_CAP_MS),
-  ]);
-
-  if (typeof document !== "undefined") {
-    document.cookie.split(";").forEach((c) => {
-      const name = c.split("=")[0].trim();
-      if (name.startsWith("sb-")) {
-        document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
-      }
-    });
-  }
-  if (typeof window !== "undefined") {
-    try {
-      window.localStorage.removeItem("smartguest:session:last-alive:v1");
-    } catch {
-      /* ignore */
+function sweepSbCookiesFromDocument(): void {
+  if (typeof document === "undefined") return;
+  document.cookie.split(";").forEach((c) => {
+    const name = c.split("=")[0].trim();
+    if (name.startsWith("sb-")) {
+      document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
     }
+  });
+}
+
+function clearLastAliveKey(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem("smartguest:session:last-alive:v1");
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Limpieza rápida sin redirigir (p. ej. SessionWatchdog). */
+export async function logoutCleanupFast(): Promise<void> {
+  notifyServerLogoutKeepalive();
+  await signOutLocalCapped(LOGOUT_UI_CAP_MS);
+  sweepSbCookiesFromDocument();
+  clearLastAliveKey();
+}
+
+export async function logout() {
+  await logoutCleanupFast();
+  if (typeof window !== "undefined") {
     window.location.replace("/");
   }
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { requestServerLogout, signOutLocalCapped, supabase } from "@/lib/supabase";
+import { logoutCleanupFast, supabase } from "@/lib/supabase";
 
 /**
  * Vigila la sesión del usuario y la cierra automáticamente en dos casos:
@@ -144,7 +144,7 @@ export default function SessionWatchdog() {
       stopInactivityTimer();
       detachActivityListeners();
       clearLastAlive();
-      await Promise.all([requestServerLogout(), signOutLocalCapped()]);
+      await logoutCleanupFast();
       if (!cancelled) {
         window.location.replace("/");
       }
