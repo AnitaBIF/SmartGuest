@@ -84,11 +84,11 @@ export default function QRPage() {
 
   return (
     <InvitadoShell mainClassName="flex flex-col items-center justify-center">
-      <h1 className="mb-6 w-full text-center text-2xl font-bold text-brand md:mb-8 md:text-right md:self-end">
+      <h1 className="mb-4 w-full text-balance text-2xl font-bold text-brand sm:mb-6 md:mb-8 md:text-right md:self-end">
         QR de ingreso
       </h1>
 
-      <div className="flex w-full min-w-0 max-w-md flex-col items-center gap-6">
+      <div className="flex w-full min-w-0 max-w-md flex-col items-stretch gap-5 sm:items-center sm:gap-6">
           {loading ? (
             <p className="text-muted">Preparando tu código de ingreso…</p>
           ) : error ? (

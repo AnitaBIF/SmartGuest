@@ -56,7 +56,7 @@ export default function EventLocationMap({
     height != null
       ? ""
       : variant === "invitado"
-        ? "aspect-[5/4] w-full min-h-[240px] max-h-[min(420px,55dvh)] sm:aspect-auto sm:min-h-[300px] sm:max-h-none lg:min-h-[min(420px,calc(100vh-14rem))] lg:aspect-auto lg:max-h-none lg:h-[min(560px,calc(100vh-11rem))]"
+        ? "h-[min(48dvh,340px)] min-h-[200px] w-full sm:aspect-auto sm:h-auto sm:min-h-[300px] sm:max-h-none lg:min-h-[min(420px,calc(100vh-14rem))] lg:h-[min(560px,calc(100vh-11rem))] lg:max-h-none"
         : "aspect-[4/3] w-full max-h-[min(360px,58dvh)] min-h-[200px] sm:max-h-[360px]";
 
   return (

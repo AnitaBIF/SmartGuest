@@ -18,12 +18,13 @@ export function InvitadoShell({ children, mainClassName = "" }: Props) {
   const [desktopCollapsed, setDesktopCollapsed] = useSidebarCollapsed("invitado.sidebar.collapsed");
 
   return (
-    <div className="min-h-dvh text-foreground [overflow-wrap:anywhere]">
+    <div className="min-h-dvh overflow-x-hidden text-foreground [overflow-wrap:anywhere]">
       <div
         className={
-          "flex min-h-dvh w-full gap-4 sm:gap-6 " +
-          "pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] sm:px-6 " +
-          "pt-16 pb-[max(4.5rem,calc(env(safe-area-inset-bottom,0px)+2.5rem))] md:pt-6 md:pb-10"
+          "flex min-h-dvh w-full max-w-[100vw] gap-3 sm:gap-6 " +
+          "pl-[max(0.75rem,env(safe-area-inset-left,0px))] pr-[max(0.75rem,env(safe-area-inset-right,0px))] sm:px-6 " +
+          "pt-[max(4.25rem,calc(env(safe-area-inset-top,0px)+3rem))] " +
+          "pb-[max(5.75rem,calc(env(safe-area-inset-bottom,0px)+3.5rem))] md:pt-6 md:pb-10"
         }
       >
         <Sidebar desktopCollapsed={desktopCollapsed} onToggleDesktop={setDesktopCollapsed} />

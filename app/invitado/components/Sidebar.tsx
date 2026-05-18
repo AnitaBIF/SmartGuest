@@ -92,11 +92,15 @@ export default function Sidebar({
         aria-hidden={!desktopCollapsed}
         tabIndex={desktopCollapsed ? 0 : -1}
         title="Abrir barra lateral"
-        className={`fixed left-3 top-4 z-40 hidden h-10 w-10 items-center justify-center rounded-xl border border-border bg-card text-brand shadow-md ring-1 ring-[var(--ring-soft)] transition-[opacity,transform] duration-300 ease-out hover:bg-card-muted md:flex print:hidden ${
+        className={`fixed z-40 hidden h-10 w-10 items-center justify-center rounded-xl border border-border bg-card text-brand shadow-md ring-1 ring-[var(--ring-soft)] transition-[opacity,transform] duration-300 ease-out hover:bg-card-muted md:flex print:hidden ${
           desktopCollapsed
             ? "translate-x-0 opacity-100 delay-200"
             : "pointer-events-none -translate-x-2 opacity-0"
         }`}
+        style={{
+          left: "max(0.75rem, env(safe-area-inset-left, 0px))",
+          top: "max(1rem, env(safe-area-inset-top, 0px))",
+        }}
       >
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
           <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />

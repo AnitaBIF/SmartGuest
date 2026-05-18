@@ -4,7 +4,7 @@ import { LeyendaObligatorios, Req } from "@/components/FormRequired";
 import { InvitadoShell } from "@/components/InvitadoShell";
 
 const inp =
-  "w-full min-w-0 flex-1 rounded-full border border-border bg-input px-4 py-2 text-[13px] text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20";
+  "w-full min-w-0 flex-1 rounded-full border border-border bg-input px-4 py-2.5 text-base text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 sm:py-2 sm:text-[13px]";
 
 function Field({
   label,
@@ -103,9 +103,9 @@ export default function ConfiguracionPage() {
 
   return (
     <InvitadoShell>
-      <h1 className="mb-6 w-full text-center text-2xl font-bold text-brand md:mb-8 md:text-right">Configuración</h1>
+      <h1 className="mb-4 w-full text-balance text-2xl font-bold text-brand sm:mb-6 md:mb-8 md:text-right">Configuración</h1>
 
-      <div className="rounded-3xl border border-border bg-card p-4 shadow ring-1 ring-[var(--ring-soft)] sm:p-8">
+      <div className="rounded-2xl border border-border bg-card p-4 shadow ring-1 ring-[var(--ring-soft)] sm:rounded-3xl sm:p-8">
             <h2 className="mb-4 text-[18px] font-semibold text-foreground">
               Aquí puedes editar datos que necesites cambiar
             </h2>

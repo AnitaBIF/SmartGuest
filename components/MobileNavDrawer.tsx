@@ -11,7 +11,11 @@ export function MobileNavOpenButton({ onClick, expanded }: { onClick: () => void
       <button
         type="button"
         onClick={onClick}
-        className="fixed left-4 top-4 z-[70] flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-card text-brand shadow-md ring-1 ring-[var(--ring-soft)]"
+        className="fixed z-[70] flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-card text-brand shadow-md ring-1 ring-[var(--ring-soft)]"
+        style={{
+          left: "max(1rem, env(safe-area-inset-left, 0px))",
+          top: "max(1rem, env(safe-area-inset-top, 0px))",
+        }}
         aria-label="Abrir menú de navegación"
         aria-expanded={expanded}
         aria-haspopup="dialog"
@@ -55,7 +59,10 @@ export function MobileNavDrawer({
         onClick={onClose}
         aria-label="Cerrar menú"
       />
-      <div className="absolute left-0 top-0 flex h-full w-[min(20rem,90vw)] flex-col overflow-y-auto bg-card text-foreground shadow-2xl ring-1 ring-[var(--ring-soft)]">
+      <div
+        className="absolute left-0 top-0 flex h-full w-[min(20rem,min(90vw,100dvw))] flex-col overflow-y-auto bg-card pb-[env(safe-area-inset-bottom,0px)] text-foreground shadow-2xl ring-1 ring-[var(--ring-soft)]"
+        style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+      >
         <div className="flex items-center justify-end border-b border-border-subtle px-3 py-2">
           <button
             type="button"

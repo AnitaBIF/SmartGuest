@@ -396,7 +396,7 @@ export default function SmartpoolPage() {
 
     return (
       <InvitadoShell mainClassName="flex justify-center">
-            <div className="w-full max-w-md rounded-3xl bg-[#f0f7f2] p-4 text-center shadow ring-1 ring-[#c5dece] sm:p-8 dark:bg-card-muted dark:ring-border">
+            <div className="w-full max-w-md rounded-3xl bg-[#f0f7f2] p-3 text-center shadow ring-1 ring-[#c5dece] sm:p-8 dark:bg-card-muted dark:ring-border">
               {!verMatch ? (
                 <>
                   <div className="relative mx-auto mb-4 h-36 w-36">
@@ -495,7 +495,7 @@ export default function SmartpoolPage() {
                   {rol === "conductor" ? (
                     <div className="mb-6 space-y-4">
                       {pasajeros.length > 0 ? (
-                        <div className="rounded-2xl bg-white px-5 py-4 text-left ring-1 ring-[#c5dece]">
+                        <div className="rounded-2xl bg-white px-3 py-4 text-left ring-1 ring-[#c5dece] sm:px-5">
                           <p className="text-[13px] font-semibold text-[#374151]">
                             Propuestas / pasajeros · plazas ocupadas ({cuposOcupados}/{cuposMax === 0 ? "—" : cuposMax})
                           </p>
@@ -575,7 +575,7 @@ export default function SmartpoolPage() {
                       ) : null}
 
                       {hayCuposLibres ? (
-                        <div className="space-y-4 rounded-2xl bg-white px-5 py-4 text-left ring-1 ring-[#c5dece]">
+                        <div className="space-y-4 rounded-2xl bg-white px-3 py-4 text-left ring-1 ring-[#c5dece] sm:px-5">
                           <p className="text-[13px] font-medium text-[#374151]">Sugerencias de pasajeros</p>
                           <p className="text-[12px] text-[#6b7280]">
                             Solo invitados con <strong>asistencia confirmada</strong>. Se indica cuántas plazas ocupa
@@ -654,7 +654,7 @@ export default function SmartpoolPage() {
                           )}
                         </div>
                       ) : pasajeros.length > 0 ? (
-                        <div className="rounded-2xl bg-white px-5 py-4 text-left ring-1 ring-[#c5dece]">
+                        <div className="rounded-2xl bg-white px-3 py-4 text-left ring-1 ring-[#c5dece] sm:px-5">
                           <p className="text-[13px] text-[#4b5563]">
                             {cuposMax === 0
                               ? "Tu invitación no permite sumar pasajeros del pool; los que figuran arriba son los que ya vinculaste."
@@ -662,7 +662,7 @@ export default function SmartpoolPage() {
                           </p>
                         </div>
                       ) : cuposMax === 0 ? (
-                        <div className="rounded-2xl bg-white px-5 py-4 text-left ring-1 ring-[#c5dece]">
+                        <div className="rounded-2xl bg-white px-3 py-4 text-left ring-1 ring-[#c5dece] sm:px-5">
                           <p className="text-[13px] text-[#4b5563]">
                             No hay plazas en el pool para tu invitación (5 personas en total). Seguís como EcoGuest
                             conductor; no se muestran sugerencias nuevas.
@@ -671,7 +671,7 @@ export default function SmartpoolPage() {
                       ) : null}
                     </div>
                   ) : !p ? (
-                    <div className="mb-6 space-y-4 rounded-2xl bg-white px-5 py-4 text-left ring-1 ring-[#c5dece]">
+                    <div className="mb-6 space-y-4 rounded-2xl bg-white px-3 py-4 text-left ring-1 ring-[#c5dece] sm:px-5">
                       <div className="space-y-3">
                         <p className="text-[13px] text-[#4b5563]">
                           Todavía ningún conductor te eligió. Esta pantalla se actualiza sola cada pocos segundos. Cuando
@@ -683,7 +683,7 @@ export default function SmartpoolPage() {
                       </div>
                     </div>
                   ) : !p.mutuo ? (
-                    <div className="mb-6 space-y-4 rounded-2xl bg-white px-5 py-4 text-left ring-1 ring-[#c5dece]">
+                    <div className="mb-6 space-y-4 rounded-2xl bg-white px-3 py-4 text-left ring-1 ring-[#c5dece] sm:px-5">
                       <p className="text-[13px] font-semibold text-foreground">{p.nombre}</p>
                       <p className="text-[12px] text-[#6b7280]">
                         Rol en el pool: <strong>{p.rol === "conductor" ? "Conductor" : "Pasajero"}</strong>
@@ -749,7 +749,7 @@ export default function SmartpoolPage() {
                       </div>
                     </div>
                   ) : (
-                    <div className="mb-6 space-y-4 rounded-2xl bg-white px-5 py-4 text-left ring-1 ring-[#c5dece]">
+                    <div className="mb-6 space-y-4 rounded-2xl bg-white px-3 py-4 text-left ring-1 ring-[#c5dece] sm:px-5">
                       <p className="text-[11px] font-bold uppercase tracking-wide text-[#166534]">Match confirmado</p>
                       <p className="text-[15px] font-bold text-foreground">{p.nombre}</p>
                       <p className="text-[13px] text-[#4b5563]">
@@ -792,7 +792,7 @@ export default function SmartpoolPage() {
   if (estado?.rol === "no" && !mostrarFormEleccion) {
     return (
       <InvitadoShell mainClassName="flex flex-col items-center">
-            <h1 className="mb-6 w-full text-center text-2xl font-bold text-brand md:text-right md:self-end">
+            <h1 className="mb-4 w-full text-balance text-2xl font-bold text-brand sm:mb-6 md:text-right md:self-end">
               SmartPool
             </h1>
 
@@ -850,9 +850,9 @@ export default function SmartpoolPage() {
 
   return (
     <InvitadoShell mainClassName="flex flex-col items-center">
-          <h1 className="mb-6 w-full text-center text-2xl font-bold text-brand md:text-right md:self-end">SmartPool</h1>
+          <h1 className="mb-4 w-full text-balance text-2xl font-bold text-brand sm:mb-6 md:text-right md:self-end">SmartPool</h1>
 
-          <div className="w-full max-w-md rounded-3xl bg-[#f0f7f2] px-4 py-6 shadow ring-1 ring-[#c5dece] sm:px-8 sm:py-8 dark:bg-card-muted dark:ring-border">
+          <div className="w-full max-w-md rounded-3xl bg-[#f0f7f2] p-3 py-6 text-center shadow ring-1 ring-[#c5dece] sm:px-8 sm:py-8 dark:bg-card-muted dark:ring-border">
             <div className="relative mx-auto mb-4 h-28 w-28">
               <Image src="/ecoguest-badge.png" alt="EcoGuest" fill className="object-contain" />
             </div>

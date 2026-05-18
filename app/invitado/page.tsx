@@ -17,11 +17,16 @@ type EventoData = {
   };
 };
 
-function InfoCard({ label, value }: { label: string; value: string }) {
+function InfoCard({ label, value, className = "" }: { label: string; value: string; className?: string }) {
   return (
-    <div className="flex w-full min-w-0 flex-col items-center justify-center rounded-xl border border-[#5d8f73]/35 bg-[#7aab8f] px-3 py-2.5 text-center text-white shadow-sm dark:border-border dark:bg-card-muted dark:text-foreground dark:shadow-none sm:px-4 sm:py-3">
+    <div
+      className={
+        "flex w-full min-w-0 flex-col justify-center rounded-xl border border-[#5d8f73]/35 bg-[#7aab8f] px-3 py-3 text-left text-white shadow-sm dark:border-border dark:bg-card-muted dark:text-foreground dark:shadow-none sm:px-4 sm:py-3 sm:text-center " +
+        className
+      }
+    >
       <p className="text-[11px] font-semibold opacity-90 dark:text-muted sm:text-[12px]">{label}</p>
-      <p className="mt-0.5 text-[13px] font-bold break-words sm:text-[14px]">{value}</p>
+      <p className="mt-1 text-[14px] font-bold leading-snug break-words sm:text-[15px]">{value}</p>
     </div>
   );
 }
@@ -57,24 +62,27 @@ export default function DatosEventoPage() {
 
   return (
     <InvitadoShell>
-      <h1 className="mb-6 w-full text-center text-2xl font-bold text-brand md:mb-8 md:text-right">
+      <h1 className="mb-4 w-full text-balance text-2xl font-bold text-brand sm:mb-6 md:mb-8 md:text-right">
         Datos del Evento
       </h1>
 
-      <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-12 lg:items-stretch lg:gap-8">
-        <div className="flex min-w-0 flex-col gap-2.5 lg:col-span-4 lg:max-w-none xl:col-span-3">
-          <InfoCard label="Anfitriones" value={evento.anfitriones} />
+      <div className="grid min-w-0 grid-cols-1 gap-5 sm:gap-6 lg:grid-cols-12 lg:items-stretch lg:gap-8">
+        <div className="grid min-w-0 grid-cols-2 gap-2 sm:gap-2.5 lg:col-span-4 lg:flex lg:max-w-none lg:flex-col lg:gap-2.5 xl:col-span-3">
+          <InfoCard className="col-span-2" label="Anfitriones" value={evento.anfitriones} />
           <InfoCard label="Día" value={evento.fecha} />
           <InfoCard label="Hora" value={`${evento.horario} hs`} />
           <InfoCard
+            className="col-span-2"
             label="Mesa asignada"
             value={invitacion.mesa != null ? `N° ${invitacion.mesa}` : "Pendiente de asignación"}
           />
-          {evento.dressCode && <InfoCard label="Dress Code" value={evento.dressCode} />}
+          {evento.dressCode ? (
+            <InfoCard className="col-span-2" label="Dress Code" value={evento.dressCode} />
+          ) : null}
         </div>
 
         <div className="min-w-0 lg:col-span-8 xl:col-span-9">
-          <h2 className="mb-2 w-full text-center text-lg font-bold text-foreground lg:mb-3 lg:text-right">
+          <h2 className="mb-2 w-full text-balance text-lg font-bold text-foreground sm:mb-3 md:text-right">
             Ubicación
           </h2>
           <EventLocationMap salon={evento.salon} direccion={evento.direccion} variant="invitado" />
