@@ -111,7 +111,6 @@ export default function LoginScreen({ signOutOnMount = false }: LoginScreenProps
     }
 
     setLoading(true);
-    let navigated = false;
     try {
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email: em.toLowerCase(),
@@ -120,6 +119,7 @@ export default function LoginScreen({ signOutOnMount = false }: LoginScreenProps
 
       if (authError || !data.user) {
         setError(translateAuthError(authError?.message, "Email o contraseña incorrectos."));
+        setLoading(false);
         return;
       }
 
@@ -136,17 +136,24 @@ export default function LoginScreen({ signOutOnMount = false }: LoginScreenProps
             "No pudimos cargar tu perfil. Reintentá en unos segundos.",
           ),
         );
+        setLoading(false);
         return;
       }
 
-      const ruta = ROLE_ROUTES[usuario.tipo] ?? "/";
-      navigated = true;
-      router.replace(ruta);
+      const ruta = ROLE_ROUTES[usuario.tipo];
+      if (!ruta) {
+        setError("Tu cuenta no tiene un rol habilitado para esta app. Consultá con el administrador.");
+        setLoading(false);
+        return;
+      }
+      /* Navegación completa: el `router.replace` del App Router a veces no
+       desmontaba el login aunque la cookie ya estuviera lista (quedaba
+       “Ingresando…” hasta recargar). */
+      window.location.replace(ruta);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setError(translateAuthError(msg, "No pudimos iniciar sesión. Intentá de nuevo."));
-    } finally {
-      if (!navigated) setLoading(false);
+      setLoading(false);
     }
   }
 
