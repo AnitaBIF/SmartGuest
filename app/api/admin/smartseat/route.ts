@@ -57,8 +57,10 @@ export async function GET(req: NextRequest) {
     .eq("evento_id", evento.id);
 
   const invitados = (invitadosRaw ?? []).filter((i) => i.asistencia !== "rechazado");
+  /** Vista admin: solo confirmados cuentan como “ocupado” en SmartSeat (sin pendientes ni rechazados). */
+  const internosConfirmados = invitados.filter((i) => i.asistencia === "confirmado");
 
-  const userIds = [...new Set(invitados.map((i) => i.usuario_id).filter((id): id is string => !!id))];
+  const userIds = [...new Set(internosConfirmados.map((i) => i.usuario_id).filter((id): id is string => !!id))];
   const userNames: Record<string, string> = {};
   if (userIds.length > 0) {
     const { data: usuarios } = await db
@@ -87,7 +89,7 @@ export async function GET(req: NextRequest) {
   const baseInvitados = Math.max(cantInvitados, totalPlazasReales);
   const seatsPerTable = cantMesas > 0 ? Math.max(1, Math.ceil(baseInvitados / cantMesas)) : 10;
 
-  const guests = invitados.map((i) => {
+  const guests = internosConfirmados.map((i) => {
     const row = i as typeof i & { grupo_cupos_max?: number | null; grupo_personas_confirmadas?: number | null };
     const seatCount = plazasSmartseatPorInvitado({
       asistencia: i.asistencia,

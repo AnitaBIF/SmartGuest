@@ -50,7 +50,7 @@ export function AdminSidebar({
           <Link
             key={key}
             href={href}
-            prefetch
+            prefetch={false}
             onClick={closeOnNavigate ? () => setMenuOpen(false) : undefined}
             className="block py-1.5 pl-1 pr-2 text-[13px] text-foreground hover:text-brand"
           >

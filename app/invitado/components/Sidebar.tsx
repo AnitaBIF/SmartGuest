@@ -48,7 +48,7 @@ export default function Sidebar({
 
   const handleLogout = () => {
     setMenuOpen(false);
-    logout();
+    void logout();
   };
 
   const navList = (closeOnNavigate: boolean) => (
@@ -59,7 +59,7 @@ export default function Sidebar({
           <Link
             key={href}
             href={href}
-            prefetch
+            prefetch={false}
             onClick={closeOnNavigate ? () => setMenuOpen(false) : undefined}
             className={`block py-1.5 pl-1 pr-2 text-[13px] transition-colors ${active ? "font-semibold text-brand" : "text-foreground hover:text-brand"}`}
           >
@@ -133,7 +133,7 @@ export default function Sidebar({
             {navList(false)}
             <ThemeToggleRow className="mt-6" />
           </div>
-          <SidebarUserChip displayName={nombre} subtitle="Usuario Invitado" onLogout={() => logout()} />
+          <SidebarUserChip displayName={nombre} subtitle="Usuario Invitado" onLogout={() => void logout()} />
         </div>
       </aside>
     </>

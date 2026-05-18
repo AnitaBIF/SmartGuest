@@ -61,7 +61,7 @@ export function HostSidebar({
           <Link
             key={key}
             href={href}
-            prefetch
+            prefetch={false}
             onClick={closeOnNavigate ? () => setMenuOpen(false) : undefined}
             className="block bg-transparent py-1.5 pl-1 pr-2 text-left text-[13px] text-foreground hover:text-brand"
           >

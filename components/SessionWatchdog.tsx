@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { requestServerLogout, signOutLocalCapped, supabase } from "@/lib/supabase";
 
 /**
  * Vigila la sesión del usuario y la cierra automáticamente en dos casos:
@@ -10,7 +10,7 @@ import { supabase } from "@/lib/supabase";
  *     volvió >30 s después). Estrategia "heartbeat" en localStorage:
  *
  *       1. Cada pestaña con sesión escribe `LAST_ALIVE_KEY = Date.now()`
- *          cada `HEARTBEAT_MS` (5 s). Mientras al menos una pestaña esté
+ *          cada `HEARTBEAT_MS` (15 s). Mientras al menos una pestaña esté
  *          abierta, el valor se mantiene fresco.
  *       2. Al montarse en cualquier página autenticada, compara el último
  *          heartbeat con `Date.now()`. Si pasaron más de `STALE_MS` (30 s)
@@ -36,7 +36,7 @@ import { supabase } from "@/lib/supabase";
  */
 
 const LAST_ALIVE_KEY = "smartguest:session:last-alive:v1";
-const HEARTBEAT_MS = 5_000;
+const HEARTBEAT_MS = 15_000;
 const STALE_MS = 30_000;
 const INACTIVITY_MS = 60 * 60 * 1000; // 60 minutos sin interacción → logout
 
@@ -144,20 +144,7 @@ export default function SessionWatchdog() {
       stopInactivityTimer();
       detachActivityListeners();
       clearLastAlive();
-      try {
-        await fetch("/api/auth/logout", {
-          method: "POST",
-          credentials: "include",
-          cache: "no-store",
-        });
-      } catch {
-        /* si falla, igual mandamos signOut local más abajo */
-      }
-      try {
-        await supabase.auth.signOut();
-      } catch {
-        /* idem */
-      }
+      await Promise.all([requestServerLogout(), signOutLocalCapped()]);
       if (!cancelled) {
         window.location.replace("/");
       }

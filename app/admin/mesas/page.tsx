@@ -31,7 +31,6 @@ type Reporte = {
 
 const SEAT_LIBRE = "#d1d5db";
 const SEAT_OCUPADA = "#22c55e";
-const SEAT_PENDIENTE = "#f59e0b";
 
 function fmtFecha(iso: string): string {
   if (!iso) return "—";
@@ -163,13 +162,13 @@ function AdminMesasContent() {
 
   const resumen = useMemo(() => {
     if (!reporte) return null;
-    const totales = reporte.guests.length;
-    const confirmados = reporte.guests.filter((g) => g.asistencia === "confirmado").length;
-    const pendientes = reporte.guests.filter((g) => g.asistencia === "pendiente").length;
-    const conMesa = reporte.guests.filter((g) => g.mesaId).length;
+    /** La API admin solo devuelve confirmados; totales = invitaciones confirmadas. */
+    const confirmados = reporte.guests;
+    const totales = confirmados.length;
+    const conMesa = confirmados.filter((g) => g.mesaId).length;
     const sinMesa = totales - conMesa;
-    const personas = reporte.guests.reduce((s, g) => s + (g.seatCount || 0), 0);
-    return { totales, confirmados, pendientes, conMesa, sinMesa, personas };
+    const personas = confirmados.reduce((s, g) => s + (g.seatCount || 0), 0);
+    return { totales, conMesa, sinMesa, personas };
   }, [reporte]);
 
   return (
@@ -225,17 +224,17 @@ function AdminMesasContent() {
             <ResumenCard
               label="Personas"
               value={resumen ? String(resumen.personas) : "—"}
-              hint={resumen ? `${resumen.confirmados} conf. · ${resumen.pendientes} pend.` : ""}
+              hint={resumen ? "Solo confirmadas" : ""}
             />
             <ResumenCard
               label="Con mesa"
               value={resumen ? `${resumen.conMesa} / ${resumen.totales}` : "—"}
-              hint="Invitaciones ubicadas"
+              hint="Ubicadas (confirmadas)"
             />
             <ResumenCard
               label="Sin mesa"
               value={resumen ? String(resumen.sinMesa) : "—"}
-              hint="Invitaciones pendientes"
+              hint="Confirmadas sin ubicar"
             />
           </div>
 
@@ -246,11 +245,10 @@ function AdminMesasContent() {
             </span>
             <span className="flex items-center gap-1.5">
               <span className="inline-block h-3 w-3 shrink-0 rounded-full ring-1 ring-black/15" style={{ backgroundColor: SEAT_OCUPADA }} />
-              Confirmado
+              Ocupada
             </span>
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block h-3 w-3 shrink-0 rounded-full ring-1 ring-black/15" style={{ backgroundColor: SEAT_PENDIENTE }} />
-              Pendiente
+            <span className="max-w-md text-[10px] leading-snug opacity-90">
+              Solo invitaciones con asistencia confirmada se muestran como ocupadas.
             </span>
           </div>
 
@@ -280,11 +278,7 @@ function AdminMesasContent() {
                       const x = cx + Math.cos(angle) * radius - size;
                       const y = cy + Math.sin(angle) * radius - size;
                       const guest = getGuestById(seat.guestId);
-                      const bg = !guest
-                        ? SEAT_LIBRE
-                        : guest.asistencia === "confirmado"
-                          ? SEAT_OCUPADA
-                          : SEAT_PENDIENTE;
+                      const bg = guest ? SEAT_OCUPADA : SEAT_LIBRE;
                       return (
                         <div key={seat.index} className="group absolute" style={{ left: x, top: y }}>
                           <span
@@ -302,9 +296,6 @@ function AdminMesasContent() {
                               )}
                               <p className="mt-0.5 whitespace-nowrap text-[#a7f3d0]">
                                 {guest.grupo} · {guest.rangoEtario}
-                              </p>
-                              <p className="mt-0.5 whitespace-nowrap text-[#fde68a]">
-                                {guest.asistencia === "confirmado" ? "Confirmado" : guest.asistencia === "pendiente" ? "Pendiente" : guest.asistencia}
                               </p>
                               {guest.restriccion && guest.restriccion !== "ninguna" && (
                                 <p className="mt-0.5 whitespace-nowrap text-[#fbbf24]">

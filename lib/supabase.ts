@@ -89,24 +89,49 @@ export const supabase = createBrowserClient<Database>(supabaseUrl, supabaseAnonK
   },
 });
 
-export async function logout() {
-  // Llamamos al endpoint server para invalidar la sesión y borrar las cookies
-  // desde el servidor (más confiable que sólo limpiar `document.cookie`).
+/** Tiempo máximo de espera a red / servidor en logout (evita botón “muerto”). */
+const LOGOUT_NETWORK_CAP_MS = 4000;
+
+/**
+ * POST `/api/auth/logout` con tope de tiempo. Usada también desde
+ * `SessionWatchdog` para no duplicar la lógica de abort.
+ */
+export async function requestServerLogout(maxMs: number = LOGOUT_NETWORK_CAP_MS): Promise<void> {
+  if (typeof window === "undefined") return;
+  const ctrl = new AbortController();
+  const tid = setTimeout(() => ctrl.abort(), maxMs);
   try {
     await fetch("/api/auth/logout", {
       method: "POST",
       credentials: "include",
       cache: "no-store",
+      signal: ctrl.signal,
     });
   } catch {
-    /* ignoramos: igual seguimos abajo con el signOut local */
+    /* timeout, red u error: seguimos con signOut + limpieza local */
+  } finally {
+    clearTimeout(tid);
   }
+}
+
+export async function signOutLocalCapped(maxMs: number = LOGOUT_NETWORK_CAP_MS): Promise<void> {
   try {
-    await supabase.auth.signOut();
+    await Promise.race([
+      supabase.auth.signOut(),
+      new Promise<void>((resolve) => setTimeout(resolve, maxMs)),
+    ]);
   } catch {
-    /* idem */
+    /* */
   }
-  // Limpieza defensiva en el cliente.
+}
+
+export async function logout() {
+  /* En paralelo: no encadenar fetch y signOut (si uno cuelga, el otro igual avanza). */
+  await Promise.all([
+    requestServerLogout(LOGOUT_NETWORK_CAP_MS),
+    signOutLocalCapped(LOGOUT_NETWORK_CAP_MS),
+  ]);
+
   if (typeof document !== "undefined") {
     document.cookie.split(";").forEach((c) => {
       const name = c.split("=")[0].trim();
@@ -121,6 +146,6 @@ export async function logout() {
     } catch {
       /* ignore */
     }
-    window.location.href = "/";
+    window.location.replace("/");
   }
 }
