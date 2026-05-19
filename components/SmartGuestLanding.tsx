@@ -1,9 +1,9 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 const NEON = "#00FF88";
 const BG_TOP = "#050A1A";
@@ -253,17 +253,36 @@ function LogoMark({ className = "" }: { className?: string }) {
   );
 }
 
+const LOGO_LAYOUT_SPRING = {
+  type: "spring" as const,
+  stiffness: 320,
+  damping: 34,
+  mass: 0.72,
+};
+
 export default function SmartGuestLanding() {
   const reduce = useReducedMotion();
+  const splashFinishedRef = useRef(false);
+  const [introDone, setIntroDone] = useState(() => !!reduce);
+  const showSplash = !reduce && !introDone;
 
   const galleryItems: GallerySlot[] =
     LANDING_GALLERY.length > 0 ? LANDING_GALLERY : PLACEHOLDER_SLOTS;
 
+  const pageBg = `linear-gradient(165deg, ${BG_TOP} 0%, #080d1f 40%, ${BG_BOT} 100%)`;
+
+  const handleSplashScaleComplete = () => {
+    if (splashFinishedRef.current) return;
+    splashFinishedRef.current = true;
+    setIntroDone(true);
+  };
+
   return (
+    <LayoutGroup id="landing-intro">
     <div
       className="relative min-h-dvh overflow-x-hidden text-white"
       style={{
-        background: `linear-gradient(165deg, ${BG_TOP} 0%, #080d1f 40%, ${BG_BOT} 100%)`,
+        background: pageBg,
       }}
     >
       <div
@@ -289,17 +308,43 @@ export default function SmartGuestLanding() {
         style={{ background: `radial-gradient(circle, #3b82f618 0%, transparent 60%)` }}
       />
 
+      <motion.div
+        className="relative z-10 flex min-h-dvh flex-col"
+        initial={false}
+        animate={{
+          opacity: introDone ? 1 : 0,
+          filter: reduce ? "blur(0px)" : introDone ? "blur(0px)" : "blur(8px)",
+        }}
+        transition={{
+          duration: introDone ? 0.58 : 0.22,
+          ease: [0.33, 1, 0.68, 1],
+          delay: introDone ? 0.06 : 0,
+        }}
+        style={{ pointerEvents: introDone ? "auto" : "none" }}
+      >
       <header className="relative z-20 px-4 pb-2 pt-8 sm:px-8">
         <div className="mx-auto flex max-w-7xl justify-center">
-          <LogoMark />
+          {introDone ? (
+            <motion.div layoutId="sg-landing-wordmark" transition={{ layout: LOGO_LAYOUT_SPRING }}>
+              <LogoMark />
+            </motion.div>
+          ) : (
+            <span className="pointer-events-none inline-flex select-none opacity-0" aria-hidden>
+              <LogoMark />
+            </span>
+          )}
         </div>
       </header>
 
       <main className="relative z-10 mx-auto max-w-7xl px-4 pb-16 pt-4 sm:px-8 lg:px-12">
         <motion.div
-          initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          initial={reduce ? false : { opacity: 0, y: 16 }}
+          animate={introDone ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
+          transition={{
+            duration: 0.5,
+            ease: [0.33, 1, 0.68, 1],
+            delay: introDone ? 0.22 : 0,
+          }}
           className="text-center"
         >
           <h1
@@ -400,6 +445,42 @@ export default function SmartGuestLanding() {
       <footer className="relative z-10 border-t border-white/10 py-6 text-center text-[11px] text-white/35">
         SmartGuest · {new Date().getFullYear()}
       </footer>
+      </motion.div>
+
+      <AnimatePresence initial={false}>
+        {showSplash ? (
+          <motion.div
+            key="landing-splash-bg"
+            aria-hidden
+            className="fixed inset-0 z-[90]"
+            style={{ background: pageBg }}
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.42, ease: [0.33, 1, 0.68, 1] }}
+          />
+        ) : null}
+      </AnimatePresence>
+
+      {showSplash ? (
+        <div
+          className="pointer-events-none fixed inset-0 z-[100] flex items-center justify-center"
+          aria-hidden
+        >
+          <motion.div
+            layoutId="sg-landing-wordmark"
+            initial={{ scale: reduce ? 1 : 2.38 }}
+            animate={{ scale: 1 }}
+            transition={{
+              layout: LOGO_LAYOUT_SPRING,
+              scale: { duration: reduce ? 0 : 1.02, ease: [0.16, 1, 0.3, 1] },
+            }}
+            onAnimationComplete={handleSplashScaleComplete}
+          >
+            <LogoMark />
+          </motion.div>
+        </div>
+      ) : null}
     </div>
+    </LayoutGroup>
   );
 }

@@ -3,8 +3,6 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { usePathname } from "next/navigation";
 
-const ease = [0.22, 1, 0.36, 1] as const;
-
 type PageTransitionProps = {
   children: React.ReactNode;
   /** Extra classes on the animated wrapper (e.g. flex grow) */
@@ -12,8 +10,7 @@ type PageTransitionProps = {
 };
 
 /**
- * Cross-fade + ligero desplazamiento vertical al cambiar de ruta (misma zona de layout).
- * Usar `initial={false}` en presencia para no animar el primer paint.
+ * Transición suave entre rutas: solo opacidad + blur muy leve (sin translate para evitar “saltos”).
  */
 export function PageTransition({ children, className }: PageTransitionProps) {
   const pathname = usePathname() ?? "";
@@ -28,10 +25,10 @@ export function PageTransition({ children, className }: PageTransitionProps) {
       <motion.div
         key={pathname}
         className={className}
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -8 }}
-        transition={{ duration: 0.26, ease }}
+        initial={{ opacity: 0, filter: "blur(6px)" }}
+        animate={{ opacity: 1, filter: "blur(0px)" }}
+        exit={{ opacity: 0, filter: "blur(4px)" }}
+        transition={{ duration: 0.42, ease: [0.33, 1, 0.68, 1] }}
       >
         {children}
       </motion.div>
@@ -40,12 +37,15 @@ export function PageTransition({ children, className }: PageTransitionProps) {
 }
 
 /**
- * Layout raíz: anima transiciones entre páginas “sueltas”.
- * `/admin` y `/anfitrion` lo omiten porque llevan su propia transición en el panel principal.
+ * `/` lleva intro propia en la landing; `/admin` y `/anfitrion` animan solo el panel.
  */
 export function RootPageTransition({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "";
-  if (pathname.startsWith("/admin") || pathname.startsWith("/anfitrion")) {
+  if (
+    pathname === "/" ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/anfitrion")
+  ) {
     return <>{children}</>;
   }
   return (
