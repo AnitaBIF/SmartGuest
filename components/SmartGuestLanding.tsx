@@ -8,8 +8,12 @@ const NEON = "#00FF88";
 const BG_TOP = "#050A1A";
 const BG_BOT = "#101525";
 
+/** Glass + borde más definido, look “tech” */
 const glass =
-  "rounded-2xl border border-white/[0.14] bg-white/[0.06] shadow-[0_8px_40px_-12px_rgba(0,0,0,0.65)] backdrop-blur-[14px]";
+  "rounded-2xl border border-white/[0.18] bg-gradient-to-br from-white/[0.1] to-white/[0.03] shadow-[0_8px_40px_-12px_rgba(0,0,0,0.7)] backdrop-blur-[16px]";
+
+const glassStrong =
+  "rounded-[1.35rem] border border-[#00FF88]/25 bg-gradient-to-b from-white/[0.09] to-white/[0.02] shadow-[0_0_40px_-8px_rgba(0,255,136,0.2)] backdrop-blur-[18px]";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -29,37 +33,91 @@ const itemVariants = {
 };
 
 const bentoHover = {
-  y: -4,
-  boxShadow: `0 0 0 1px ${NEON}, 0 16px 40px -12px rgba(0,255,136,0.2)`,
+  y: -5,
+  boxShadow: `0 0 0 1px ${NEON}, 0 20px 48px -12px rgba(0,255,136,0.28)`,
   transition: { type: "spring" as const, stiffness: 400, damping: 24 },
 };
 
 type GallerySlot = { src: string; alt: string } | { placeholder: true };
 
 /**
- * Agregá archivos en `public/landing/` y referenciálos acá, por ejemplo:
- * `{ src: "/landing/captura-1.png", alt: "Panel invitado" }`
+ * Capturas en `public/landing/`. Si agregás archivos nuevos, actualizá esta lista.
+ * Los nombres deben coincidir exactamente con los archivos (incl. mayúsculas).
  */
-const LANDING_GALLERY: { src: string; alt: string }[] = [];
-
-const PLACEHOLDER_SLOTS: GallerySlot[] = [
-  { placeholder: true },
-  { placeholder: true },
-  { placeholder: true },
+const LANDING_GALLERY: { src: string; alt: string }[] = [
+  { src: "/landing/Invitado1imagen.png", alt: "Vista invitado — datos del evento" },
+  { src: "/landing/SmartPool2.png", alt: "SmartPool — viajes compartidos" },
+  {
+    src: `/landing/${encodeURIComponent("QR Dinamico3.png")}`,
+    alt: "QR dinámico de ingreso",
+  },
 ];
+
+const PLACEHOLDER_SLOTS: GallerySlot[] = [{ placeholder: true }, { placeholder: true }, { placeholder: true }];
+
+function IconUsers({ className = "h-7 w-7" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M16 11a3 3 0 100-6 3 3 0 000 6zM8 13a3 3 0 100-6 3 3 0 000 6z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+      <path
+        d="M4 20v-1a4 4 0 014-4h2M20 20v-1a3 3 0 00-3-3h-2"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function IconHub({ className = "h-7 w-7" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.6" />
+      <path
+        d="M12 5v2M12 17v2M5 12h2M17 12h2M7.05 7.05l1.42 1.42M15.54 15.54l1.4 1.4M7.05 16.95l1.42-1.42M15.54 8.46l1.4-1.4"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function IconOrbit({ className = "h-7 w-7" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M12 2l1.8 5.5h5.8l-4.7 3.4 1.8 5.5L12 15.5 7.3 16.4l1.8-5.5L4.4 7.5h5.8L12 2z"
+        stroke="currentColor"
+        strokeWidth="1.35"
+        strokeLinejoin="round"
+        className="text-[#00FF88]"
+      />
+      <circle cx="12" cy="12" r="2.5" fill="currentColor" className="text-white/90" />
+    </svg>
+  );
+}
 
 const BENTO_ITEMS = [
   {
     title: "Gestión inteligente de invitados, simplificada.",
     accent: "01",
+    Icon: IconUsers,
   },
   {
     title: "Para anfitriones, invitados y el equipo del salón.",
     accent: "02",
+    Icon: IconHub,
   },
   {
     title: "Plataforma intuitiva, eficiente y sustentable.",
     accent: "03",
+    Icon: IconOrbit,
   },
 ];
 
@@ -84,22 +142,32 @@ export default function SmartGuestLanding() {
     <div
       className="relative min-h-dvh overflow-x-hidden text-white"
       style={{
-        background: `linear-gradient(165deg, ${BG_TOP} 0%, #0a1022 38%, ${BG_BOT} 100%)`,
+        background: `linear-gradient(165deg, ${BG_TOP} 0%, #080d1f 40%, ${BG_BOT} 100%)`,
       }}
     >
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.07]"
+        className="pointer-events-none absolute inset-0 opacity-[0.08]"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
         }}
       />
+      {/* Grid futurista muy sutil */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.04]"
+        style={{
+          backgroundImage: `linear-gradient(${NEON} 1px, transparent 1px), linear-gradient(90deg, ${NEON} 1px, transparent 1px)`,
+          backgroundSize: "48px 48px",
+        }}
+      />
       <div
         className="pointer-events-none absolute -left-40 top-20 h-96 w-96 rounded-full blur-3xl"
-        style={{ background: `radial-gradient(circle, ${NEON}22 0%, transparent 65%)` }}
+        style={{ background: `radial-gradient(circle, ${NEON}28 0%, transparent 65%)` }}
       />
-      <div className="pointer-events-none absolute -right-32 bottom-40 h-80 w-80 rounded-full bg-[#1a2a4a]/80 blur-3xl" />
+      <div
+        className="pointer-events-none absolute -right-32 bottom-40 h-80 w-80 rounded-full blur-3xl"
+        style={{ background: `radial-gradient(circle, #3b82f618 0%, transparent 60%)` }}
+      />
 
-      {/* Header: móvil = logo y debajo los 2 botones; sm+ = botón | logo | botón */}
       <header className="relative z-20 px-4 py-5 sm:px-8">
         <div className="mx-auto flex max-w-5xl flex-col items-center gap-5 sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:gap-3">
           <div className="hidden justify-self-start sm:flex">
@@ -138,7 +206,7 @@ export default function SmartGuestLanding() {
         </div>
       </header>
 
-      <main className="relative z-10 mx-auto max-w-4xl px-5 pb-16 pt-6 sm:px-10">
+      <main className="relative z-10 mx-auto max-w-5xl px-5 pb-16 pt-6 sm:px-10">
         <motion.div
           initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -146,73 +214,124 @@ export default function SmartGuestLanding() {
           className="text-center"
         >
           <h1
-            className="mx-auto max-w-3xl text-balance text-2xl font-bold leading-tight tracking-tight text-white sm:text-4xl md:text-[2.35rem] md:leading-[1.15]"
+            className="mx-auto max-w-3xl text-balance text-2xl font-bold leading-tight tracking-tight text-white drop-shadow-[0_0_40px_rgba(255,255,255,0.12)] sm:text-4xl md:text-[2.45rem] md:leading-[1.12]"
             style={{ fontFamily: "var(--font-poppins), system-ui" }}
           >
             Transformando la logística de tus eventos
           </h1>
         </motion.div>
 
-        {/* Bento: 3 bloques */}
         <motion.div
-          className="mx-auto mt-12 grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-3"
+          className="mx-auto mt-12 grid max-w-5xl grid-cols-1 gap-5 sm:grid-cols-3 sm:gap-4"
           variants={containerVariants}
           initial="hidden"
           whileInView="show"
-          viewport={{ once: true, amount: 0.2 }}
+          viewport={{ once: true, amount: 0.15 }}
         >
-          {BENTO_ITEMS.map((item, i) => (
-            <motion.div
-              key={item.accent}
-              variants={itemVariants}
-              className={`${glass} flex min-h-[140px] flex-col justify-between p-5 sm:min-h-[160px]`}
-              whileHover={reduce ? undefined : bentoHover}
-            >
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#00FF88]/85">{item.accent}</span>
-              <p className="text-left text-[15px] font-medium leading-snug text-white/90 sm:text-[14px]">{item.title}</p>
-            </motion.div>
-          ))}
+          {BENTO_ITEMS.map((item) => {
+            const Icon = item.Icon;
+            return (
+              <motion.div
+                key={item.accent}
+                variants={itemVariants}
+                className={`${glass} group relative flex min-h-[168px] flex-col gap-4 overflow-hidden p-6 sm:min-h-[188px]`}
+                whileHover={reduce ? undefined : bentoHover}
+              >
+                <div
+                  className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full opacity-30 blur-2xl transition-opacity group-hover:opacity-50"
+                  style={{ background: NEON }}
+                />
+                <div className="flex items-start justify-between gap-3">
+                  <div
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[#00FF88]/35 bg-[#00FF88]/10 text-[#00FF88] shadow-[0_0_24px_rgba(0,255,136,0.18)]"
+                    aria-hidden
+                  >
+                    <Icon className="h-7 w-7" />
+                  </div>
+                  <span className="text-[11px] font-bold tabular-nums tracking-[0.22em] text-[#00FF88]/90">
+                    {item.accent}
+                  </span>
+                </div>
+                <p className="relative text-left text-[17px] font-medium leading-snug tracking-tight text-white sm:text-lg">
+                  {item.title}
+                </p>
+              </motion.div>
+            );
+          })}
         </motion.div>
 
-        {/* Galería móvil horizontal */}
         <motion.div
           initial={reduce ? { opacity: 1 } : { opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.45 }}
-          className="mt-14"
+          className="mt-16"
         >
-          <p className="mb-4 text-center text-[11px] font-semibold uppercase tracking-[0.25em] text-white/40">
-            La app en acción
-          </p>
-          <div className="flex gap-4 overflow-x-auto overflow-y-hidden pb-4 pt-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="mb-5 flex flex-col items-center gap-2">
+            <span
+              className="h-px w-12 bg-gradient-to-r from-transparent via-[#00FF88] to-transparent opacity-80"
+              aria-hidden
+            />
+            <p className="text-center text-[11px] font-semibold uppercase tracking-[0.32em] text-[#00FF88]/80">
+              La app en acción
+            </p>
+            <span
+              className="h-px w-12 bg-gradient-to-r from-transparent via-[#00FF88] to-transparent opacity-80"
+              aria-hidden
+            />
+          </div>
+          <div className="flex gap-5 overflow-x-auto overflow-y-hidden px-1 pb-6 pt-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:justify-center sm:overflow-visible">
             {galleryItems.map((item, idx) => (
-              <div
+              <motion.div
                 key={idx}
-                className={`relative w-[200px] flex-shrink-0 sm:w-[234px] ${glass} p-2`}
+                className={`relative flex-shrink-0 ${glassStrong} p-2.5 sm:w-[248px]`}
+                initial={reduce ? undefined : { opacity: 0, scale: 0.94 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.08, type: "spring", stiffness: 260, damping: 26 }}
+                whileHover={reduce ? undefined : { scale: 1.02, transition: { duration: 0.2 } }}
               >
-                <div className="relative mx-auto aspect-[9/19] w-full overflow-hidden rounded-xl bg-black/40 ring-1 ring-white/10">
+                {/* “Notch” / marco móvil */}
+                <div className="relative overflow-hidden rounded-[1.25rem] bg-[#0b1020] ring-1 ring-white/10">
+                  <div className="absolute left-1/2 top-1.5 z-10 h-1 w-10 -translate-x-1/2 rounded-full bg-black/60 ring-1 ring-white/10" />
                   {"placeholder" in item ? (
-                    <div className="flex aspect-[9/19] w-full flex-col items-center justify-center gap-3 px-3 text-center">
+                    <div className="flex aspect-[9/19] w-full flex-col items-center justify-center gap-3 px-4 text-center">
                       <span className="text-2xl opacity-35" aria-hidden>
                         📱
                       </span>
-                      <p className="text-[10px] leading-relaxed text-white/40">
-                        Próximamente: sumá tus capturas en{" "}
-                        <code className="break-all rounded bg-white/10 px-1 text-[#00FF88]/80">LANDING_GALLERY</code>
+                      <p className="text-[11px] leading-relaxed text-white/45">
+                        Guardá imágenes en <span className="text-[#00FF88]/90">public/landing/</span> y listalas en{" "}
+                        <code className="rounded bg-white/10 px-1 text-[10px]">LANDING_GALLERY</code>
                       </p>
                     </div>
                   ) : (
-                    <Image
-                      src={item.src}
-                      alt={item.alt}
-                      fill
-                      className="object-cover object-top"
-                      sizes="(max-width:640px) 200px, 234px"
-                    />
+                    <div className="relative aspect-[9/19] w-full">
+                      <Image
+                        src={item.src}
+                        alt={item.alt}
+                        fill
+                        className="object-cover object-top"
+                        sizes="(max-width:640px) 72vw, 248px"
+                        priority={idx === 0}
+                      />
+                      {/* Viñeta + scan line sutil */}
+                      <div
+                        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#050A1A]/50 via-transparent to-transparent"
+                        aria-hidden
+                      />
+                      {!reduce ? (
+                        <div
+                          className="pointer-events-none absolute inset-0 opacity-[0.06]"
+                          style={{
+                            background:
+                              "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,136,0.15) 2px, rgba(0,255,136,0.15) 4px)",
+                          }}
+                        />
+                      ) : null}
+                    </div>
                   )}
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </motion.div>
