@@ -181,12 +181,16 @@ export default function LoginScreen({ signOutOnMount = false }: LoginScreenProps
   return (
     <div className="flex min-h-[100dvh] flex-col text-foreground">
       <header className="flex justify-end px-5 pt-6 sm:px-10 sm:pt-8">
-        <span className="text-2xl font-extrabold tracking-tight text-brand sm:text-3xl">
+        <Link
+          href="/"
+          className="rounded text-2xl font-extrabold tracking-tight text-brand transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)] sm:text-3xl"
+          aria-label="Ir a la página principal de SmartGuest"
+        >
           SMART
           <span className="ml-1 font-normal text-brand" style={{ fontFamily: "var(--font-poppins)" }}>
             GUEST
           </span>
-        </span>
+        </Link>
       </header>
 
       <main className="flex flex-1 flex-col items-center justify-center px-4 py-10 sm:py-16">
