@@ -16,6 +16,10 @@ const glass =
 const glassStrong =
   "rounded-[1.35rem] border border-[#00FF88]/25 bg-gradient-to-b from-white/[0.09] to-white/[0.02] shadow-[0_0_40px_-8px_rgba(0,255,136,0.2)] backdrop-blur-[18px]";
 
+/** Carrusel: glass sin borde neón fuerte para evitar “líneas” duras entre slides. */
+const galleryCard =
+  "rounded-[1.35rem] border border-white/12 bg-gradient-to-b from-white/[0.08] to-white/[0.02] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.55)] backdrop-blur-[18px]";
+
 const containerVariants = {
   hidden: { opacity: 0 },
   show: {
@@ -131,9 +135,9 @@ const BENTO_ITEMS = [
 ];
 
 const SLIDE_WIDTH_CLASS =
-  "w-[min(94vw,400px)] sm:w-[min(90vw,440px)] md:w-[460px] lg:w-[500px]";
+  "w-[min(82vw,240px)] sm:w-[260px] md:w-[280px]";
 
-/** Carrusel horizontal: tarjetas anchas, autoplay, flechas y puntos. */
+/** Carrusel compacto: autoplay continuo, una slide protagonista, snap al centro. */
 function LandingGalleryCarousel({
   items,
   reduced,
@@ -143,7 +147,6 @@ function LandingGalleryCarousel({
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
-  const [paused, setPaused] = useState(false);
   const n = items.length;
 
   const centerSlide = useCallback(
@@ -166,12 +169,12 @@ function LandingGalleryCarousel({
   }, [active, centerSlide]);
 
   useEffect(() => {
-    if (n <= 1 || reduced || paused) return;
+    if (n <= 1 || reduced) return;
     const id = window.setInterval(() => {
       setActive((a) => (a + 1) % n);
-    }, 5200);
+    }, 4000);
     return () => window.clearInterval(id);
-  }, [n, reduced, paused]);
+  }, [n, reduced]);
 
   const go = (dir: -1 | 1) => {
     setActive((a) => (a + dir + n) % n);
@@ -181,9 +184,7 @@ function LandingGalleryCarousel({
 
   return (
     <div
-      className="relative mx-auto w-full max-w-[min(100%,1180px)]"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
+      className="relative mx-auto w-full max-w-[min(100vw,340px)] sm:max-w-[360px]"
       role="region"
       aria-roledescription="carrusel"
       aria-label="Capturas de la aplicación SmartGuest"
@@ -194,7 +195,7 @@ function LandingGalleryCarousel({
       <button
         type="button"
         onClick={() => go(-1)}
-        className="absolute left-1 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white/90 backdrop-blur-md transition hover:border-[#00FF88]/50 hover:bg-white/15 sm:left-2 md:left-0 md:h-11 md:w-11"
+        className="absolute left-0 top-1/2 z-20 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/12 bg-black/40 text-white/85 backdrop-blur-sm transition hover:border-[#00FF88]/40 hover:bg-black/55 sm:h-10 sm:w-10"
         aria-label="Imagen anterior"
       >
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -204,7 +205,7 @@ function LandingGalleryCarousel({
       <button
         type="button"
         onClick={() => go(1)}
-        className="absolute right-1 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white/90 backdrop-blur-md transition hover:border-[#00FF88]/50 hover:bg-white/15 sm:right-2 md:right-0 md:h-11 md:w-11"
+        className="absolute right-0 top-1/2 z-20 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/12 bg-black/40 text-white/85 backdrop-blur-sm transition hover:border-[#00FF88]/40 hover:bg-black/55 sm:h-10 sm:w-10"
         aria-label="Imagen siguiente"
       >
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -215,16 +216,16 @@ function LandingGalleryCarousel({
       <div
         ref={scrollerRef}
         className={
-          "flex scroll-snap-x snap-mandatory gap-6 overflow-x-auto overflow-y-hidden scroll-smooth pb-2 pt-1 " +
+          "flex scroll-snap-x snap-mandatory gap-4 overflow-x-auto overflow-y-hidden scroll-smooth pb-2 pt-1 " +
+          "[scroll-padding-inline:max(1rem,calc(50%-min(41vw,120px)))] sm:[scroll-padding-inline:max(1rem,calc(50%-130px))] md:[scroll-padding-inline:max(1rem,calc(50%-140px))] " +
           "[scrollbar-width:thin] [scrollbar-color:rgba(0,255,136,0.35)_transparent] hover:[scrollbar-color:rgba(0,255,136,0.55)_transparent] " +
           "[&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#00FF88]/40"
         }
-        style={{ scrollPaddingInline: "max(1rem, calc(50% - min(47vw, 250px)))" }}
       >
         {items.map((item, idx) => (
           <div
             key={idx}
-            className={`${glassStrong} shrink-0 snap-center scroll-ml-4 p-3 first:ml-[max(1rem,calc(50%-min(47vw,250px)))] last:mr-[max(1rem,calc(50%-min(47vw,250px)))] sm:p-3.5 md:first:ml-[max(1rem,calc(50%-230px))] md:last:mr-[max(1rem,calc(50%-230px))] ${SLIDE_WIDTH_CLASS}`}
+            className={`${galleryCard} shrink-0 snap-center scroll-ml-4 p-2 first:ml-[max(1rem,calc(50%-min(41vw,120px)))] last:mr-[max(1rem,calc(50%-min(41vw,120px)))] sm:p-2.5 sm:first:ml-[max(1rem,calc(50%-130px))] sm:last:mr-[max(1rem,calc(50%-130px))] md:first:ml-[max(1rem,calc(50%-140px))] md:last:mr-[max(1rem,calc(50%-140px))] ${SLIDE_WIDTH_CLASS}`}
           >
             <div className="relative overflow-hidden rounded-[1.25rem] bg-[#0b1020] ring-1 ring-white/10">
               <div className="absolute left-1/2 top-2 z-10 h-1 w-12 -translate-x-1/2 rounded-full bg-black/50 ring-1 ring-white/10" />
@@ -239,13 +240,13 @@ function LandingGalleryCarousel({
                   </p>
                 </div>
               ) : (
-                <div className="relative aspect-[9/16] w-full min-h-[min(78dvh,520px)] sm:min-h-[500px] md:min-h-[520px]">
+                <div className="relative aspect-[9/16] w-full">
                   <Image
                     src={item.src}
                     alt={item.alt}
                     fill
                     className="object-contain object-center"
-                    sizes="(max-width:640px) 94vw, (max-width:1024px) 440px, 500px"
+                    sizes="(max-width:640px) 82vw, 280px"
                     priority={idx === 0}
                   />
                   <div
