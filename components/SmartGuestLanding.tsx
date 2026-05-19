@@ -149,8 +149,8 @@ function LandingGalleryStrip({
     >
       <div
         className={
-          "flex min-h-[min(48vh,340px)] items-center justify-start gap-3 overflow-x-auto overflow-y-visible py-4 [scrollbar-width:thin] " +
-          "[scrollbar-color:rgba(0,255,136,0.3)_transparent] sm:justify-center sm:gap-4 sm:overflow-x-visible md:min-h-[380px] md:gap-5 " +
+          "flex items-center justify-start gap-3 overflow-x-auto overflow-y-visible py-6 [scrollbar-width:thin] " +
+          "[scrollbar-color:rgba(0,255,136,0.3)_transparent] sm:justify-center sm:gap-4 sm:overflow-x-visible md:gap-5 " +
           "[&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#00FF88]/35"
         }
         style={reduced ? undefined : { perspective: "1100px" }}
@@ -183,7 +183,7 @@ function LandingGalleryStrip({
                 }
               >
                 {"placeholder" in item ? (
-                  <div className="flex aspect-[9/16] w-full flex-col items-center justify-center gap-2 px-3 text-center">
+                  <div className="flex min-h-[220px] w-full flex-col items-center justify-center gap-2 px-3 py-8 text-center">
                     <span className="text-2xl opacity-35" aria-hidden>
                       📱
                     </span>
@@ -193,17 +193,19 @@ function LandingGalleryStrip({
                     </p>
                   </div>
                 ) : (
-                  <div className="relative aspect-[9/16] w-full">
+                  <div className="relative w-full leading-none">
                     <Image
                       src={item.src}
                       alt={item.alt}
-                      fill
-                      className="object-contain object-center"
+                      width={900}
+                      height={1200}
                       sizes="(max-width:640px) 38vw, 176px"
+                      className="block h-auto w-full max-w-none align-top"
+                      style={{ height: "auto", width: "100%" }}
                       priority={i === 0}
                     />
                     <div
-                      className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#050A1A]/20 via-transparent to-transparent"
+                      className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-[#050A1A]/25 to-transparent"
                       aria-hidden
                     />
                   </div>
