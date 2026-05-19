@@ -4,6 +4,7 @@ import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-m
 import Image from "next/image";
 import Link from "next/link";
 import { useRef, useState } from "react";
+import { useNarrowScreen } from "@/lib/useNarrowScreen";
 
 const NEON = "#00FF88";
 const BG_TOP = "#050A1A";
@@ -130,46 +131,52 @@ const BENTO_ITEMS = [
   },
 ];
 
-/** Fila estática de capturas: sin marco de teléfono, una al lado de la otra; leve arco 3D (se desactiva con “reducir movimiento”). */
+/** Fila de capturas: en viewport angosto va plana (sin 3D) para que no se vea “rota” en celular. */
 function LandingGalleryStrip({
   items,
   reduced,
+  narrow,
 }: {
   items: GallerySlot[];
   reduced: boolean;
+  narrow: boolean;
 }) {
   const n = items.length;
   const [hovered, setHovered] = useState<number | null>(null);
   if (n === 0) return null;
 
+  const flat = reduced || narrow;
   const mid = (n - 1) / 2;
 
   return (
     <div
-      className="relative mx-auto w-full max-w-[min(100%,90rem)] px-2 sm:px-4"
+      className={
+        "relative mx-auto w-full max-w-[min(100%,90rem)] px-[max(0.75rem,env(safe-area-inset-left))] sm:px-4 " +
+        "pr-[max(0.75rem,env(safe-area-inset-right))]"
+      }
       aria-label="Capturas de la aplicación SmartGuest"
     >
       <div
         className={
-          "flex items-center justify-start gap-3 overflow-x-auto overflow-y-visible py-6 [scrollbar-width:thin] " +
-          "[scrollbar-color:rgba(0,255,136,0.3)_transparent] sm:justify-center sm:gap-5 sm:overflow-x-visible md:gap-6 " +
-          "[&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#00FF88]/35"
+          "flex items-center justify-start gap-2.5 overflow-x-auto overflow-y-visible py-5 [scrollbar-width:thin] sm:gap-5 sm:justify-center sm:overflow-x-visible sm:py-6 md:gap-6 " +
+          "[scrollbar-color:rgba(0,255,136,0.3)_transparent] [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#00FF88]/35 " +
+          (narrow ? "snap-x snap-mandatory scroll-pl-3 scroll-pr-3 [-webkit-overflow-scrolling:touch]" : "")
         }
-        style={reduced ? undefined : { perspective: "1100px" }}
+        style={flat ? undefined : { perspective: "1100px" }}
       >
         {items.map((item, i) => {
           const offset = i - mid;
           const abs = Math.abs(offset);
-          const transform = reduced
+          const transform = flat
             ? undefined
-            : `rotateY(${offset * -15}deg) scale(${1 - abs * 0.06}) translateZ(${-abs * 14}px)`;
+            : `rotateY(${offset * -10}deg) scale(${1 - abs * 0.04}) translateZ(${-abs * 10}px)`;
 
           return (
             <div
               key={i}
-              className="relative shrink-0"
+              className={"relative shrink-0 " + (narrow ? "snap-center" : "")}
               style={
-                reduced
+                flat
                   ? { zIndex: 5 }
                   : {
                       transform,
@@ -183,29 +190,29 @@ function LandingGalleryStrip({
               <div
                 className={
                   "group relative " +
-                  (reduced
-                    ? ""
-                    : "transition duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform hover:-translate-y-4 hover:scale-[1.04]")
+                  (!flat
+                    ? "transition duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform [@media(hover:hover)]:hover:-translate-y-3 [@media(hover:hover)]:hover:scale-[1.03]"
+                    : "")
                 }
               >
-                {!reduced ? (
+                {!flat ? (
                   <div
-                    className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[88%] w-[92%] -translate-x-1/2 -translate-y-1/2 rounded-[2rem] bg-white/30 opacity-0 blur-2xl transition duration-300 ease-out group-hover:opacity-100 sm:blur-3xl"
+                    className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[88%] w-[92%] -translate-x-1/2 -translate-y-1/2 rounded-[2rem] bg-white/30 opacity-0 blur-2xl transition duration-300 ease-out [@media(hover:hover)]:group-hover:opacity-100 sm:blur-3xl"
                     aria-hidden
                   />
                 ) : null}
                 <div
                   className={
-                    "relative z-[1] w-[min(72vw,18rem)] overflow-hidden rounded-2xl border border-white/12 " +
-                    "bg-[#0b1020] shadow-[0_20px_48px_-16px_rgba(0,0,0,0.65)] ring-1 ring-white/[0.05] sm:w-56 md:w-64 lg:w-72 " +
-                    (reduced
-                      ? ""
-                      : "transition duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:border-white/25 " +
-                        "group-hover:shadow-[0_28px_60px_-18px_rgba(0,0,0,0.55),0_0_45px_-6px_rgba(255,255,255,0.4)] group-hover:ring-white/25")
+                    "relative z-[1] w-[min(68vw,14.5rem)] overflow-hidden rounded-2xl border border-white/12 sm:w-56 " +
+                    "bg-[#0b1020] shadow-[0_20px_48px_-16px_rgba(0,0,0,0.65)] ring-1 ring-white/[0.05] md:w-64 lg:w-72 " +
+                    (!flat
+                      ? "transition duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] [@media(hover:hover)]:group-hover:border-white/25 " +
+                        "[@media(hover:hover)]:group-hover:shadow-[0_28px_60px_-18px_rgba(0,0,0,0.55),0_0_45px_-6px_rgba(255,255,255,0.4)] [@media(hover:hover)]:group-hover:ring-white/25"
+                      : "")
                   }
                 >
                 {"placeholder" in item ? (
-                  <div className="flex min-h-[220px] w-full flex-col items-center justify-center gap-2 px-3 py-8 text-center">
+                  <div className="flex min-h-[180px] w-full flex-col items-center justify-center gap-2 px-3 py-6 text-center sm:min-h-[220px] sm:py-8">
                     <span className="text-2xl opacity-35" aria-hidden>
                       📱
                     </span>
@@ -221,7 +228,7 @@ function LandingGalleryStrip({
                       alt={item.alt}
                       width={1200}
                       height={1600}
-                      sizes="(max-width:640px) 72vw, (max-width:1024px) 224px, 288px"
+                      sizes="(max-width:640px) 68vw, (max-width:1024px) 224px, 288px"
                       className="block h-auto w-full max-w-none align-top"
                       style={{ height: "auto", width: "100%" }}
                       priority={i === 0}
@@ -245,7 +252,7 @@ function LandingGalleryStrip({
 function LogoMark({ className = "" }: { className?: string }) {
   return (
     <span
-      className={`block text-center text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl ${className}`}
+      className={`block max-w-[min(100%,22rem)] text-center text-[clamp(1.65rem,6.8vw,2.25rem)] font-extrabold leading-tight tracking-tight sm:max-w-none sm:text-5xl md:text-6xl ${className}`}
       style={{ fontFamily: "var(--font-poppins), system-ui" }}
     >
       SMART<span className="ml-1.5 font-normal text-[#00FF88] md:ml-2">GUEST</span>
@@ -260,11 +267,24 @@ const LOGO_LAYOUT_SPRING = {
   mass: 0.72,
 };
 
+const LOGO_LAYOUT_SPRING_NARROW = {
+  type: "spring" as const,
+  stiffness: 260,
+  damping: 40,
+  mass: 0.78,
+};
+
 export default function SmartGuestLanding() {
   const reduce = useReducedMotion();
+  const narrow = useNarrowScreen();
   const splashFinishedRef = useRef(false);
   const [introDone, setIntroDone] = useState(() => !!reduce);
   const showSplash = !reduce && !introDone;
+
+  const logoSpring = narrow ? LOGO_LAYOUT_SPRING_NARROW : LOGO_LAYOUT_SPRING;
+  const splashScaleFrom = narrow ? 1.76 : 2.18;
+  const splashScaleMs = narrow ? 0.82 : 1.02;
+  const introContentBlur = narrow ? "blur(4px)" : "blur(7px)";
 
   const galleryItems: GallerySlot[] =
     LANDING_GALLERY.length > 0 ? LANDING_GALLERY : PLACEHOLDER_SLOTS;
@@ -280,7 +300,7 @@ export default function SmartGuestLanding() {
   return (
     <LayoutGroup id="landing-intro">
     <div
-      className="relative min-h-dvh overflow-x-hidden text-white"
+      className="relative min-h-dvh min-h-[100dvh] overflow-x-hidden text-white"
       style={{
         background: pageBg,
       }}
@@ -313,19 +333,19 @@ export default function SmartGuestLanding() {
         initial={false}
         animate={{
           opacity: introDone ? 1 : 0,
-          filter: reduce ? "blur(0px)" : introDone ? "blur(0px)" : "blur(8px)",
+          filter: reduce ? "blur(0px)" : introDone ? "blur(0px)" : introContentBlur,
         }}
         transition={{
-          duration: introDone ? 0.58 : 0.22,
+          duration: introDone ? (narrow ? 0.5 : 0.58) : 0.22,
           ease: [0.33, 1, 0.68, 1],
-          delay: introDone ? 0.06 : 0,
+          delay: introDone ? (narrow ? 0.04 : 0.06) : 0,
         }}
         style={{ pointerEvents: introDone ? "auto" : "none" }}
       >
-      <header className="relative z-20 px-4 pb-2 pt-8 sm:px-8">
+      <header className="relative z-20 px-[max(1rem,env(safe-area-inset-left))] pb-2 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-8 sm:pt-8">
         <div className="mx-auto flex max-w-7xl justify-center">
           {introDone ? (
-            <motion.div layoutId="sg-landing-wordmark" transition={{ layout: LOGO_LAYOUT_SPRING }}>
+            <motion.div layoutId="sg-landing-wordmark" transition={{ layout: logoSpring }}>
               <LogoMark />
             </motion.div>
           ) : (
@@ -336,19 +356,19 @@ export default function SmartGuestLanding() {
         </div>
       </header>
 
-      <main className="relative z-10 mx-auto max-w-7xl px-4 pb-16 pt-4 sm:px-8 lg:px-12">
+      <main className="relative z-10 mx-auto max-w-7xl px-[max(1rem,env(safe-area-inset-left))] pb-[max(4rem,env(safe-area-inset-bottom))] pt-4 sm:px-8 lg:px-12">
         <motion.div
           initial={reduce ? false : { opacity: 0, y: 16 }}
           animate={introDone ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
           transition={{
             duration: 0.5,
             ease: [0.33, 1, 0.68, 1],
-            delay: introDone ? 0.22 : 0,
+            delay: introDone ? (narrow ? 0.16 : 0.22) : 0,
           }}
           className="text-center"
         >
           <h1
-            className="mx-auto max-w-3xl text-balance text-lg font-semibold leading-snug tracking-tight text-white/90 sm:text-2xl md:max-w-2xl md:text-[1.65rem]"
+            className="mx-auto max-w-3xl text-balance text-[1.125rem] font-semibold leading-snug tracking-tight text-white/90 sm:text-2xl md:max-w-2xl md:text-[1.65rem]"
             style={{ fontFamily: "var(--font-poppins), system-ui" }}
           >
             Transformando la logística de tus eventos
@@ -356,7 +376,7 @@ export default function SmartGuestLanding() {
         </motion.div>
 
         <motion.div
-          className="mx-auto mt-12 grid w-full max-w-7xl grid-cols-1 gap-5 sm:grid-cols-3 sm:gap-5 lg:gap-6"
+          className="mx-auto mt-8 grid w-full max-w-7xl grid-cols-1 gap-4 sm:mt-12 sm:grid-cols-3 sm:gap-5 lg:gap-6"
           variants={containerVariants}
           initial="hidden"
           whileInView="show"
@@ -368,7 +388,7 @@ export default function SmartGuestLanding() {
               <motion.div
                 key={item.accent}
                 variants={itemVariants}
-                className={`${glass} group relative flex min-h-[220px] flex-col gap-4 overflow-hidden p-6 sm:min-h-[240px] sm:p-7`}
+                className={`${glass} group relative flex min-h-[200px] flex-col gap-3 overflow-hidden p-5 sm:min-h-[240px] sm:gap-4 sm:p-7`}
                 whileHover={reduce ? undefined : bentoHover}
               >
                 <div
@@ -387,10 +407,10 @@ export default function SmartGuestLanding() {
                   </span>
                 </div>
                 <div className="relative flex flex-1 flex-col gap-3">
-                  <p className="text-left text-[1.125rem] font-semibold leading-tight tracking-tight text-white sm:text-xl">
+                  <p className="text-left text-[1.05rem] font-semibold leading-tight tracking-tight text-white sm:text-xl">
                     {item.title}
                   </p>
-                  <p className="text-left text-[14px] leading-relaxed text-white/60 sm:text-[15px]">{item.subtitle}</p>
+                  <p className="text-left text-[13px] leading-relaxed text-white/60 sm:text-[15px]">{item.subtitle}</p>
                 </div>
               </motion.div>
             );
@@ -402,7 +422,7 @@ export default function SmartGuestLanding() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.4 }}
-          className="mx-auto mt-10 flex w-full max-w-lg flex-col gap-3 sm:max-w-2xl sm:flex-row sm:justify-center sm:gap-4"
+          className="mx-auto mt-8 flex w-full max-w-lg flex-col gap-3 sm:mt-10 sm:max-w-2xl sm:flex-row sm:justify-center sm:gap-4"
         >
           <Link
             href="/login"
@@ -438,11 +458,11 @@ export default function SmartGuestLanding() {
               aria-hidden
             />
           </div>
-          <LandingGalleryStrip items={galleryItems} reduced={!!reduce} />
+          <LandingGalleryStrip items={galleryItems} reduced={!!reduce} narrow={narrow} />
         </motion.div>
       </main>
 
-      <footer className="relative z-10 border-t border-white/10 py-6 text-center text-[11px] text-white/35">
+      <footer className="relative z-10 border-t border-white/10 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-center text-[11px] text-white/35">
         SmartGuest · {new Date().getFullYear()}
       </footer>
       </motion.div>
@@ -463,16 +483,16 @@ export default function SmartGuestLanding() {
 
       {showSplash ? (
         <div
-          className="pointer-events-none fixed inset-0 z-[100] flex items-center justify-center"
+          className="pointer-events-none fixed inset-0 z-[100] flex items-center justify-center pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(0.5rem,env(safe-area-inset-bottom))]"
           aria-hidden
         >
           <motion.div
             layoutId="sg-landing-wordmark"
-            initial={{ scale: reduce ? 1 : 2.38 }}
+            initial={{ scale: reduce ? 1 : splashScaleFrom }}
             animate={{ scale: 1 }}
             transition={{
-              layout: LOGO_LAYOUT_SPRING,
-              scale: { duration: reduce ? 0 : 1.02, ease: [0.16, 1, 0.3, 1] },
+              layout: logoSpring,
+              scale: { duration: reduce ? 0 : splashScaleMs, ease: [0.16, 1, 0.3, 1] },
             }}
             onAnimationComplete={handleSplashScaleComplete}
           >
