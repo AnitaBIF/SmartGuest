@@ -1,7 +1,5 @@
-"use client";
-
-import LoginScreen from "@/components/LoginScreen";
+import SmartGuestLanding from "@/components/SmartGuestLanding";
 
 export default function Home() {
-  return <LoginScreen />;
+  return <SmartGuestLanding />;
 }
