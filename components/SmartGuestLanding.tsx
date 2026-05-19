@@ -144,13 +144,13 @@ function LandingGalleryStrip({
 
   return (
     <div
-      className="relative mx-auto w-full max-w-6xl px-1 sm:px-3"
+      className="relative mx-auto w-full max-w-[min(100%,90rem)] px-2 sm:px-4"
       aria-label="Capturas de la aplicación SmartGuest"
     >
       <div
         className={
           "flex items-center justify-start gap-3 overflow-x-auto overflow-y-visible py-6 [scrollbar-width:thin] " +
-          "[scrollbar-color:rgba(0,255,136,0.3)_transparent] sm:justify-center sm:gap-4 sm:overflow-x-visible md:gap-5 " +
+          "[scrollbar-color:rgba(0,255,136,0.3)_transparent] sm:justify-center sm:gap-5 sm:overflow-x-visible md:gap-6 " +
           "[&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#00FF88]/35"
         }
         style={reduced ? undefined : { perspective: "1100px" }}
@@ -178,8 +178,8 @@ function LandingGalleryStrip({
             >
               <div
                 className={
-                  "relative w-[min(38vw,10rem)] overflow-hidden rounded-2xl border border-white/12 " +
-                  "bg-[#0b1020] shadow-[0_20px_48px_-16px_rgba(0,0,0,0.65)] ring-1 ring-white/[0.05] sm:w-40 md:w-44"
+                  "relative w-[min(72vw,18rem)] overflow-hidden rounded-2xl border border-white/12 " +
+                  "bg-[#0b1020] shadow-[0_20px_48px_-16px_rgba(0,0,0,0.65)] ring-1 ring-white/[0.05] sm:w-56 md:w-64 lg:w-72"
                 }
               >
                 {"placeholder" in item ? (
@@ -197,9 +197,9 @@ function LandingGalleryStrip({
                     <Image
                       src={item.src}
                       alt={item.alt}
-                      width={900}
-                      height={1200}
-                      sizes="(max-width:640px) 38vw, 176px"
+                      width={1200}
+                      height={1600}
+                      sizes="(max-width:640px) 72vw, (max-width:1024px) 224px, 288px"
                       className="block h-auto w-full max-w-none align-top"
                       style={{ height: "auto", width: "100%" }}
                       priority={i === 0}
