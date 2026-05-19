@@ -3,7 +3,7 @@
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNarrowScreen } from "@/lib/useNarrowScreen";
 
 const NEON = "#00FF88";
@@ -261,16 +261,16 @@ function LogoMark({ className = "" }: { className?: string }) {
 
 const LOGO_LAYOUT_SPRING = {
   type: "spring" as const,
-  stiffness: 320,
-  damping: 34,
-  mass: 0.72,
+  stiffness: 260,
+  damping: 36,
+  mass: 0.82,
 };
 
 const LOGO_LAYOUT_SPRING_NARROW = {
   type: "spring" as const,
-  stiffness: 260,
-  damping: 40,
-  mass: 0.78,
+  stiffness: 210,
+  damping: 42,
+  mass: 0.88,
 };
 
 export default function SmartGuestLanding() {
@@ -284,7 +284,7 @@ export default function SmartGuestLanding() {
   /** layoutId + morph suele descentrar en WebKit móvil; desktop conserva el morph. */
   const useLayoutMorph = !narrow && !reduce;
   const splashScaleFrom = narrow ? 1.62 : 2.18;
-  const splashScaleMs = narrow ? 0.82 : 1.02;
+  const splashScaleMs = narrow ? 1.05 : 1.28;
   const introContentBlur = narrow || reduce ? "blur(0px)" : "blur(7px)";
 
   const galleryItems: GallerySlot[] =
@@ -292,11 +292,24 @@ export default function SmartGuestLanding() {
 
   const pageBg = `linear-gradient(165deg, ${BG_TOP} 0%, #080d1f 40%, ${BG_BOT} 100%)`;
 
-  const handleSplashScaleComplete = () => {
-    if (splashFinishedRef.current) return;
-    splashFinishedRef.current = true;
-    setIntroDone(true);
-  };
+  /**
+   * Durante el splash el contenido tiene opacity 0 pero sigue intersectando el viewport;
+   * `whileInView` disparaba las animaciones “en secreto” y al terminar el intro ya estaban
+   * terminadas (parecía que no hubiera transiciones). Solo habilitamos reveals cuando `introDone`.
+   *
+   * El cierre del splash va por temporizador alineado a `splashScaleMs`: con `layoutId` + escala,
+   * `onAnimationComplete` a veces dispara demasiado pronto en Motion 12.
+   */
+  useEffect(() => {
+    if (!showSplash) return;
+    const padMs = 90;
+    const id = window.setTimeout(() => {
+      if (splashFinishedRef.current) return;
+      splashFinishedRef.current = true;
+      setIntroDone(true);
+    }, Math.round(splashScaleMs * 1000) + padMs);
+    return () => window.clearTimeout(id);
+  }, [showSplash, splashScaleMs]);
 
   return (
     <LayoutGroup id="landing-intro">
@@ -337,9 +350,9 @@ export default function SmartGuestLanding() {
           filter: introDone ? "blur(0px)" : introContentBlur,
         }}
         transition={{
-          duration: introDone ? (narrow ? 0.5 : 0.58) : 0.22,
+          duration: introDone ? (narrow ? 0.62 : 0.74) : 0.26,
           ease: [0.33, 1, 0.68, 1],
-          delay: introDone ? (narrow ? 0.04 : 0.06) : 0,
+          delay: introDone ? (narrow ? 0.06 : 0.08) : 0,
         }}
         style={{ pointerEvents: introDone ? "auto" : "none" }}
       >
@@ -366,9 +379,9 @@ export default function SmartGuestLanding() {
           initial={reduce ? false : { opacity: 0, y: 16 }}
           animate={introDone ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
           transition={{
-            duration: 0.5,
+            duration: 0.62,
             ease: [0.33, 1, 0.68, 1],
-            delay: introDone ? (narrow ? 0.16 : 0.22) : 0,
+            delay: introDone ? (narrow ? 0.2 : 0.28) : 0,
           }}
           className="text-center"
         >
@@ -384,8 +397,12 @@ export default function SmartGuestLanding() {
           className="mx-auto mt-8 grid w-full min-w-0 max-w-7xl grid-cols-1 gap-4 sm:mt-12 sm:grid-cols-3 sm:gap-5 lg:gap-6"
           variants={containerVariants}
           initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, amount: 0.15 }}
+          {...(!introDone
+            ? { animate: "hidden" as const }
+            : {
+                whileInView: "show" as const,
+                viewport: { once: true, amount: 0.15 },
+              })}
         >
           {BENTO_ITEMS.map((item) => {
             const Icon = item.Icon;
@@ -424,8 +441,14 @@ export default function SmartGuestLanding() {
 
         <motion.div
           initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          {...(!reduce && !introDone
+            ? { animate: { opacity: 0, y: 12 } }
+            : !reduce
+              ? {
+                  whileInView: { opacity: 1, y: 0 },
+                  viewport: { once: true },
+                }
+              : {})}
           transition={{ duration: 0.4 }}
           className="mx-auto mt-8 flex w-full max-w-lg flex-col gap-3 sm:mt-10 sm:max-w-2xl sm:flex-row sm:justify-center sm:gap-4"
         >
@@ -445,8 +468,14 @@ export default function SmartGuestLanding() {
 
         <motion.div
           initial={reduce ? { opacity: 1 } : { opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          {...(!reduce && !introDone
+            ? { animate: { opacity: 0, y: 16 } }
+            : !reduce
+              ? {
+                  whileInView: { opacity: 1, y: 0 },
+                  viewport: { once: true },
+                }
+              : {})}
           transition={{ duration: 0.45 }}
           className="mt-16"
         >
@@ -481,7 +510,7 @@ export default function SmartGuestLanding() {
             style={{ background: pageBg }}
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.42, ease: [0.33, 1, 0.68, 1] }}
+            transition={{ duration: 0.52, ease: [0.33, 1, 0.68, 1] }}
           />
         ) : null}
       </AnimatePresence>
@@ -507,7 +536,6 @@ export default function SmartGuestLanding() {
                 layout: logoSpring,
                 scale: { duration: reduce ? 0 : splashScaleMs, ease: [0.16, 1, 0.3, 1] },
               }}
-              onAnimationComplete={handleSplashScaleComplete}
             >
               <LogoMark />
             </motion.div>
@@ -519,7 +547,6 @@ export default function SmartGuestLanding() {
               transition={{
                 scale: { duration: reduce ? 0 : splashScaleMs, ease: [0.16, 1, 0.3, 1] },
               }}
-              onAnimationComplete={handleSplashScaleComplete}
             >
               <LogoMark />
             </motion.div>
