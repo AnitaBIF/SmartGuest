@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Poppins } from "next/font/google";
 import { AppThemeProvider } from "@/components/AppThemeProvider";
+import { RootPageTransition } from "@/components/PageTransition";
 import SessionWatchdog from "@/components/SessionWatchdog";
 import { ThemeToggleGate } from "@/components/ThemeToggleGate";
 import "./globals.css";
@@ -51,7 +52,7 @@ export default function RootLayout({
         <AppThemeProvider>
           <ThemeToggleGate />
           <SessionWatchdog />
-          {children}
+          <RootPageTransition>{children}</RootPageTransition>
         </AppThemeProvider>
       </body>
     </html>

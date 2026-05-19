@@ -1,6 +1,7 @@
 "use client";
 
 import { AssistantChat } from "@/components/AssistantChat";
+import { PageTransition } from "@/components/PageTransition";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
 import { useSidebarCollapsed } from "@/lib/useSidebarCollapsed";
@@ -38,7 +39,7 @@ export function AdminHostLayout({ children }: { children: React.ReactNode }) {
             desktopCollapsed ? "md:pl-14" : "md:pl-0"
           }`}
         >
-          {children}
+          <PageTransition className="min-w-0 flex-1">{children}</PageTransition>
         </div>
       </div>
       <AssistantChat />
