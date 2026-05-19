@@ -151,14 +151,13 @@ function LandingGalleryStrip({
   return (
     <div
       className={
-        "relative mx-auto w-full max-w-[min(100%,90rem)] px-[max(0.75rem,env(safe-area-inset-left))] sm:px-4 " +
-        "pr-[max(0.75rem,env(safe-area-inset-right))]"
+        "relative mx-auto w-full min-w-0 max-w-[min(100%,90rem)] pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] sm:px-4"
       }
       aria-label="Capturas de la aplicación SmartGuest"
     >
       <div
         className={
-          "flex items-center justify-start gap-2.5 overflow-x-auto overflow-y-visible py-5 [scrollbar-width:thin] sm:gap-5 sm:justify-center sm:overflow-x-visible sm:py-6 md:gap-6 " +
+          "flex min-w-0 w-full items-center justify-start gap-2.5 overflow-x-auto overflow-y-visible py-5 [scrollbar-width:thin] sm:gap-5 sm:justify-center sm:overflow-x-visible sm:py-6 md:gap-6 " +
           "[scrollbar-color:rgba(0,255,136,0.3)_transparent] [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#00FF88]/35 " +
           (narrow ? "snap-x snap-mandatory scroll-pl-3 scroll-pr-3 [-webkit-overflow-scrolling:touch]" : "")
         }
@@ -252,7 +251,7 @@ function LandingGalleryStrip({
 function LogoMark({ className = "" }: { className?: string }) {
   return (
     <span
-      className={`block max-w-[min(100%,22rem)] text-center text-[clamp(1.65rem,6.8vw,2.25rem)] font-extrabold leading-tight tracking-tight sm:max-w-none sm:text-5xl md:text-6xl ${className}`}
+      className={`block w-full text-center text-[clamp(1.55rem,6.2vw,2.25rem)] font-extrabold leading-tight tracking-tight sm:text-5xl md:text-6xl ${className}`}
       style={{ fontFamily: "var(--font-poppins), system-ui" }}
     >
       SMART<span className="ml-1.5 font-normal text-[#00FF88] md:ml-2">GUEST</span>
@@ -282,9 +281,9 @@ export default function SmartGuestLanding() {
   const showSplash = !reduce && !introDone;
 
   const logoSpring = narrow ? LOGO_LAYOUT_SPRING_NARROW : LOGO_LAYOUT_SPRING;
-  const splashScaleFrom = narrow ? 1.76 : 2.18;
+  const splashScaleFrom = narrow ? 1.62 : 2.18;
   const splashScaleMs = narrow ? 0.82 : 1.02;
-  const introContentBlur = narrow ? "blur(4px)" : "blur(7px)";
+  const introContentBlur = narrow || reduce ? "blur(0px)" : "blur(7px)";
 
   const galleryItems: GallerySlot[] =
     LANDING_GALLERY.length > 0 ? LANDING_GALLERY : PLACEHOLDER_SLOTS;
@@ -300,7 +299,7 @@ export default function SmartGuestLanding() {
   return (
     <LayoutGroup id="landing-intro">
     <div
-      className="relative min-h-dvh min-h-[100dvh] overflow-x-hidden text-white"
+      className="relative min-h-dvh min-h-[100dvh] w-full max-w-[100vw] overflow-x-visible sm:overflow-x-hidden text-white"
       style={{
         background: pageBg,
       }}
@@ -329,11 +328,11 @@ export default function SmartGuestLanding() {
       />
 
       <motion.div
-        className="relative z-10 flex min-h-dvh flex-col"
+        className="relative z-10 flex min-h-dvh min-w-0 w-full flex-col"
         initial={false}
         animate={{
           opacity: introDone ? 1 : 0,
-          filter: reduce ? "blur(0px)" : introDone ? "blur(0px)" : introContentBlur,
+          filter: introDone ? "blur(0px)" : introContentBlur,
         }}
         transition={{
           duration: introDone ? (narrow ? 0.5 : 0.58) : 0.22,
@@ -342,7 +341,7 @@ export default function SmartGuestLanding() {
         }}
         style={{ pointerEvents: introDone ? "auto" : "none" }}
       >
-      <header className="relative z-20 px-[max(1rem,env(safe-area-inset-left))] pb-2 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-8 sm:pt-8">
+      <header className="relative z-20 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pb-2 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-8 sm:pt-8">
         <div className="mx-auto flex max-w-7xl justify-center">
           {introDone ? (
             <motion.div layoutId="sg-landing-wordmark" transition={{ layout: logoSpring }}>
@@ -356,7 +355,7 @@ export default function SmartGuestLanding() {
         </div>
       </header>
 
-      <main className="relative z-10 mx-auto max-w-7xl px-[max(1rem,env(safe-area-inset-left))] pb-[max(4rem,env(safe-area-inset-bottom))] pt-4 sm:px-8 lg:px-12">
+      <main className="relative z-10 mx-auto w-full min-w-0 max-w-7xl pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pb-[max(4rem,env(safe-area-inset-bottom))] pt-4 sm:px-8 lg:px-12">
         <motion.div
           initial={reduce ? false : { opacity: 0, y: 16 }}
           animate={introDone ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
@@ -376,7 +375,7 @@ export default function SmartGuestLanding() {
         </motion.div>
 
         <motion.div
-          className="mx-auto mt-8 grid w-full max-w-7xl grid-cols-1 gap-4 sm:mt-12 sm:grid-cols-3 sm:gap-5 lg:gap-6"
+          className="mx-auto mt-8 grid w-full min-w-0 max-w-7xl grid-cols-1 gap-4 sm:mt-12 sm:grid-cols-3 sm:gap-5 lg:gap-6"
           variants={containerVariants}
           initial="hidden"
           whileInView="show"
@@ -388,7 +387,7 @@ export default function SmartGuestLanding() {
               <motion.div
                 key={item.accent}
                 variants={itemVariants}
-                className={`${glass} group relative flex min-h-[200px] flex-col gap-3 overflow-hidden p-5 sm:min-h-[240px] sm:gap-4 sm:p-7`}
+                className={`${glass} group relative flex min-h-[200px] min-w-0 flex-col gap-3 overflow-x-hidden overflow-y-visible p-5 sm:min-h-[240px] sm:gap-4 sm:p-7`}
                 whileHover={reduce ? undefined : bentoHover}
               >
                 <div
@@ -462,7 +461,7 @@ export default function SmartGuestLanding() {
         </motion.div>
       </main>
 
-      <footer className="relative z-10 border-t border-white/10 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-center text-[11px] text-white/35">
+      <footer className="relative z-10 border-t border-white/10 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] text-center text-[11px] text-white/35">
         SmartGuest · {new Date().getFullYear()}
       </footer>
       </motion.div>
@@ -483,10 +482,11 @@ export default function SmartGuestLanding() {
 
       {showSplash ? (
         <div
-          className="pointer-events-none fixed inset-0 z-[100] flex items-center justify-center pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+          className="pointer-events-none fixed inset-0 z-[100] flex items-center justify-center overflow-visible pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))]"
           aria-hidden
         >
           <motion.div
+            className="max-w-[100vw] origin-center"
             layoutId="sg-landing-wordmark"
             initial={{ scale: reduce ? 1 : splashScaleFrom }}
             animate={{ scale: 1 }}
