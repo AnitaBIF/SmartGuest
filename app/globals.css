@@ -4,6 +4,13 @@ html {
   scrollbar-gutter: stable;
 }
 
+/* En viewport angosto, stable + 100vw desalinea el layout en algunos navegadores (p. ej. Samsung Internet). */
+@media (max-width: 639px) {
+  html {
+    scrollbar-gutter: auto;
+  }
+}
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {

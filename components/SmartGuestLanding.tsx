@@ -281,6 +281,8 @@ export default function SmartGuestLanding() {
   const showSplash = !reduce && !introDone;
 
   const logoSpring = narrow ? LOGO_LAYOUT_SPRING_NARROW : LOGO_LAYOUT_SPRING;
+  /** layoutId + morph suele descentrar en WebKit móvil; desktop conserva el morph. */
+  const useLayoutMorph = !narrow && !reduce;
   const splashScaleFrom = narrow ? 1.62 : 2.18;
   const splashScaleMs = narrow ? 0.82 : 1.02;
   const introContentBlur = narrow || reduce ? "blur(0px)" : "blur(7px)";
@@ -299,7 +301,7 @@ export default function SmartGuestLanding() {
   return (
     <LayoutGroup id="landing-intro">
     <div
-      className="relative min-h-dvh min-h-[100dvh] w-full max-w-[100vw] overflow-x-visible sm:overflow-x-hidden text-white"
+      className="relative isolate flex min-h-dvh min-h-[100dvh] w-full min-w-0 flex-1 flex-col overflow-x-clip text-white"
       style={{
         background: pageBg,
       }}
@@ -342,11 +344,15 @@ export default function SmartGuestLanding() {
         style={{ pointerEvents: introDone ? "auto" : "none" }}
       >
       <header className="relative z-20 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pb-2 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-8 sm:pt-8">
-        <div className="mx-auto flex max-w-7xl justify-center">
+        <div className="mx-auto flex w-full min-w-0 max-w-7xl justify-center px-0">
           {introDone ? (
-            <motion.div layoutId="sg-landing-wordmark" transition={{ layout: logoSpring }}>
+            useLayoutMorph ? (
+              <motion.div layoutId="sg-landing-wordmark" transition={{ layout: logoSpring }}>
+                <LogoMark />
+              </motion.div>
+            ) : (
               <LogoMark />
-            </motion.div>
+            )
           ) : (
             <span className="pointer-events-none inline-flex select-none opacity-0" aria-hidden>
               <LogoMark />
@@ -482,22 +488,42 @@ export default function SmartGuestLanding() {
 
       {showSplash ? (
         <div
-          className="pointer-events-none fixed inset-0 z-[100] flex items-center justify-center overflow-visible pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+          className="pointer-events-none fixed inset-0 z-[100] flex w-full items-center justify-center overflow-hidden"
+          style={{
+            paddingTop: "max(0.75rem, env(safe-area-inset-top))",
+            paddingRight: "max(0.75rem, env(safe-area-inset-right))",
+            paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))",
+            paddingLeft: "max(0.75rem, env(safe-area-inset-left))",
+          }}
           aria-hidden
         >
-          <motion.div
-            className="max-w-[100vw] origin-center"
-            layoutId="sg-landing-wordmark"
-            initial={{ scale: reduce ? 1 : splashScaleFrom }}
-            animate={{ scale: 1 }}
-            transition={{
-              layout: logoSpring,
-              scale: { duration: reduce ? 0 : splashScaleMs, ease: [0.16, 1, 0.3, 1] },
-            }}
-            onAnimationComplete={handleSplashScaleComplete}
-          >
-            <LogoMark />
-          </motion.div>
+          {useLayoutMorph ? (
+            <motion.div
+              className="w-full min-w-0 max-w-full origin-center"
+              layoutId="sg-landing-wordmark"
+              initial={{ scale: reduce ? 1 : splashScaleFrom }}
+              animate={{ scale: 1 }}
+              transition={{
+                layout: logoSpring,
+                scale: { duration: reduce ? 0 : splashScaleMs, ease: [0.16, 1, 0.3, 1] },
+              }}
+              onAnimationComplete={handleSplashScaleComplete}
+            >
+              <LogoMark />
+            </motion.div>
+          ) : (
+            <motion.div
+              className="w-full min-w-0 max-w-full origin-center"
+              initial={{ scale: reduce ? 1 : splashScaleFrom }}
+              animate={{ scale: 1 }}
+              transition={{
+                scale: { duration: reduce ? 0 : splashScaleMs, ease: [0.16, 1, 0.3, 1] },
+              }}
+              onAnimationComplete={handleSplashScaleComplete}
+            >
+              <LogoMark />
+            </motion.div>
+          )}
         </div>
       ) : null}
     </div>

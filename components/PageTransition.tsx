@@ -46,9 +46,9 @@ export function RootPageTransition({ children }: { children: React.ReactNode }) 
     pathname.startsWith("/admin") ||
     pathname.startsWith("/anfitrion")
   ) {
-    return <>{children}</>;
+    return <div className="flex min-h-full min-w-0 flex-1 flex-col">{children}</div>;
   }
   return (
-    <PageTransition className="flex min-h-full flex-1 flex-col">{children}</PageTransition>
+    <PageTransition className="flex min-h-full min-w-0 flex-1 flex-col">{children}</PageTransition>
   );
 }
