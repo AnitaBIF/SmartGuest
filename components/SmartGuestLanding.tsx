@@ -105,17 +105,23 @@ function IconOrbit({ className = "h-7 w-7" }: { className?: string }) {
 
 const BENTO_ITEMS = [
   {
-    title: "Gestión inteligente de invitados, simplificada.",
+    title: "Invitaciones bajo control",
+    subtitle:
+      "Automatizá confirmaciones, controlá cupos máximos y gestioná el RSVP en tiempo real desde un solo lugar.",
     accent: "01",
     Icon: IconUsers,
   },
   {
-    title: "Para anfitriones, invitados y el equipo del salón.",
+    title: "Experiencia 360°",
+    subtitle:
+      "Conectá en tiempo real las decisiones de tus invitados con el panel del anfitrión y las tarjetas de la cocina.",
     accent: "02",
     Icon: IconHub,
   },
   {
-    title: "Plataforma intuitiva, eficiente y sustentable.",
+    title: "Acceso inteligente",
+    subtitle:
+      "Controlá el ingreso con QR dinámico anticopia y gestioná traslados eficientes con lógica SmartPool.",
     accent: "03",
     Icon: IconOrbit,
   },
@@ -124,10 +130,10 @@ const BENTO_ITEMS = [
 function LogoMark({ className = "" }: { className?: string }) {
   return (
     <span
-      className={`text-xl font-extrabold tracking-tight sm:text-2xl ${className}`}
+      className={`block text-center text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl ${className}`}
       style={{ fontFamily: "var(--font-poppins), system-ui" }}
     >
-      SMART<span className="ml-1 font-normal text-[#00FF88]">GUEST</span>
+      SMART<span className="ml-1.5 font-normal text-[#00FF88] md:ml-2">GUEST</span>
     </span>
   );
 }
@@ -168,45 +174,13 @@ export default function SmartGuestLanding() {
         style={{ background: `radial-gradient(circle, #3b82f618 0%, transparent 60%)` }}
       />
 
-      <header className="relative z-20 px-4 py-5 sm:px-8">
-        <div className="mx-auto flex max-w-5xl flex-col items-center gap-5 sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:gap-3">
-          <div className="hidden justify-self-start sm:flex">
-            <Link
-              href="/login"
-              className="rounded-xl border border-white/15 bg-white/[0.05] px-4 py-2 text-[13px] font-semibold text-white/90 backdrop-blur-sm transition hover:border-white/25 hover:bg-white/[0.08]"
-            >
-              Iniciar sesión
-            </Link>
-          </div>
-          <div className="flex justify-center sm:justify-center">
-            <LogoMark />
-          </div>
-          <div className="hidden justify-self-end sm:flex">
-            <Link
-              href="/registro/salon"
-              className="rounded-xl border border-[#00FF88]/45 bg-[#00FF88]/12 px-4 py-2 text-[13px] font-semibold text-[#00FF88] transition hover:bg-[#00FF88]/22"
-            >
-              Registrá tu salón
-            </Link>
-          </div>
-          <div className="flex w-full max-w-sm gap-3 sm:hidden">
-            <Link
-              href="/login"
-              className="flex-1 rounded-xl border border-white/15 bg-white/[0.05] py-2.5 text-center text-[13px] font-semibold text-white/90 backdrop-blur-sm"
-            >
-              Iniciar sesión
-            </Link>
-            <Link
-              href="/registro/salon"
-              className="flex-1 rounded-xl border border-[#00FF88]/45 bg-[#00FF88]/12 py-2.5 text-center text-[13px] font-semibold text-[#00FF88]"
-            >
-              Registrá tu salón
-            </Link>
-          </div>
+      <header className="relative z-20 px-4 pb-2 pt-8 sm:px-8">
+        <div className="mx-auto flex max-w-7xl justify-center">
+          <LogoMark />
         </div>
       </header>
 
-      <main className="relative z-10 mx-auto max-w-5xl px-5 pb-16 pt-6 sm:px-10">
+      <main className="relative z-10 mx-auto max-w-7xl px-4 pb-16 pt-4 sm:px-8 lg:px-12">
         <motion.div
           initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -214,7 +188,7 @@ export default function SmartGuestLanding() {
           className="text-center"
         >
           <h1
-            className="mx-auto max-w-3xl text-balance text-2xl font-bold leading-tight tracking-tight text-white drop-shadow-[0_0_40px_rgba(255,255,255,0.12)] sm:text-4xl md:text-[2.45rem] md:leading-[1.12]"
+            className="mx-auto max-w-3xl text-balance text-lg font-semibold leading-snug tracking-tight text-white/90 sm:text-2xl md:max-w-2xl md:text-[1.65rem]"
             style={{ fontFamily: "var(--font-poppins), system-ui" }}
           >
             Transformando la logística de tus eventos
@@ -222,7 +196,7 @@ export default function SmartGuestLanding() {
         </motion.div>
 
         <motion.div
-          className="mx-auto mt-12 grid max-w-5xl grid-cols-1 gap-5 sm:grid-cols-3 sm:gap-4"
+          className="mx-auto mt-12 grid w-full max-w-7xl grid-cols-1 gap-5 sm:grid-cols-3 sm:gap-5 lg:gap-6"
           variants={containerVariants}
           initial="hidden"
           whileInView="show"
@@ -234,7 +208,7 @@ export default function SmartGuestLanding() {
               <motion.div
                 key={item.accent}
                 variants={itemVariants}
-                className={`${glass} group relative flex min-h-[168px] flex-col gap-4 overflow-hidden p-6 sm:min-h-[188px]`}
+                className={`${glass} group relative flex min-h-[220px] flex-col gap-4 overflow-hidden p-6 sm:min-h-[240px] sm:p-7`}
                 whileHover={reduce ? undefined : bentoHover}
               >
                 <div
@@ -252,12 +226,36 @@ export default function SmartGuestLanding() {
                     {item.accent}
                   </span>
                 </div>
-                <p className="relative text-left text-[17px] font-medium leading-snug tracking-tight text-white sm:text-lg">
-                  {item.title}
-                </p>
+                <div className="relative flex flex-1 flex-col gap-3">
+                  <p className="text-left text-[1.125rem] font-semibold leading-tight tracking-tight text-white sm:text-xl">
+                    {item.title}
+                  </p>
+                  <p className="text-left text-[14px] leading-relaxed text-white/60 sm:text-[15px]">{item.subtitle}</p>
+                </div>
               </motion.div>
             );
           })}
+        </motion.div>
+
+        <motion.div
+          initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.4 }}
+          className="mx-auto mt-10 flex w-full max-w-lg flex-col gap-3 sm:max-w-2xl sm:flex-row sm:justify-center sm:gap-4"
+        >
+          <Link
+            href="/login"
+            className="rounded-xl border border-white/18 bg-white/[0.06] py-3.5 text-center text-[15px] font-semibold text-white/95 backdrop-blur-md transition hover:border-white/28 hover:bg-white/[0.1] sm:min-w-[200px] sm:px-8"
+          >
+            Iniciar sesión
+          </Link>
+          <Link
+            href="/registro/salon"
+            className="rounded-xl border border-[#00FF88]/50 bg-[#00FF88]/12 py-3.5 text-center text-[15px] font-semibold text-[#00FF88] shadow-[0_0_24px_rgba(0,255,136,0.15)] transition hover:bg-[#00FF88]/22 sm:min-w-[200px] sm:px-8"
+          >
+            Registrá tu salón
+          </Link>
         </motion.div>
 
         <motion.div
