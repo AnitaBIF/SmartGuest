@@ -183,6 +183,7 @@ export default function SeguridadPage() {
   }
 
   if (estado === "valid" && guest) {
+    const primerIngreso = guest.primerIngreso;
     return (
       <div className="flex min-h-[100dvh] flex-col bg-background text-foreground">
         <header className="flex items-center justify-between px-6 pt-6 pb-2">
@@ -197,8 +198,14 @@ export default function SeguridadPage() {
         </header>
 
         <div className="flex flex-1 flex-col items-center justify-center px-8 pb-16 text-center">
-          <p className="mb-2 rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-900 dark:bg-emerald-950/55 dark:text-emerald-200">
-            Verificado
+          <p
+            className={
+              primerIngreso
+                ? "mb-2 rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-900 dark:bg-emerald-950/55 dark:text-emerald-200"
+                : "mb-2 rounded-full bg-amber-200 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-950 dark:bg-amber-900/90 dark:text-amber-100"
+            }
+          >
+            {primerIngreso ? "Primer ingreso — verificado" : "Reingreso — ya estaba registrado"}
           </p>
           <h1 className="mb-2 text-4xl font-extrabold text-brand">
             {guest.nombre}
@@ -215,14 +222,21 @@ export default function SeguridadPage() {
             </p>
           </div>
 
-          <p className="mb-4 text-base font-semibold text-brand">
-            Corroborá el DNI con el documento.
-          </p>
+          {primerIngreso ? (
+            <p className="mb-4 text-base font-semibold text-brand">
+              Corroborá el DNI con el documento.
+            </p>
+          ) : (
+            <p className="mb-4 max-w-sm rounded-xl border-2 border-amber-400 bg-amber-50 px-4 py-3 text-[14px] font-semibold leading-snug text-amber-950 dark:border-amber-600 dark:bg-amber-950/50 dark:text-amber-100">
+              No tratar como ingreso nuevo: esta persona ya pasó la entrada registrada en el sistema. Volvé a chequear identidad si hace falta.
+            </p>
+          )}
+
           {guest.ingresoAt && (
             <p className="mb-6 max-w-sm text-[13px] leading-relaxed text-muted">
-              {guest.primerIngreso ? (
+              {primerIngreso ? (
                 <>
-                  <span className="font-semibold text-emerald-700 dark:text-emerald-400">Ingreso registrado</span> en el sistema (
+                  <span className="font-semibold text-emerald-700 dark:text-emerald-400">Ingreso que queda registrado</span> (
                   {new Date(guest.ingresoAt).toLocaleString("es-AR", {
                     day: "numeric",
                     month: "short",
@@ -234,7 +248,7 @@ export default function SeguridadPage() {
                 </>
               ) : (
                 <>
-                  <span className="font-semibold text-amber-800 dark:text-amber-300">Ya había ingresado antes.</span> Primer registro:{" "}
+                  <span className="font-semibold text-amber-800 dark:text-amber-300">Primer ingreso registrado:</span>{" "}
                   {new Date(guest.ingresoAt).toLocaleString("es-AR", {
                     day: "numeric",
                     month: "short",
@@ -242,25 +256,42 @@ export default function SeguridadPage() {
                     minute: "2-digit",
                     second: "2-digit",
                   })}
-                  .
+                  . Este escaneo es un reingreso o repetición del código.
                 </>
               )}
             </p>
           )}
 
-          <div className="mb-10 flex h-24 w-24 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/50">
-            <svg
-              viewBox="0 0 24 24"
-              className="h-14 w-14 text-emerald-600 dark:text-emerald-400"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          </div>
+          {primerIngreso ? (
+            <div className="mb-10 flex h-24 w-24 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/50">
+              <svg
+                viewBox="0 0 24 24"
+                className="h-14 w-14 text-emerald-600 dark:text-emerald-400"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+          ) : (
+            <div className="mb-10 flex h-24 w-24 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-950/45">
+              <svg
+                viewBox="0 0 24 24"
+                className="h-14 w-14 text-amber-700 dark:text-amber-300"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <path d="M12 9v4M12 17h.01M10.3 3.2L1.8 18a2 2 0 0 0 1.7 3h16a2 2 0 0 0 1.7-3L13.7 3.2a2 2 0 0 0-3.4 0z" />
+              </svg>
+            </div>
+          )}
 
           <button
             type="button"
