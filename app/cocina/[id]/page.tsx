@@ -1,8 +1,11 @@
 "use client";
 
+import { formatStandardBreakdownForDisplay } from "@/lib/cocinaConteos";
 import { use, useEffect, useState } from "react";
+import { CocinaMenuStandardReferencia } from "../components/CocinaMenuStandardReferencia";
 import { CocinaTopBar } from "../components/CocinaTopBar";
 import type { EventoCocina, Mesa } from "../data";
+import { mergeStandardBreakdownPorEvento } from "../data";
 
 type Estado = "pendiente" | "preparacion" | "despachado";
 
@@ -54,7 +57,16 @@ function MesaCard({ mesa, estado, onEstado }: { mesa: Mesa; estado: Estado; onEs
 
       <ul className="mb-4 space-y-1 text-[13px] text-muted">
         {mesa.menus.standard > 0 && (
-          <li className="flex justify-between"><span>Menú standard</span><span className="font-semibold text-brand">{mesa.menus.standard}</span></li>
+          <li className="flex flex-col gap-0.5">
+            <div className="flex justify-between gap-2">
+              <span>Menú estándar</span>
+              <span className="font-semibold text-brand">{mesa.menus.standard}</span>
+            </div>
+            {(() => {
+              const line = formatStandardBreakdownForDisplay(mesa.menus.standardBreakdown);
+              return line ? <span className="text-[11px] leading-tight text-muted">{line}</span> : null;
+            })()}
+          </li>
         )}
         {mesa.menus.celiaco > 0 && (
           <li className="flex justify-between"><span>Menú Celíaco</span><span className="font-semibold text-brand">{mesa.menus.celiaco}</span></li>
@@ -164,25 +176,39 @@ export default function EventoDetallePage({ params }: { params: Promise<{ id: st
   const handlePrint = () => {
     const rows = evento.mesas.map((m, i) => {
       const total = m.menus.standard + m.menus.celiaco + m.menus.vegVeg + m.menus.otros;
+      const stdBreakLine = formatStandardBreakdownForDisplay(m.menus.standardBreakdown);
       const items = [
-        m.menus.standard > 0 ? `Standard: ${m.menus.standard}` : null,
+        m.menus.standard > 0
+          ? `Estándar: ${m.menus.standard}${stdBreakLine ? ` (${stdBreakLine})` : ""}`
+          : null,
         m.menus.celiaco  > 0 ? `Celíaco: ${m.menus.celiaco}`  : null,
         m.menus.vegVeg   > 0 ? `Veg/Veg: ${m.menus.vegVeg}`   : null,
         m.menus.otros    > 0 ? (m.menus.otrosDetalle ?? `Otros: ${m.menus.otros}`) : null,
       ].filter(Boolean).join(" · ");
+      const mesaLabel = m.numero === 0 ? "Sin mesa asignada" : `Mesa ${m.numero}`;
       return `<tr style="background:${i % 2 === 0 ? "white" : "#f0f7f2"}">
-        <td style="padding:8px 14px;font-weight:600;color:#1a3d28">Mesa ${m.numero}</td>
+        <td style="padding:8px 14px;font-weight:600;color:#1a3d28">${mesaLabel}</td>
         <td style="padding:8px 14px;color:#374151">${items}</td>
         <td style="padding:8px 14px;text-align:center;font-weight:700;color:#2d5a41">${total}</td>
       </tr>`;
     }).join("");
 
+    const refStdHtml = evento.menuStandardAnfitrion?.trim()
+      ? `<p class="sub"><strong>Menú estándar del evento (anfitrión):</strong> ${evento.menuStandardAnfitrion}</p>`
+      : `<p class="sub"><em>Menú estándar del evento (anfitrión): sin cargar.</em></p>`;
+    const aggStdLine = formatStandardBreakdownForDisplay(mergeStandardBreakdownPorEvento(evento));
+    const desgloseAggHtml = aggStdLine
+      ? `<p class="sub"><strong>Desglose estándar (invitaciones):</strong> ${aggStdLine}</p>`
+      : "";
+
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/>
       <title>Reporte – ${evento.titulo}</title>
-      <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:sans-serif;padding:40px;color:#111827}.brand{font-size:22px;font-weight:800;color:#2d5a41}h1{font-size:18px;font-weight:700;margin:14px 0 4px}.sub{font-size:13px;color:#6b7280;margin-bottom:24px}table{width:100%;border-collapse:collapse;font-size:14px}th{background:#2d5a41;color:white;padding:10px 14px;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.05em}th:last-child{text-align:center}.footer{margin-top:32px;font-size:11px;color:#9ca3af;text-align:center}</style></head><body>
+      <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:sans-serif;padding:40px;color:#111827}.brand{font-size:22px;font-weight:800;color:#2d5a41}h1{font-size:18px;font-weight:700;margin:14px 0 4px}.sub{font-size:13px;color:#6b7280;margin-bottom:8px}table{width:100%;border-collapse:collapse;font-size:14px}th{background:#2d5a41;color:white;padding:10px 14px;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.05em}th:last-child{text-align:center}.footer{margin-top:32px;font-size:11px;color:#9ca3af;text-align:center}</style></head><body>
       <div class="brand">SMART<span style="font-weight:400"> GUEST</span></div>
       <h1>Evento del día ${evento.fecha} — ${evento.titulo}</h1>
       <p class="sub">Anfitriones: ${evento.anfitriones}</p>
+      ${refStdHtml}
+      ${desgloseAggHtml}
       <table><thead><tr><th>Mesa</th><th>Detalle de menús</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table>
       <div class="footer">Generado por SmartGuest · ${new Date().toLocaleDateString("es-AR")}</div>
     </body></html>`;
@@ -221,6 +247,20 @@ export default function EventoDetallePage({ params }: { params: Promise<{ id: st
               </div>
             </div>
             <h1 className="text-xl font-bold text-brand">Evento del día {evento.fecha}</h1>
+          </div>
+
+          <div className="mb-5 max-w-3xl">
+            <p className="mb-2 text-[13px] text-muted">{evento.titulo}</p>
+            <CocinaMenuStandardReferencia texto={evento.menuStandardAnfitrion} />
+            {(() => {
+              const line = formatStandardBreakdownForDisplay(mergeStandardBreakdownPorEvento(evento));
+              if (!line) return null;
+              return (
+                <p className="text-[11px] leading-snug text-muted">
+                  <span className="font-medium text-foreground/90">Desglose estándar (invitaciones):</span> {line}
+                </p>
+              );
+            })()}
           </div>
 
           <div className="mb-6 h-2.5 w-full overflow-hidden rounded-full bg-card-muted">

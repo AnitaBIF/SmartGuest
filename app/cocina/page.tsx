@@ -2,8 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { formatStandardBreakdownForDisplay } from "@/lib/cocinaConteos";
+import { CocinaMenuStandardReferencia } from "./components/CocinaMenuStandardReferencia";
 import { CocinaTopBar } from "./components/CocinaTopBar";
 import type { EventoCocina } from "./data";
+import { mergeStandardBreakdownPorEvento } from "./data";
 
 function totalMenus(ev: EventoCocina) {
   return ev.mesas.reduce(
@@ -79,13 +82,29 @@ export default function CocinaHome() {
                   <div>
                     <h3 className="mb-0.5 text-[15px] font-bold text-brand">Evento del día {ev.fecha}</h3>
                     <p className="mb-4 text-[11px] text-muted">{ev.titulo}</p>
+                    <CocinaMenuStandardReferencia texto={ev.menuStandardAnfitrion} />
 
                     <ul className="space-y-1 text-[13px] text-muted">
-                      <li className="flex justify-between"><span>Menú standard</span>        <span className="font-semibold text-brand">{tot.standard}</span></li>
+                      <li className="flex justify-between">
+                        <span>Menú estándar (total cubiertos)</span>
+                        <span className="font-semibold text-brand">{tot.standard}</span>
+                      </li>
                       <li className="flex justify-between"><span>Menú Celíaco</span>          <span className="font-semibold text-brand">{tot.celiaco}</span></li>
                       <li className="flex justify-between"><span>Menú Vegetariano/Vegano</span><span className="font-semibold text-brand">{tot.vegVeg}</span></li>
                       <li className="flex justify-between"><span>Otros</span>                 <span className="font-semibold text-brand">{tot.otros}</span></li>
                     </ul>
+                    {(() => {
+                      const line = formatStandardBreakdownForDisplay(mergeStandardBreakdownPorEvento(ev));
+                      if (!line) return null;
+                      return (
+                        <p className="mt-2 text-[11px] leading-snug text-muted">
+                          <span className="font-medium text-foreground/90">
+                            Desglose estándar (por etiqueta en invitaciones):
+                          </span>{" "}
+                          {line}
+                        </p>
+                      );
+                    })()}
                   </div>
 
                   <Link

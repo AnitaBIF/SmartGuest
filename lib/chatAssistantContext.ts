@@ -247,7 +247,7 @@ export async function buildChatRoleContext(
     const { data: evento } = await db
       .from("eventos")
       .select(
-        "id, nombre, tipo, fecha, horario, salon, direccion, cant_invitados, cant_mesas, menus_especiales, dress_code, anfitrion1_nombre, anfitrion2_nombre"
+        "id, nombre, tipo, fecha, horario, salon, direccion, cant_invitados, cant_mesas, menus_especiales, dress_code, anfitrion1_nombre, anfitrion2_nombre, menu_standard"
       )
       .eq("anfitrion_id", userId)
       .order("fecha", { ascending: false })
@@ -371,6 +371,10 @@ export async function buildChatRoleContext(
         dress_code: evento.dress_code,
         anfitriones: [evento.anfitrion1_nombre, evento.anfitrion2_nombre].filter(Boolean).join(" y "),
         menus_especiales: evento.menus_especiales ?? [],
+        menu_standard_anfitrion:
+          evento.menu_standard != null && String(evento.menu_standard).trim()
+            ? String(evento.menu_standard).trim()
+            : null,
         opciones_menu_ui: menuOpcionesAnfitrion,
         invitaciones_totales: rows?.length ?? 0,
         invitaciones_por_asistencia: conteo,

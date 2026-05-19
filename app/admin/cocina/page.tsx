@@ -1,13 +1,19 @@
 "use client";
 
+import { formatStandardBreakdownForDisplay } from "@/lib/cocinaConteos";
 import { useEffect, useState } from "react";
+import { CocinaMenuStandardReferencia } from "../../cocina/components/CocinaMenuStandardReferencia";
 import type { EventoCocina } from "../../cocina/data";
+import { mergeStandardBreakdownPorEvento } from "../../cocina/data";
 
 function printReporte(ev: EventoCocina) {
   const rows = ev.mesas.map((m, i) => {
     const total = m.menus.standard + m.menus.celiaco + m.menus.vegVeg + m.menus.otros;
+    const stdBreakLine = formatStandardBreakdownForDisplay(m.menus.standardBreakdown);
     const detalle = [
-      m.menus.standard > 0 ? `Standard: ${m.menus.standard}` : null,
+      m.menus.standard > 0
+        ? `Estándar: ${m.menus.standard}${stdBreakLine ? ` (${stdBreakLine})` : ""}`
+        : null,
       m.menus.celiaco  > 0 ? `Celíaco: ${m.menus.celiaco}`  : null,
       m.menus.vegVeg   > 0 ? `Veg/Veg: ${m.menus.vegVeg}`   : null,
       m.menus.otros    > 0 ? (m.menus.otrosDetalle ?? `Otros: ${m.menus.otros}`) : null,
@@ -23,6 +29,14 @@ function printReporte(ev: EventoCocina) {
   const grandTotal = ev.mesas.reduce((a, m) =>
     a + m.menus.standard + m.menus.celiaco + m.menus.vegVeg + m.menus.otros, 0);
 
+  const refStdHtml = ev.menuStandardAnfitrion?.trim()
+    ? `<p class="sub"><strong>Menú estándar del evento (anfitrión):</strong> ${ev.menuStandardAnfitrion}</p>`
+    : `<p class="sub"><em>Menú estándar del evento (anfitrión): sin cargar.</em></p>`;
+  const aggStdLine = formatStandardBreakdownForDisplay(mergeStandardBreakdownPorEvento(ev));
+  const desgloseAggHtml = aggStdLine
+    ? `<p class="sub"><strong>Desglose estándar (invitaciones):</strong> ${aggStdLine}</p>`
+    : "";
+
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/>
     <title>Reporte de Cocina – ${ev.titulo}</title>
     <style>
@@ -30,7 +44,7 @@ function printReporte(ev: EventoCocina) {
       body{font-family:sans-serif;padding:40px;color:#111827}
       .brand{font-size:22px;font-weight:800;color:#2d5a41}
       h1{font-size:18px;font-weight:700;margin:14px 0 4px}
-      .sub{font-size:13px;color:#6b7280;margin-bottom:24px}
+      .sub{font-size:13px;color:#6b7280;margin-bottom:8px}
       table{width:100%;border-collapse:collapse;font-size:14px}
       th{background:#2d5a41;color:white;padding:10px 14px;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.05em}
       th:last-child{text-align:center}
@@ -41,6 +55,8 @@ function printReporte(ev: EventoCocina) {
     <div class="brand">SMART<span style="font-weight:400"> GUEST</span></div>
     <h1>Reporte de Cocina — Evento del día ${ev.fecha}</h1>
     <p class="sub">${ev.titulo} · Anfitriones: ${ev.anfitriones}</p>
+    ${refStdHtml}
+    ${desgloseAggHtml}
     <table>
       <thead><tr><th>Mesa</th><th>Detalle de menús</th><th>Cubiertos</th></tr></thead>
       <tbody>
@@ -133,11 +149,24 @@ export default function AdminCocinaPage() {
                   <div>
                     <h3 className="mb-0.5 text-[15px] font-bold text-brand">Evento del día {ev.fecha}</h3>
                     <p className="mb-1 text-[11px] text-muted">{ev.titulo}</p>
-                    <p className="mb-4 text-[10px] text-muted/90">{ev.mesas.length} mesas</p>
+                    <p className="mb-3 text-[10px] text-muted/90">{ev.mesas.length} mesas</p>
+                    <CocinaMenuStandardReferencia texto={ev.menuStandardAnfitrion} />
+                    {(() => {
+                      const line = formatStandardBreakdownForDisplay(mergeStandardBreakdownPorEvento(ev));
+                      if (!line) return null;
+                      return (
+                        <p className="mb-4 text-[11px] leading-snug text-muted">
+                          <span className="font-medium text-foreground/90">
+                            Desglose estándar (invitaciones):
+                          </span>{" "}
+                          {line}
+                        </p>
+                      );
+                    })()}
 
                     <ul className="space-y-1 text-[13px] text-foreground">
                       <li className="flex justify-between gap-2">
-                        <span className="text-muted">Menú standard</span>
+                        <span className="text-muted">Menú estándar</span>
                         <span className="font-semibold text-brand">{tot.standard}</span>
                       </li>
                       <li className="flex justify-between gap-2">

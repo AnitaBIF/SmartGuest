@@ -20,7 +20,9 @@ export async function GET(req: NextRequest) {
 
   const { data: eventos, error: evError } = await supabase
     .from("eventos")
-    .select("id, nombre, tipo, fecha, horario, anfitrion1_nombre, anfitrion2_nombre, cant_invitados, cant_mesas")
+    .select(
+      "id, nombre, tipo, fecha, horario, anfitrion1_nombre, anfitrion2_nombre, cant_invitados, cant_mesas, menu_standard"
+    )
     .eq("salon", salonNombre)
     .eq("direccion", salonDireccion)
     .order("fecha", { ascending: true });
@@ -84,6 +86,7 @@ export async function GET(req: NextRequest) {
       titulo: ev.nombre || ev.tipo || "Evento",
       fecha: d.toLocaleDateString("es-AR", { day: "numeric", month: "numeric", year: "2-digit" }),
       anfitriones,
+      menuStandardAnfitrion: ev.menu_standard ?? null,
       mesas: mesasConMenus,
     });
   }

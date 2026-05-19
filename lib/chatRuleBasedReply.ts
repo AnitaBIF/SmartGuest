@@ -336,12 +336,17 @@ function digestOnlyFromData(data: Record<string, unknown>): string {
         : menusUi.length === 1
           ? "Menú para invitados: solo opción estándar («Ninguna» en restricciones; sin menús especiales configurados)."
           : "Menú: sin lista en contexto; revisá Menús / restricciones en el panel.";
+    const refMenuStd =
+      ev.menu_standard_anfitrion != null && String(ev.menu_standard_anfitrion).trim()
+        ? `Menú estándar definido por el anfitrión para este evento: ${String(ev.menu_standard_anfitrion).trim()}.`
+        : "Menú estándar del evento (anfitrión): todavía no figura cargado — revisá el alta del evento con administración si el salón ofrece varias opciones.";
 
     return [
       `${nombre} — ${fecha}, ${String(ev.horario ?? "")}.`,
       anfsEv ? `Anfitriones (en tarjeta de invitación): ${anfsEv}.` : "",
       `Lugar: ${String(ev.salon ?? "")}, ${String(ev.direccion ?? "")}.`,
       `Dress code: ${dressHost}.`,
+      refMenuStd,
       menusBloque,
       `Filas de invitación en lista: ${tot} (cupo del evento: ${cupo}).`,
       `Asistencia: confirmados ${cConf}, pendientes ${cPen}, no asisten ${cRec}.`,
@@ -355,9 +360,17 @@ function digestOnlyFromData(data: Record<string, unknown>): string {
         const ot = Number(c.otras ?? 0);
         const invN = Number(ev.restricciones_invitaciones_con_no_estandar ?? 0);
         if (ce + vv + ot === 0) {
-          return `Restricciones alimentarias (cubiertos): todos estándar según datos cargados (${st} cubierto(s) estándar).`;
+          const refStdDigest =
+            ev.menu_standard_anfitrion != null && String(ev.menu_standard_anfitrion).trim()
+              ? ` Referencia menú estándar del evento (anfitrión): ${String(ev.menu_standard_anfitrion).trim()}.`
+              : "";
+          return `Restricciones alimentarias (cubiertos): todos estándar según datos cargados (${st} cubierto(s) estándar).${refStdDigest}`;
         }
-        return `Restricciones (cubiertos en invitaciones/grupos): ${st} estándar; ${ce} celíaco/TACC; ${vv} vegetariano/vegano; ${ot} otra(s). Filas de invitación con al menos un cubierto no estándar: ${invN}.`;
+        const refStdMix =
+          ev.menu_standard_anfitrion != null && String(ev.menu_standard_anfitrion).trim()
+            ? ` Referencia menú estándar del evento (anfitrión): ${String(ev.menu_standard_anfitrion).trim()}.`
+            : "";
+        return `Restricciones (cubiertos en invitaciones/grupos): ${st} estándar; ${ce} celíaco/TACC; ${vv} vegetariano/vegano; ${ot} otra(s). Filas de invitación con al menos un cubierto no estándar: ${invN}.${refStdMix}`;
       })(),
       nombresBloque,
     ].join("\n\n");
@@ -415,6 +428,10 @@ export function liveDataDigestForChat(contextJson: string): string {
 }
 
 function replyAnfitrionRestricciones(ev: Record<string, unknown>): string {
+  const prefijoStd =
+    ev.menu_standard_anfitrion != null && String(ev.menu_standard_anfitrion).trim()
+      ? `Menú estándar del evento (elección del anfitrión): ${String(ev.menu_standard_anfitrion).trim()}.\n\n`
+      : "";
   const c = ev.restricciones_cubiertos as Record<string, number> | undefined;
   const st = c != null ? Number(c.estandar ?? 0) : 0;
   const ce = c != null ? Number(c.celiaco ?? 0) : 0;
@@ -432,7 +449,7 @@ function replyAnfitrionRestricciones(ev: Record<string, unknown>): string {
       menusUi.length > 1 || (menusUi.length === 1 && menusUi[0] !== "Ninguna")
         ? `Opciones configuradas al elegir:\n${fmtLista(menusUi)}`
         : "Solo opción estándar en configuración.";
-    return `En la base no hay cubiertos no estándar todavía.\n\n${ofrecen}\n\nEditar opciones: Menús y restricciones (panel anfitrión).`;
+    return prefijoStd + `En la base no hay cubiertos no estándar todavía.\n\n${ofrecen}\n\nEditar opciones: Menús y restricciones (panel anfitrión).`;
   }
   const maxEj = 6;
   const ms = muestra.slice(0, maxEj);
@@ -442,7 +459,7 @@ function replyAnfitrionRestricciones(ev: Record<string, unknown>): string {
     ms.length > 0
       ? `${ms.map((m) => `• ${String(m.nombre ?? "Invitado")}: ${String(m.detalle ?? "—")}`).join("\n")}${sufijoMas}`
       : "Sin muestra de nombres en este mensaje.";
-  return `${agregado}\n\n${lines}\n\nMás: Invitados / Menús y restricciones.`;
+  return prefijoStd + `${agregado}\n\n${lines}\n\nMás: Invitados / Menús y restricciones.`;
 }
 
 function replyAnfitrionConfirmados(ev: Record<string, unknown>): string {

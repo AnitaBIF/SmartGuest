@@ -96,6 +96,9 @@ export const supabase = createBrowserClient<Database>(supabaseUrl, supabaseAnonK
  */
 const LOGOUT_UI_CAP_MS = 500;
 
+/** Tras cerrar sesión (manual o por watchdog), siempre volver al login, no al landing. */
+export const POST_LOGOUT_REDIRECT_PATH = "/login";
+
 /** Aviso al servidor sin await (sobrevive al cambio de página). */
 export function notifyServerLogoutKeepalive(): void {
   if (typeof window === "undefined") return;
@@ -152,6 +155,6 @@ export async function logoutCleanupFast(): Promise<void> {
 export async function logout() {
   await logoutCleanupFast();
   if (typeof window !== "undefined") {
-    window.location.replace("/");
+    window.location.replace(POST_LOGOUT_REDIRECT_PATH);
   }
 }

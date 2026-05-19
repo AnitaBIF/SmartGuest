@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { logoutCleanupFast, supabase } from "@/lib/supabase";
+import { logoutCleanupFast, POST_LOGOUT_REDIRECT_PATH, supabase } from "@/lib/supabase";
 
 /**
  * Vigila la sesión del usuario y la cierra automáticamente en dos casos:
@@ -146,7 +146,7 @@ export default function SessionWatchdog() {
       clearLastAlive();
       await logoutCleanupFast();
       if (!cancelled) {
-        window.location.replace("/");
+        window.location.replace(POST_LOGOUT_REDIRECT_PATH);
       }
     };
 
