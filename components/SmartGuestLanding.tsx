@@ -1,9 +1,8 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 
 const NEON = "#00FF88";
 const BG_TOP = "#050A1A";
@@ -130,156 +129,89 @@ const BENTO_ITEMS = [
   },
 ];
 
-const AUTOPLAY_MS = 5000;
-
-/**
- * Carrusel estilo mockup de teléfono: una captura centrada, autoplay y barra de progreso.
- */
-function LandingGalleryCarousel({
+/** Fila estática de capturas: sin marco de teléfono, una al lado de la otra; leve arco 3D (se desactiva con “reducir movimiento”). */
+function LandingGalleryStrip({
   items,
   reduced,
 }: {
   items: GallerySlot[];
   reduced: boolean;
 }) {
-  const [active, setActive] = useState(0);
   const n = items.length;
-
-  useEffect(() => {
-    if (n <= 1 || reduced) return;
-    const id = window.setTimeout(() => {
-      setActive((a) => (a + 1) % n);
-    }, AUTOPLAY_MS);
-    return () => window.clearTimeout(id);
-  }, [active, n, reduced]);
-
-  const go = (dir: -1 | 1) => {
-    setActive((a) => (a + dir + n) % n);
-  };
-
-  const jump = (i: number) => {
-    setActive(((i % n) + n) % n);
-  };
-
   if (n === 0) return null;
 
-  const item = items[active];
+  const mid = (n - 1) / 2;
 
   return (
     <div
-      className="mx-auto w-full max-w-[min(100vw,22rem)] sm:max-w-[23rem]"
-      role="region"
-      aria-roledescription="carrusel"
+      className="relative mx-auto w-full max-w-6xl px-1 sm:px-3"
       aria-label="Capturas de la aplicación SmartGuest"
     >
-      <div className="flex items-center gap-2 sm:gap-4">
-        <button
-          type="button"
-          onClick={() => go(-1)}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/12 bg-black/45 text-white/90 backdrop-blur-sm transition hover:border-[#00FF88]/40 hover:bg-black/60 sm:h-10 sm:w-10"
-          aria-label="Imagen anterior"
-        >
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
+      <div
+        className={
+          "flex min-h-[min(48vh,340px)] items-center justify-start gap-3 overflow-x-auto overflow-y-visible py-4 [scrollbar-width:thin] " +
+          "[scrollbar-color:rgba(0,255,136,0.3)_transparent] sm:justify-center sm:gap-4 sm:overflow-x-visible md:min-h-[380px] md:gap-5 " +
+          "[&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#00FF88]/35"
+        }
+        style={reduced ? undefined : { perspective: "1100px" }}
+      >
+        {items.map((item, i) => {
+          const offset = i - mid;
+          const abs = Math.abs(offset);
+          const transform = reduced
+            ? undefined
+            : `rotateY(${offset * -15}deg) scale(${1 - abs * 0.06}) translateZ(${-abs * 14}px)`;
 
-        {/* Chasis tipo smartphone */}
-        <div className="min-w-0 flex-1">
-          <div
-            className={
-              "rounded-[1.65rem] border border-white/[0.14] bg-gradient-to-b from-[#252a38] via-[#151a24] to-[#0a0d14] " +
-              "p-[10px] shadow-[0_24px_48px_-16px_rgba(0,0,0,0.75),inset_0_1px_0_rgba(255,255,255,0.06)] sm:p-3"
-            }
-          >
-            <div className="mx-auto mb-2 h-1 w-16 rounded-full bg-black/55 ring-1 ring-white/[0.08]" aria-hidden />
-            <div className="relative overflow-hidden rounded-[1.15rem] bg-[#000] ring-1 ring-black/80">
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.div
-                  key={active}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: reduced ? 0 : 0.22 }}
-                  className="relative aspect-[9/19.5] w-full"
-                >
-                  {"placeholder" in item ? (
-                    <div className="flex h-full w-full flex-col items-center justify-center gap-3 px-4 text-center">
-                      <span className="text-3xl opacity-35" aria-hidden>
-                        📱
-                      </span>
-                      <p className="text-[11px] leading-relaxed text-white/45">
-                        Guardá imágenes en <span className="text-[#00FF88]/90">public/landing/</span> y listalas en{" "}
-                        <code className="rounded bg-white/10 px-1 text-[10px]">LANDING_GALLERY</code>
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                      <Image
-                        src={item.src}
-                        alt={item.alt}
-                        fill
-                        className="object-contain object-center"
-                        sizes="(max-width:640px) 76vw, 288px"
-                        priority={active === 0}
-                      />
-                      <div
-                        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent"
-                        aria-hidden
-                      />
-                    </>
-                  )}
-                </motion.div>
-              </AnimatePresence>
-            </div>
-          </div>
-
-          {/* Barra de progreso del autoplay */}
-          {n > 1 ? (
+          return (
             <div
-              className="mt-4 h-1 w-full overflow-hidden rounded-full bg-white/10"
-              aria-hidden={reduced}
+              key={i}
+              className="relative shrink-0"
+              style={
+                reduced
+                  ? { zIndex: 5 }
+                  : {
+                      transform,
+                      transformStyle: "preserve-3d" as const,
+                      zIndex: 10 - abs,
+                    }
+              }
             >
-              {reduced ? (
-                <div className="h-full w-full bg-[#00FF88]/35" />
-              ) : (
-                <motion.div
-                  key={active}
-                  className="h-full rounded-full bg-[#00FF88] shadow-[0_0_12px_rgba(0,255,136,0.45)]"
-                  initial={{ width: "0%" }}
-                  animate={{ width: "100%" }}
-                  transition={{ duration: AUTOPLAY_MS / 1000, ease: "linear" }}
-                />
-              )}
+              <div
+                className={
+                  "relative w-[min(38vw,10rem)] overflow-hidden rounded-2xl border border-white/12 " +
+                  "bg-[#0b1020] shadow-[0_20px_48px_-16px_rgba(0,0,0,0.65)] ring-1 ring-white/[0.05] sm:w-40 md:w-44"
+                }
+              >
+                {"placeholder" in item ? (
+                  <div className="flex aspect-[9/16] w-full flex-col items-center justify-center gap-2 px-3 text-center">
+                    <span className="text-2xl opacity-35" aria-hidden>
+                      📱
+                    </span>
+                    <p className="text-[10px] leading-relaxed text-white/45">
+                      Guardá imágenes en <span className="text-[#00FF88]/90">public/landing/</span> y listalas en{" "}
+                      <code className="rounded bg-white/10 px-1 text-[9px]">LANDING_GALLERY</code>
+                    </p>
+                  </div>
+                ) : (
+                  <div className="relative aspect-[9/16] w-full">
+                    <Image
+                      src={item.src}
+                      alt={item.alt}
+                      fill
+                      className="object-contain object-center"
+                      sizes="(max-width:640px) 38vw, 176px"
+                      priority={i === 0}
+                    />
+                    <div
+                      className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#050A1A]/20 via-transparent to-transparent"
+                      aria-hidden
+                    />
+                  </div>
+                )}
+              </div>
             </div>
-          ) : null}
-        </div>
-
-        <button
-          type="button"
-          onClick={() => go(1)}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/12 bg-black/45 text-white/90 backdrop-blur-sm transition hover:border-[#00FF88]/40 hover:bg-black/60 sm:h-10 sm:w-10"
-          aria-label="Imagen siguiente"
-        >
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-      </div>
-
-      <div className="mt-5 flex justify-center gap-2">
-        {items.map((_, i) => (
-          <button
-            key={i}
-            type="button"
-            onClick={() => jump(i)}
-            className={`h-2 rounded-full transition-all ${
-              i === active ? "w-8 bg-[#00FF88] shadow-[0_0_10px_rgba(0,255,136,0.35)]" : "w-2 bg-white/22 hover:bg-white/38"
-            }`}
-            aria-label={`Ir a la imagen ${i + 1} de ${n}`}
-            aria-current={i === active ? true : undefined}
-          />
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -436,7 +368,7 @@ export default function SmartGuestLanding() {
               aria-hidden
             />
           </div>
-          <LandingGalleryCarousel items={galleryItems} reduced={!!reduce} />
+          <LandingGalleryStrip items={galleryItems} reduced={!!reduce} />
         </motion.div>
       </main>
 
