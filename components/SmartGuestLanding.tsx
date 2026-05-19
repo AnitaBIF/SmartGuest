@@ -1,9 +1,9 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 const NEON = "#00FF88";
 const BG_TOP = "#050A1A";
@@ -15,10 +15,6 @@ const glass =
 
 const glassStrong =
   "rounded-[1.35rem] border border-[#00FF88]/25 bg-gradient-to-b from-white/[0.09] to-white/[0.02] shadow-[0_0_40px_-8px_rgba(0,255,136,0.2)] backdrop-blur-[18px]";
-
-/** Carrusel: glass sin borde neón fuerte para evitar “líneas” duras entre slides. */
-const galleryCard =
-  "rounded-[1.35rem] border border-white/12 bg-gradient-to-b from-white/[0.08] to-white/[0.02] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.55)] backdrop-blur-[18px]";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -134,10 +130,11 @@ const BENTO_ITEMS = [
   },
 ];
 
-const SLIDE_WIDTH_CLASS =
-  "w-[min(82vw,240px)] sm:w-[260px] md:w-[280px]";
+const AUTOPLAY_MS = 5000;
 
-/** Carrusel compacto: autoplay continuo, una slide protagonista, snap al centro. */
+/**
+ * Carrusel estilo mockup de teléfono: una captura centrada, autoplay y barra de progreso.
+ */
 function LandingGalleryCarousel({
   items,
   reduced,
@@ -145,129 +142,139 @@ function LandingGalleryCarousel({
   items: GallerySlot[];
   reduced: boolean;
 }) {
-  const scrollerRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
   const n = items.length;
 
-  const centerSlide = useCallback(
-    (i: number) => {
-      const root = scrollerRef.current;
-      if (!root) return;
-      const target = root.children[i] as HTMLElement | undefined;
-      if (!target) return;
-      const nextLeft = target.offsetLeft - (root.clientWidth - target.offsetWidth) / 2;
-      root.scrollTo({
-        left: Math.max(0, nextLeft),
-        behavior: reduced ? "auto" : "smooth",
-      });
-    },
-    [reduced],
-  );
-
-  useLayoutEffect(() => {
-    centerSlide(active);
-  }, [active, centerSlide]);
-
   useEffect(() => {
     if (n <= 1 || reduced) return;
-    const id = window.setInterval(() => {
+    const id = window.setTimeout(() => {
       setActive((a) => (a + 1) % n);
-    }, 4000);
-    return () => window.clearInterval(id);
-  }, [n, reduced]);
+    }, AUTOPLAY_MS);
+    return () => window.clearTimeout(id);
+  }, [active, n, reduced]);
 
   const go = (dir: -1 | 1) => {
     setActive((a) => (a + dir + n) % n);
   };
 
+  const jump = (i: number) => {
+    setActive(((i % n) + n) % n);
+  };
+
   if (n === 0) return null;
+
+  const item = items[active];
 
   return (
     <div
-      className="relative mx-auto w-full max-w-[min(100vw,340px)] sm:max-w-[360px]"
+      className="mx-auto w-full max-w-[min(100vw,22rem)] sm:max-w-[23rem]"
       role="region"
       aria-roledescription="carrusel"
       aria-label="Capturas de la aplicación SmartGuest"
     >
-      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 bg-gradient-to-r from-[#050A1A] to-transparent sm:w-14" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-[#050A1A] to-transparent sm:w-14" />
+      <div className="flex items-center gap-2 sm:gap-4">
+        <button
+          type="button"
+          onClick={() => go(-1)}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/12 bg-black/45 text-white/90 backdrop-blur-sm transition hover:border-[#00FF88]/40 hover:bg-black/60 sm:h-10 sm:w-10"
+          aria-label="Imagen anterior"
+        >
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
 
-      <button
-        type="button"
-        onClick={() => go(-1)}
-        className="absolute left-0 top-1/2 z-20 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/12 bg-black/40 text-white/85 backdrop-blur-sm transition hover:border-[#00FF88]/40 hover:bg-black/55 sm:h-10 sm:w-10"
-        aria-label="Imagen anterior"
-      >
-        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
-      <button
-        type="button"
-        onClick={() => go(1)}
-        className="absolute right-0 top-1/2 z-20 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/12 bg-black/40 text-white/85 backdrop-blur-sm transition hover:border-[#00FF88]/40 hover:bg-black/55 sm:h-10 sm:w-10"
-        aria-label="Imagen siguiente"
-      >
-        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-        </svg>
-      </button>
-
-      <div
-        ref={scrollerRef}
-        className={
-          "flex scroll-snap-x snap-mandatory gap-4 overflow-x-auto overflow-y-hidden scroll-smooth pb-2 pt-1 " +
-          "[scroll-padding-inline:max(1rem,calc(50%-min(41vw,120px)))] sm:[scroll-padding-inline:max(1rem,calc(50%-130px))] md:[scroll-padding-inline:max(1rem,calc(50%-140px))] " +
-          "[scrollbar-width:thin] [scrollbar-color:rgba(0,255,136,0.35)_transparent] hover:[scrollbar-color:rgba(0,255,136,0.55)_transparent] " +
-          "[&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#00FF88]/40"
-        }
-      >
-        {items.map((item, idx) => (
+        {/* Chasis tipo smartphone */}
+        <div className="min-w-0 flex-1">
           <div
-            key={idx}
-            className={`${galleryCard} shrink-0 snap-center scroll-ml-4 p-2 first:ml-[max(1rem,calc(50%-min(41vw,120px)))] last:mr-[max(1rem,calc(50%-min(41vw,120px)))] sm:p-2.5 sm:first:ml-[max(1rem,calc(50%-130px))] sm:last:mr-[max(1rem,calc(50%-130px))] md:first:ml-[max(1rem,calc(50%-140px))] md:last:mr-[max(1rem,calc(50%-140px))] ${SLIDE_WIDTH_CLASS}`}
+            className={
+              "rounded-[1.65rem] border border-white/[0.14] bg-gradient-to-b from-[#252a38] via-[#151a24] to-[#0a0d14] " +
+              "p-[10px] shadow-[0_24px_48px_-16px_rgba(0,0,0,0.75),inset_0_1px_0_rgba(255,255,255,0.06)] sm:p-3"
+            }
           >
-            <div className="relative overflow-hidden rounded-[1.25rem] bg-[#0b1020] ring-1 ring-white/10">
-              <div className="absolute left-1/2 top-2 z-10 h-1 w-12 -translate-x-1/2 rounded-full bg-black/50 ring-1 ring-white/10" />
-              {"placeholder" in item ? (
-                <div className="flex aspect-[9/16] w-full flex-col items-center justify-center gap-3 px-4 text-center">
-                  <span className="text-3xl opacity-35" aria-hidden>
-                    📱
-                  </span>
-                  <p className="text-[11px] leading-relaxed text-white/45">
-                    Guardá imágenes en <span className="text-[#00FF88]/90">public/landing/</span> y listalas en{" "}
-                    <code className="rounded bg-white/10 px-1 text-[10px]">LANDING_GALLERY</code>
-                  </p>
-                </div>
-              ) : (
-                <div className="relative aspect-[9/16] w-full">
-                  <Image
-                    src={item.src}
-                    alt={item.alt}
-                    fill
-                    className="object-contain object-center"
-                    sizes="(max-width:640px) 82vw, 280px"
-                    priority={idx === 0}
-                  />
-                  <div
-                    className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#050A1A]/35 via-transparent to-transparent"
-                    aria-hidden
-                  />
-                </div>
-              )}
+            <div className="mx-auto mb-2 h-1 w-16 rounded-full bg-black/55 ring-1 ring-white/[0.08]" aria-hidden />
+            <div className="relative overflow-hidden rounded-[1.15rem] bg-[#000] ring-1 ring-black/80">
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={active}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: reduced ? 0 : 0.22 }}
+                  className="relative aspect-[9/19.5] w-full"
+                >
+                  {"placeholder" in item ? (
+                    <div className="flex h-full w-full flex-col items-center justify-center gap-3 px-4 text-center">
+                      <span className="text-3xl opacity-35" aria-hidden>
+                        📱
+                      </span>
+                      <p className="text-[11px] leading-relaxed text-white/45">
+                        Guardá imágenes en <span className="text-[#00FF88]/90">public/landing/</span> y listalas en{" "}
+                        <code className="rounded bg-white/10 px-1 text-[10px]">LANDING_GALLERY</code>
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <Image
+                        src={item.src}
+                        alt={item.alt}
+                        fill
+                        className="object-contain object-center"
+                        sizes="(max-width:640px) 76vw, 288px"
+                        priority={active === 0}
+                      />
+                      <div
+                        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent"
+                        aria-hidden
+                      />
+                    </>
+                  )}
+                </motion.div>
+              </AnimatePresence>
             </div>
           </div>
-        ))}
+
+          {/* Barra de progreso del autoplay */}
+          {n > 1 ? (
+            <div
+              className="mt-4 h-1 w-full overflow-hidden rounded-full bg-white/10"
+              aria-hidden={reduced}
+            >
+              {reduced ? (
+                <div className="h-full w-full bg-[#00FF88]/35" />
+              ) : (
+                <motion.div
+                  key={active}
+                  className="h-full rounded-full bg-[#00FF88] shadow-[0_0_12px_rgba(0,255,136,0.45)]"
+                  initial={{ width: "0%" }}
+                  animate={{ width: "100%" }}
+                  transition={{ duration: AUTOPLAY_MS / 1000, ease: "linear" }}
+                />
+              )}
+            </div>
+          ) : null}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => go(1)}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/12 bg-black/45 text-white/90 backdrop-blur-sm transition hover:border-[#00FF88]/40 hover:bg-black/60 sm:h-10 sm:w-10"
+          aria-label="Imagen siguiente"
+        >
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
       </div>
 
-      <div className="mt-4 flex justify-center gap-2">
+      <div className="mt-5 flex justify-center gap-2">
         {items.map((_, i) => (
           <button
             key={i}
             type="button"
-            onClick={() => setActive(i)}
+            onClick={() => jump(i)}
             className={`h-2 rounded-full transition-all ${
-              i === active ? "w-8 bg-[#00FF88]" : "w-2 bg-white/25 hover:bg-white/40"
+              i === active ? "w-8 bg-[#00FF88] shadow-[0_0_10px_rgba(0,255,136,0.35)]" : "w-2 bg-white/22 hover:bg-white/38"
             }`}
             aria-label={`Ir a la imagen ${i + 1} de ${n}`}
             aria-current={i === active ? true : undefined}
