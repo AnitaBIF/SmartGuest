@@ -99,37 +99,15 @@ export default function QRPage() {
           <p className="text-center text-muted">No hay código disponible.</p>
         ) : (
           <>
-            <div className="w-full rounded-2xl border border-border bg-card-muted px-4 py-4 text-center sm:px-5">
-              <p className="text-[13px] font-semibold text-brand">Código en vivo (no sirve una foto fija)</p>
-              <p className="mt-2 text-[12px] leading-relaxed text-muted">
-                El QR se renueva cada {payload.windowSeconds} segundos: solo es válido el que ves ahora en esta pantalla. Una
-                captura de pantalla deja de servir al rato y en la puerta suelen rechazarla.
-              </p>
-            </div>
-
-            <div className="w-full rounded-xl border border-amber-200/80 bg-amber-50/90 px-3 py-2.5 text-center text-[11px] leading-snug text-amber-950 dark:border-amber-800/60 dark:bg-amber-950/35 dark:text-amber-100">
-              En el navegador <strong>no se puede impedir</strong> que saquen foto de pantalla; por eso el código cambia
-              solo y seguridad ve si es primer ingreso o reingreso. En el evento abrí esta página en vivo.
-            </div>
-
-            <p className="w-full px-1 text-center text-[14px] leading-relaxed text-muted">
-              En la entrada mostrá <strong>esta pantalla abierta</strong> (contador corriendo). No uses imagen guardada.
+            <p className="w-full px-1 text-center text-[13px] leading-relaxed text-muted">
+              En la entrada presentá el código que figure acá cuando te lo pidan.
             </p>
 
-            {/* select-none / touch-callout: en algunos móviles reduce guardar imagen con pulsación larga; no bloquea captura del sistema. */}
             <div className="flex w-full justify-center">
               <div
                 className="rounded-3xl bg-[#ffffff] p-4 shadow-lg ring-1 ring-border sm:p-6 [&_svg]:pointer-events-none select-none [-webkit-touch-callout:none] [-webkit-user-select:none] [user-select:none]"
-                aria-describedby="qr-live-hint"
+                aria-label="Código QR de ingreso"
               >
-                <p id="qr-live-hint" className="sr-only">
-                  Código bidimensional que se actualiza solo; mostrar en vivo en la entrada.
-                </p>
-                <div className="mb-2 flex justify-center">
-                  <span className="rounded-md bg-emerald-600/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-200">
-                    En vivo · no foto
-                  </span>
-                </div>
                 <QRCodeSVG
                   value={payload.token}
                   size={qrSize}
