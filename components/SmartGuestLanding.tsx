@@ -3,6 +3,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 
 const NEON = "#00FF88";
 const BG_TOP = "#050A1A";
@@ -138,6 +139,7 @@ function LandingGalleryStrip({
   reduced: boolean;
 }) {
   const n = items.length;
+  const [hovered, setHovered] = useState<number | null>(null);
   if (n === 0) return null;
 
   const mid = (n - 1) / 2;
@@ -172,16 +174,36 @@ function LandingGalleryStrip({
                   : {
                       transform,
                       transformStyle: "preserve-3d" as const,
-                      zIndex: 10 - abs,
+                      zIndex: hovered === i ? 50 : 10 - abs,
                     }
               }
+              onMouseEnter={() => setHovered(i)}
+              onMouseLeave={() => setHovered(null)}
             >
               <div
                 className={
-                  "relative w-[min(72vw,18rem)] overflow-hidden rounded-2xl border border-white/12 " +
-                  "bg-[#0b1020] shadow-[0_20px_48px_-16px_rgba(0,0,0,0.65)] ring-1 ring-white/[0.05] sm:w-56 md:w-64 lg:w-72"
+                  "group relative " +
+                  (reduced
+                    ? ""
+                    : "transition duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform hover:-translate-y-4 hover:scale-[1.04]")
                 }
               >
+                {!reduced ? (
+                  <div
+                    className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[88%] w-[92%] -translate-x-1/2 -translate-y-1/2 rounded-[2rem] bg-white/30 opacity-0 blur-2xl transition duration-300 ease-out group-hover:opacity-100 sm:blur-3xl"
+                    aria-hidden
+                  />
+                ) : null}
+                <div
+                  className={
+                    "relative z-[1] w-[min(72vw,18rem)] overflow-hidden rounded-2xl border border-white/12 " +
+                    "bg-[#0b1020] shadow-[0_20px_48px_-16px_rgba(0,0,0,0.65)] ring-1 ring-white/[0.05] sm:w-56 md:w-64 lg:w-72 " +
+                    (reduced
+                      ? ""
+                      : "transition duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:border-white/25 " +
+                        "group-hover:shadow-[0_28px_60px_-18px_rgba(0,0,0,0.55),0_0_45px_-6px_rgba(255,255,255,0.4)] group-hover:ring-white/25")
+                  }
+                >
                 {"placeholder" in item ? (
                   <div className="flex min-h-[220px] w-full flex-col items-center justify-center gap-2 px-3 py-8 text-center">
                     <span className="text-2xl opacity-35" aria-hidden>
@@ -211,6 +233,7 @@ function LandingGalleryStrip({
                   </div>
                 )}
               </div>
+            </div>
             </div>
           );
         })}
