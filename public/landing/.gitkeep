@@ -2,4 +2,6 @@ const LANDING_GALLERY: { src: string; alt: string }[] = [
   { src: "/landing/Invitado1imagen.png", alt: "Invitado — datos del evento" },
   { src: "/landing/QR Dinamico3.png", alt: "QR de ingreso" },
   { src: "/landing/SmartPool2.png", alt: "SmartPool" },
+  { src: "/landing/Cocina.png", alt: "Panel de Cocina" },
+  { src: "/landing/SmartSeat.png", alt: "SmartSeat" },
 ];

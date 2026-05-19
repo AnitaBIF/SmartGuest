@@ -46,6 +46,8 @@ type GallerySlot = { src: string; alt: string } | { placeholder: true };
  */
 const LANDING_GALLERY: { src: string; alt: string }[] = [
   { src: "/landing/Invitado1imagen.png", alt: "Vista invitado — datos del evento" },
+  { src: "/landing/SmartSeat.jpeg", alt: "SmartSeat — gestión de mesas" },
+  { src: "/landing/Cocina.png", alt: "Vista jefe de cocina — conteos y menús" },
   { src: "/landing/SmartPool2.png", alt: "SmartPool — viajes compartidos" },
   {
     src: `/landing/${encodeURIComponent("QR Dinamico3.png")}`,
