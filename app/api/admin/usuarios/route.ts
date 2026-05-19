@@ -104,18 +104,13 @@ export async function POST(req: NextRequest) {
 
   const { data: inviter, error: invErr } = await db
     .from("usuarios")
-    .select(
-      "cuit, habilitacion_numero, salon_menus_especiales, salon_menus_especiales_otro, salon_menu_standard"
-    )
+    .select("salon_menus_especiales, salon_menus_especiales_otro, salon_menu_standard")
     .eq("id", userId)
     .single();
 
   if (invErr || !inviter) {
     return NextResponse.json({ error: "No se pudo cargar tu perfil de salón." }, { status: 500 });
   }
-
-  const cuitInv = typeof inviter.cuit === "string" ? inviter.cuit.trim() : "";
-  const habInv = typeof inviter.habilitacion_numero === "string" ? inviter.habilitacion_numero.trim() : "";
 
   const dniFinal = dniFinalParaAltaUsuario(dni);
 
@@ -134,10 +129,6 @@ export async function POST(req: NextRequest) {
     salon_nombre: salonNombre,
     salon_direccion: salonDireccion,
   };
-  if (tipo === "administrador") {
-    userMeta.cuit = cuitInv || null;
-    userMeta.habilitacion_numero = habInv || null;
-  }
 
   const { data: authData, error: authError } = await db.auth.admin.createUser({
     email,
@@ -165,6 +156,8 @@ export async function POST(req: NextRequest) {
     patch.salon_menus_especiales = inviter.salon_menus_especiales ?? [];
     patch.salon_menus_especiales_otro = inviter.salon_menus_especiales_otro ?? null;
     patch.salon_menu_standard = inviter.salon_menu_standard ?? null;
+    patch.cuit = null;
+    patch.habilitacion_numero = null;
   }
 
   const { error: updateError } = await db.from("usuarios").update(patch).eq("id", newId);
@@ -190,9 +183,9 @@ export async function POST(req: NextRequest) {
         tipo: "administrador",
         salon_nombre: salonNombre,
         salon_direccion: salonDireccion,
-        cuit: cuitInv || null,
-        habilitacion_numero: habInv || null,
         salon_menu_standard: inviter.salon_menu_standard ?? null,
+        cuit: null,
+        habilitacion_numero: null,
       },
     });
     if (metaErr) {

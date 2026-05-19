@@ -20,8 +20,6 @@ type CuentaUsuario = Pick<
   | "tipo"
   | "salon_nombre"
   | "salon_direccion"
-  | "cuit"
-  | "habilitacion_numero"
   | "salon_menus_especiales"
   | "salon_menus_especiales_otro"
   | "salon_menu_standard"
@@ -73,7 +71,7 @@ export async function GET(req: NextRequest) {
   const { data: profileRow, error } = await supabase
     .from("usuarios")
     .select(
-      "nombre, apellido, dni, email, tipo, salon_nombre, salon_direccion, cuit, habilitacion_numero, salon_menus_especiales, salon_menus_especiales_otro, salon_menu_standard"
+      "nombre, apellido, dni, email, tipo, salon_nombre, salon_direccion, salon_menus_especiales, salon_menus_especiales_otro, salon_menu_standard"
     )
     .eq("id", user.id)
     .single();
@@ -96,8 +94,6 @@ export async function GET(req: NextRequest) {
     email,
     salonNombre: profile.salon_nombre ?? "",
     salonDireccion: profile.salon_direccion ?? "",
-    cuit: profile.cuit ?? "",
-    habilitacionNumero: profile.habilitacion_numero ?? "",
     salonMenusEspeciales: profile.salon_menus_especiales ?? [],
     salonMenusEspecialesOtro: profile.salon_menus_especiales_otro ?? "",
     salonMenuStandard: profile.salon_menu_standard ?? "",
@@ -112,7 +108,7 @@ export async function PUT(req: NextRequest) {
   const { data: profileRow, error: pErr } = await supabase
     .from("usuarios")
     .select(
-      "nombre, apellido, dni, email, tipo, salon_nombre, salon_direccion, cuit, habilitacion_numero, salon_menus_especiales, salon_menus_especiales_otro, salon_menu_standard"
+      "nombre, apellido, dni, email, tipo, salon_nombre, salon_direccion, salon_menus_especiales, salon_menus_especiales_otro, salon_menu_standard"
     )
     .eq("id", user.id)
     .single();
@@ -129,9 +125,6 @@ export async function PUT(req: NextRequest) {
   const dni = normalizeDniInput(typeof body.dni === "string" ? body.dni : "");
   const salonNombre = typeof body.salonNombre === "string" ? body.salonNombre.trim() : "";
   const salonDireccion = typeof body.salonDireccion === "string" ? body.salonDireccion.trim() : "";
-  const cuit = typeof body.cuit === "string" ? body.cuit.trim() : "";
-  const habilitacionNumero =
-    typeof body.habilitacionNumero === "string" ? body.habilitacionNumero.trim() : "";
   const menusRaw = body.salonMenusEspeciales;
   const salonMenusEspeciales = Array.isArray(menusRaw)
     ? normalizarMenusEspecialesEvento(menusRaw.map((x: unknown) => String(x)))
@@ -216,8 +209,6 @@ export async function PUT(req: NextRequest) {
       tipo: "administrador",
       salon_nombre: salonNombre || null,
       salon_direccion: salonDireccion || null,
-      cuit: cuit || null,
-      habilitacion_numero: habilitacionNumero || null,
       salon_menu_standard: salonMenuStandardNorm,
     },
   };
@@ -240,8 +231,6 @@ export async function PUT(req: NextRequest) {
     email: quiereCambiarEmail ? emailNew : profile.email,
     salon_nombre: salonNombre || null,
     salon_direccion: salonDireccion || null,
-    cuit: cuit || null,
-    habilitacion_numero: habilitacionNumero || null,
     salon_menus_especiales: salonMenusEspeciales,
     salon_menus_especiales_otro: salonMenusEspeciales.includes("Otro") ? salonMenusEspecialesOtro : null,
     salon_menu_standard: salonMenuStandardNorm,

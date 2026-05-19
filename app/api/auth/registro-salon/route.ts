@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import type { Database } from "@/lib/database.types";
 import { normalizarMenusEspecialesEvento } from "@/lib/grupoFamiliar";
-import { cuitValido, dniValido, formatearCuit, soloDigitos } from "@/lib/registroSalon";
+import { dniValido, soloDigitos } from "@/lib/registroSalon";
 import {
   formatSalonMenuStandardOpciones,
   parseSalonMenuStandardToOpciones,
@@ -38,8 +38,6 @@ export async function POST(req: NextRequest) {
   const password = typeof body.password === "string" ? body.password : "";
   const salonNombre = str(body.salon_nombre);
   const salonDireccion = str(body.salon_direccion);
-  const cuitRaw = str(body.cuit);
-  const habilitacion = str(body.habilitacion_numero);
   const menusRaw = body.menus_especiales;
   const menusEspeciales = Array.isArray(menusRaw)
     ? normalizarMenusEspecialesEvento(menusRaw.map((x) => String(x)))
@@ -65,12 +63,6 @@ export async function POST(req: NextRequest) {
   if (salonDireccion.length < 8) {
     return NextResponse.json({ error: "Indicá la dirección completa del local (calle, número, ciudad)." }, { status: 400 });
   }
-  if (!cuitValido(cuitRaw)) {
-    return NextResponse.json({ error: "CUIT inválido (debe tener 11 dígitos)." }, { status: 400 });
-  }
-  if (habilitacion.length < 2) {
-    return NextResponse.json({ error: "Indicá el número de habilitación del local." }, { status: 400 });
-  }
   const menuStdOpciones = parseSalonMenuStandardToOpciones(menuStandard);
   const menuStdErr = validateSalonMenuStandardOpciones(menuStdOpciones);
   if (menuStdErr) {
@@ -82,7 +74,6 @@ export async function POST(req: NextRequest) {
   }
 
   const dniNorm = soloDigitos(dni);
-  const cuitFmt = formatearCuit(cuitRaw);
 
   const supabase = adminClient();
 
@@ -102,8 +93,6 @@ export async function POST(req: NextRequest) {
       tipo: "administrador",
       salon_nombre: salonNombre,
       salon_direccion: salonDireccion,
-      cuit: cuitFmt,
-      habilitacion_numero: habilitacion,
       salon_menu_standard: menuStandardNorm,
     },
   });
@@ -122,8 +111,8 @@ export async function POST(req: NextRequest) {
       dni: dniNorm,
       salon_nombre: salonNombre,
       salon_direccion: salonDireccion,
-      cuit: cuitFmt,
-      habilitacion_numero: habilitacion,
+      cuit: null,
+      habilitacion_numero: null,
       salon_menus_especiales: menusEspeciales,
       salon_menus_especiales_otro: menusEspeciales.includes("Otro") ? menusOtro : null,
       salon_menu_standard: menuStandardNorm,

@@ -10,7 +10,7 @@ import {
   formatSalonMenuStandardOpciones,
   validateSalonMenuStandardOpciones,
 } from "@/lib/salonMenuStandardOpciones";
-import { cuitValido, dniValido } from "@/lib/registroSalon";
+import { dniValido } from "@/lib/registroSalon";
 
 function NotchedField({
   id,
@@ -67,8 +67,6 @@ export default function RegistroSalonPage() {
   const [dni, setDni] = useState("");
   const [salonNombre, setSalonNombre] = useState("");
   const [salonDireccion, setSalonDireccion] = useState("");
-  const [cuit, setCuit] = useState("");
-  const [habilitacion, setHabilitacion] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
@@ -128,14 +126,6 @@ export default function RegistroSalonPage() {
       setError("Indicá la dirección completa del local (calle, número, ciudad).");
       return;
     }
-    if (!cuitValido(cuit)) {
-      setError("CUIT inválido (11 dígitos, persona o empresa).");
-      return;
-    }
-    if (habilitacion.trim().length < 2) {
-      setError("Indicá el número de habilitación del local físico.");
-      return;
-    }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       setError("Email inválido. Lo usaremos para iniciar sesión y recuperar la contraseña.");
       return;
@@ -169,8 +159,6 @@ export default function RegistroSalonPage() {
           dni: dni.trim(),
           salon_nombre: salonNombre.trim(),
           salon_direccion: salonDireccion.trim(),
-          cuit: cuit.trim(),
-          habilitacion_numero: habilitacion.trim(),
           email: email.trim().toLowerCase(),
           password,
           menus_especiales: menusEspeciales,
@@ -265,23 +253,6 @@ export default function RegistroSalonPage() {
               placeholder="Calle, número, ciudad"
               value={salonDireccion}
               onChange={setSalonDireccion}
-              required
-            />
-            <NotchedField
-              id="cuit"
-              label="CUIT (personal o empresa)"
-              autoComplete="off"
-              placeholder="11 dígitos"
-              value={cuit}
-              onChange={setCuit}
-              required
-            />
-            <NotchedField
-              id="habilitacion"
-              label="Nº habilitación del local"
-              autoComplete="off"
-              value={habilitacion}
-              onChange={setHabilitacion}
               required
             />
 

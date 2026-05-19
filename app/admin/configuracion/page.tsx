@@ -47,8 +47,6 @@ export default function AdminConfiguracionPage() {
 
   const [salonNombre, setSalonNombre] = useState("");
   const [salonDireccion, setSalonDireccion] = useState("");
-  const [cuit, setCuit] = useState("");
-  const [habilitacionNumero, setHabilitacionNumero] = useState("");
   const [salonMenusEspeciales, setSalonMenusEspeciales] = useState<string[]>([]);
   const [salonMenusOtro, setSalonMenusOtro] = useState("");
   const [nOpcionesMenuStandard, setNOpcionesMenuStandard] = useState(1);
@@ -76,8 +74,6 @@ export default function AdminConfiguracionPage() {
       setEmailInicial(em.trim().toLowerCase());
       setSalonNombre(typeof data.salonNombre === "string" ? data.salonNombre : "");
       setSalonDireccion(typeof data.salonDireccion === "string" ? data.salonDireccion : "");
-      setCuit(typeof data.cuit === "string" ? data.cuit : "");
-      setHabilitacionNumero(typeof data.habilitacionNumero === "string" ? data.habilitacionNumero : "");
       setSalonMenusEspeciales(Array.isArray(data.salonMenusEspeciales) ? data.salonMenusEspeciales : []);
       setSalonMenusOtro(typeof data.salonMenusEspecialesOtro === "string" ? data.salonMenusEspecialesOtro : "");
       const rawMenuStd = typeof data.salonMenuStandard === "string" ? data.salonMenuStandard : "";
@@ -130,8 +126,6 @@ export default function AdminConfiguracionPage() {
           email: email.trim().toLowerCase(),
           salonNombre: salonNombre.trim(),
           salonDireccion: salonDireccion.trim(),
-          cuit: cuit.trim(),
-          habilitacionNumero: habilitacionNumero.trim(),
           salonMenusEspeciales,
           salonMenusEspecialesOtro: salonMenusOtro.trim(),
           salonMenuStandard: salonMenuStandardFormatted,
@@ -225,12 +219,6 @@ export default function AdminConfiguracionPage() {
                   </Field>
                   <Field label="Dirección del local" required>
                     <input className={inp} type="text" value={salonDireccion} onChange={(e) => setSalonDireccion(e.target.value)} />
-                  </Field>
-                  <Field label="CUIT">
-                    <input className={inp} type="text" value={cuit} onChange={(e) => setCuit(e.target.value)} />
-                  </Field>
-                  <Field label="Nº habilitación">
-                    <input className={inp} type="text" value={habilitacionNumero} onChange={(e) => setHabilitacionNumero(e.target.value)} />
                   </Field>
                 </div>
               </div>
