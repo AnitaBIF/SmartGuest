@@ -10,7 +10,11 @@ type PageTransitionProps = {
 };
 
 /**
- * Transición suave entre rutas: solo opacidad + blur muy leve (sin translate para evitar “saltos”).
+ * Transición suave entre rutas: solo opacidad.
+ *
+ * No usamos `filter: blur()` acá: en CSS, un ancestro con `filter` distinto de `none`
+ * convierte a los hijos `position: fixed` en “fixed al ancestro”, no al viewport — los
+ * modales (overlay `fixed inset-0`) quedan descentrados o pegados abajo.
  */
 export function PageTransition({ children, className }: PageTransitionProps) {
   const pathname = usePathname() ?? "";
@@ -25,9 +29,9 @@ export function PageTransition({ children, className }: PageTransitionProps) {
       <motion.div
         key={pathname}
         className={className}
-        initial={{ opacity: 0, filter: "blur(6px)" }}
-        animate={{ opacity: 1, filter: "blur(0px)" }}
-        exit={{ opacity: 0, filter: "blur(4px)" }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
         transition={{ duration: 0.42, ease: [0.33, 1, 0.68, 1] }}
       >
         {children}

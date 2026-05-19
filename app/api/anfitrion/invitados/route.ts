@@ -10,6 +10,10 @@ import {
   plazasSmartseatPorInvitado,
 } from "@/lib/grupoFamiliar";
 import {
+  collapseGuestsByGrupoForImport,
+  sumCuposDesdeFilasInvitados,
+} from "@/lib/invitadosImportGrupo";
+import {
   generateImportDni,
   generateSyntheticEmail,
   nombreDisplayInvitado,
@@ -135,6 +139,8 @@ export async function GET(req: NextRequest) {
 
   const rows = invsList ?? [];
 
+  const cuposTotalesReservados = sumCuposDesdeFilasInvitados(rows);
+
   const userIds = [...new Set(rows.map((i) => i.usuario_id).filter(Boolean) as string[])];
   let userMap: Record<
     string,
@@ -221,7 +227,12 @@ export async function GET(req: NextRequest) {
   const menuOpciones = menuOpcionesParaEvento(evento.menus_especiales);
 
   return NextResponse.json(
-    { invitados, menuOpciones },
+    {
+      invitados,
+      menuOpciones,
+      cuposTotalesReservados,
+      cupoEventoMax: evento.cantInvitados > 0 ? evento.cantInvitados : null,
+    },
     { headers: { "Cache-Control": "private, no-store, max-age=0" } },
   );
 }
@@ -242,6 +253,10 @@ export async function GET(req: NextRequest) {
  *
  * En ambos modos se agrupan lookups (usuarios por email/DNI, duplicados en el
  * evento) y el insert de invitados en bulk donde aplica.
+ *
+ * **Capacidad:** se compara la suma de `grupo_cupos_max` (cupos/personas por invitación),
+ * no la cantidad de filas. Varias filas con el mismo «Grupo» se fusionan en una sola
+ * invitación antes de insertar y antes de validar cupos.
  */
 export async function POST(req: NextRequest) {
   const user = await getSessionUser(req);
@@ -316,22 +331,29 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ created: 0, errors, total: guests.length });
   }
 
-  /* ────────────────── 2. Validación de capacidad del evento ────────────────── */
+  /** Misma familia = mismo texto en columna «Grupo» del Excel (varias filas → una invitación). */
+  const { collapsed: validasMerged } = collapseGuestsByGrupoForImport(validas);
+
+  /* ────────────────── 2. Validación de capacidad del evento (cupos = personas, no filas) ────────────────── */
 
   const limite = evento.cantInvitados;
   if (limite > 0) {
-    const { count, error: countErr } = await supabase
+    const { data: cuposRows, error: cuposErr } = await supabase
       .from("invitados")
-      .select("*", { count: "exact", head: true })
+      .select("grupo_cupos_max")
       .eq("evento_id", eventoId);
-    if (countErr) {
-      return NextResponse.json({ error: countErr.message }, { status: 500 });
+    if (cuposErr) {
+      return NextResponse.json({ error: cuposErr.message }, { status: 500 });
     }
-    const actuales = count ?? 0;
-    if (actuales + validas.length > limite) {
+    const cuposActuales = sumCuposDesdeFilasInvitados(cuposRows ?? []);
+    const cuposNuevaCarga = validasMerged.reduce(
+      (acc, r) => acc + clampCuposMax(r.grupoCuposMax, 1),
+      0,
+    );
+    if (cuposActuales + cuposNuevaCarga > limite) {
       return NextResponse.json(
         {
-          error: `El evento admite hasta ${limite} invitados. Ya hay ${actuales} en la lista; esta carga suma ${validas.length} (${actuales + validas.length} en total). Reducí filas o pedí aumentar la capacidad.`,
+          error: `Capacidad del evento: ${limite} personas (cupos). Ya hay ${cuposActuales} cupos reservados en invitaciones; esta carga sumaría ${cuposNuevaCarga} (${cuposActuales + cuposNuevaCarga} en total). Las filas del Excel con el mismo «Grupo» cuentan como una sola familia. Revisá cupos y grupos o pedí aumentar la capacidad.`,
         },
         { status: 400 },
       );
@@ -341,9 +363,9 @@ export async function POST(req: NextRequest) {
   /* ────────────────── 3. Bulk lookup: usuarios existentes por email/dni ────────────────── */
 
   const emailsProvidos = Array.from(
-    new Set(validas.filter((v) => v.emailProvided).map((v) => v.emailFinal)),
+    new Set(validasMerged.filter((v) => v.emailProvided).map((v) => v.emailFinal)),
   );
-  const dnisTodos = Array.from(new Set(validas.map((v) => v.dniFinal)));
+  const dnisTodos = Array.from(new Set(validasMerged.map((v) => v.dniFinal)));
 
   const [byEmailRes, byDniRes] = await Promise.all([
     emailsProvidos.length > 0
@@ -368,7 +390,7 @@ export async function POST(req: NextRequest) {
   /* ────────────────── 4. Resolver usuario_id por cada invitado ────────────────── */
 
   type Resolved = Pending & { usuarioId: string | null };
-  const resolved: Resolved[] = validas.map((v) => {
+  const resolved: Resolved[] = validasMerged.map((v) => {
     let usuarioId: string | null = null;
     if (v.emailProvided) usuarioId = emailToUserId.get(v.emailFinal) ?? null;
     if (!usuarioId) usuarioId = dniToUserId.get(v.dniFinal) ?? null;

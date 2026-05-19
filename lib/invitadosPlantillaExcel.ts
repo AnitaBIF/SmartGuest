@@ -21,7 +21,7 @@ export function downloadInvitadosPlantilla() {
     ["Celular", "Incluir código de área (ej. +54 9 11 1234-5678)."],
     [
       "Grupo",
-      "Ej.: Familia, Amigos Universidad, Amigos Escuela, Compañeros Trabajo, Otros (texto libre para agrupar en SmartSeat).",
+      "Identificador de familia o grupo de mesa. IMPORTANTE: si repetís exactamente el mismo texto en varias filas, SmartGuest las trata como una sola familia y genera una sola invitación (los cupos se calculan según esas filas y la columna Cupos). Para dos familias distintas usá textos distintos (ej. «Familia López», «Familia López 2»).",
     ],
     [
       "Rango etario",
@@ -29,7 +29,7 @@ export function downloadInvitadosPlantilla() {
     ],
     [
       "Cupos",
-      "Número entero entre 1 y 20. Indica a cuántas personas cubre esta única invitación (ej.: 4 si invitás a una familia de 4). Por defecto 1.",
+      "Número entero entre 1 y 20: cuántas personas cubre esta invitación familiar. Si hay varias filas con el mismo «Grupo», se fusionan en una sola invitación; los cupos serán el mayor valor entre lo que pongas acá y la cantidad de filas de ese grupo. Si omitís la columna o la celda, cada fila cuenta al menos como 1 persona.",
     ],
   ];
   const wsInstr = XLSX.utils.aoa_to_sheet(instr);

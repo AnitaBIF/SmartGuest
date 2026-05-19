@@ -9,7 +9,9 @@ import {
   type FormEvent,
 } from "react";
 import { LeyendaObligatorios, Req } from "@/components/FormRequired";
+import { clampCuposMax } from "@/lib/grupoFamiliar";
 import { downloadInvitadosPlantilla } from "@/lib/invitadosPlantillaExcel";
+import { collapseGuestsByGrupoForImport } from "@/lib/invitadosImportGrupo";
 import { parseInvitadosExcelFile } from "@/lib/parseInvitadosExcel";
 
 function Logo() {
@@ -426,6 +428,8 @@ export default function GestionInvitadosPage() {
   const [hostName, setHostName] = useState("Anfitrión");
   const [nombreEvento, setNombreEvento] = useState("");
   const [fechaEventoIso, setFechaEventoIso] = useState<string | null>(null);
+  /** Capacidad máxima del evento en personas (cupos); viene del GET de invitados o del evento. */
+  const [cupoEventoMax, setCupoEventoMax] = useState<number | null>(null);
   const [savingManual, setSavingManual] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -489,6 +493,12 @@ export default function GestionInvitadosPage() {
     }
     return Array.from(set).sort((a, b) => a.localeCompare(b, "es"));
   }, [invitados]);
+
+  /** Suma cupos reservados en la lista actual (personas máx. por invitación familiar). */
+  const cuposTotalesLista = useMemo(
+    () => invitados.reduce((acc, inv) => acc + clampCuposMax(inv.grupoCuposMax, 1), 0),
+    [invitados],
+  );
 
   const opcionesRango = useMemo(() => {
     const set = new Set<string>();
@@ -623,6 +633,11 @@ export default function GestionInvitadosPage() {
       } else {
         setMenuOpciones(["Ninguna"]);
       }
+      if (typeof data.cupoEventoMax === "number" && data.cupoEventoMax > 0) {
+        setCupoEventoMax(data.cupoEventoMax);
+      } else {
+        setCupoEventoMax(null);
+      }
       setInvitados(
         raw.map((row) => ({
           ...row,
@@ -688,6 +703,9 @@ export default function GestionInvitadosPage() {
           if (typeof d.evento?.nombre === "string") setNombreEvento(d.evento.nombre);
           if (typeof d.evento?.fecha === "string" && d.evento.fecha.trim()) {
             setFechaEventoIso(d.evento.fecha.trim());
+          }
+          if (typeof d.evento?.cantInvitados === "number" && d.evento.cantInvitados > 0) {
+            setCupoEventoMax(d.evento.cantInvitados);
           }
         }
       } catch {
@@ -832,13 +850,24 @@ export default function GestionInvitadosPage() {
         return;
       }
 
-      // Particionamos en chunks
-      const chunks: typeof guests[] = [];
-      for (let i = 0; i < guests.length; i += IMPORT_CHUNK_SIZE) {
-        chunks.push(guests.slice(i, i + IMPORT_CHUNK_SIZE));
+      const { collapsed: guestsParaImportar, gruposFusionados } = collapseGuestsByGrupoForImport(guests);
+
+      const cuposImport = guestsParaImportar.reduce((acc, g) => acc + clampCuposMax(g.grupoCuposMax, 1), 0);
+      const cuposListaActual = invitados.reduce((acc, inv) => acc + clampCuposMax(inv.grupoCuposMax, 1), 0);
+      if (cupoEventoMax != null && cupoEventoMax > 0 && cuposListaActual + cuposImport > cupoEventoMax) {
+        setExcelFileError(
+          `Superás la capacidad del evento (${cupoEventoMax} personas por cupos). Ya tenés ${cuposListaActual} cupos reservados; esta planilla sumaría ${cuposImport} (${cuposListaActual + cuposImport} en total). Las filas con el mismo texto en «Grupo» cuentan como una sola familia — revisá cupos y grupos.`,
+        );
+        return;
       }
 
-      setImportProgress({ done: 0, total: guests.length });
+      // Una fila por familia tras fusionar «Grupo»; troceamos así los chunks no parten una familia.
+      const chunks: typeof guestsParaImportar[] = [];
+      for (let i = 0; i < guestsParaImportar.length; i += IMPORT_CHUNK_SIZE) {
+        chunks.push(guestsParaImportar.slice(i, i + IMPORT_CHUNK_SIZE));
+      }
+
+      setImportProgress({ done: 0, total: guestsParaImportar.length });
 
       const allErrors: { row?: number; message: string }[] = [];
       let totalCreated = 0;
@@ -848,7 +877,7 @@ export default function GestionInvitadosPage() {
       // Worker que toma el siguiente chunk pendiente y lo procesa.
       // Manejamos las requests con un mini pool de IMPORT_PARALLEL_CHUNKS.
       let nextChunkIdx = 0;
-      const sendOne = async (chunk: typeof guests): Promise<void> => {
+      const sendOne = async (chunk: typeof guestsParaImportar): Promise<void> => {
         const controller = new AbortController();
         const timeoutMs = 120_000;
         const timeoutId = globalThis.setTimeout(() => controller.abort(), timeoutMs);
@@ -906,7 +935,7 @@ export default function GestionInvitadosPage() {
         } finally {
           globalThis.clearTimeout(timeoutId);
           doneCount += chunk.length;
-          setImportProgress({ done: doneCount, total: guests.length });
+          setImportProgress({ done: doneCount, total: guestsParaImportar.length });
         }
       };
 
@@ -928,7 +957,10 @@ export default function GestionInvitadosPage() {
         return;
       }
 
-      let msg = `Importados: ${totalCreated} de ${guests.length}.`;
+      let msg = `Importados: ${totalCreated} de ${guestsParaImportar.length} invitación(es).`;
+      if (gruposFusionados.length > 0) {
+        msg += ` Se fusionaron ${gruposFusionados.length} grupo(s) familiar(es) desde varias filas (mismo texto en «Grupo»).`;
+      }
       if (skipped > 0) msg += ` Filas incompletas omitidas: ${skipped}.`;
       if (allErrors.length) {
         msg += ` Errores: ${allErrors
@@ -1114,8 +1146,12 @@ export default function GestionInvitadosPage() {
                   <div className="mt-1 max-w-2xl space-y-1 text-[11px] leading-snug text-muted">
                     <p>
                       {invitadosFiltrados.length === invitados.length
-                        ? `${invitados.length} en total`
-                        : `Mostrando ${invitadosFiltrados.length} de ${invitados.length}`}
+                        ? `${invitados.length} invitación(es) · ${cuposTotalesLista} cupos${
+                            cupoEventoMax != null ? ` / ${cupoEventoMax} capacidad del evento` : ""
+                          }`
+                        : `Mostrando ${invitadosFiltrados.length} de ${invitados.length} invitación(es) · ${cuposTotalesLista} cupos${
+                            cupoEventoMax != null ? ` / ${cupoEventoMax} capacidad` : ""
+                          }`}
                       {filtrosActivos ? " · filtros activos" : ""}
                     </p>
                   </div>

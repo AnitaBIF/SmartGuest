@@ -5,6 +5,7 @@ import type { Database, EstadoAsistencia } from "@/lib/database.types";
 import { eventoCoincideConSalonPerfil } from "@/lib/adminSalonAuth";
 import { clampCuposMax, mapUiMenuToInvitadoColumns, menuOpcionesParaEvento, plazasSmartpoolPasajeros } from "@/lib/grupoFamiliar";
 import { normalizeDniInput, splitNombreCompleto } from "@/lib/invitadosImport";
+import { sumCuposDesdeFilasInvitados } from "@/lib/invitadosImportGrupo";
 
 function adminClient() {
   return createClient<Database>(
@@ -143,6 +144,30 @@ export async function PATCH(
   };
   if (grupoCuposMaxRaw !== undefined && grupoCuposMaxRaw !== null && grupoCuposMaxRaw !== "") {
     const n = clampCuposMax(grupoCuposMaxRaw as number | string, 1);
+    const { data: evCap, error: evCapErr } = await supabase
+      .from("eventos")
+      .select("cant_invitados")
+      .eq("id", owned.inv.evento_id)
+      .single();
+    if (evCapErr) return NextResponse.json({ error: evCapErr.message }, { status: 500 });
+    const limite = evCap?.cant_invitados ?? 0;
+    if (limite > 0) {
+      const { data: otros, error: otrosErr } = await supabase
+        .from("invitados")
+        .select("grupo_cupos_max")
+        .eq("evento_id", owned.inv.evento_id)
+        .neq("id", id);
+      if (otrosErr) return NextResponse.json({ error: otrosErr.message }, { status: 500 });
+      const sumOtros = sumCuposDesdeFilasInvitados(otros ?? []);
+      if (sumOtros + n > limite) {
+        return NextResponse.json(
+          {
+            error: `Capacidad del evento: ${limite} personas (cupos). Con este cambio habría ${sumOtros + n} cupos en total (${sumOtros} en otras invitaciones + ${n} en esta).`,
+          },
+          { status: 400 },
+        );
+      }
+    }
     invUpdate.grupo_cupos_max = n;
     invUpdate.smartpool_cupos_max = plazasSmartpoolPasajeros(n);
   }
