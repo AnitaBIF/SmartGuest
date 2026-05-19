@@ -3,6 +3,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 const NEON = "#00FF88";
 const BG_TOP = "#050A1A";
@@ -109,7 +110,7 @@ const BENTO_ITEMS = [
   {
     title: "Invitaciones bajo control",
     subtitle:
-      "Automatizá confirmaciones, controlá cupos máximos y gestioná el RSVP en tiempo real desde un solo lugar.",
+      "Automatizá confirmaciones, controlá cupos máximos y gestioná el sistema de confirmación de asistencia en tiempo real desde un solo lugar.",
     accent: "01",
     Icon: IconUsers,
   },
@@ -128,6 +129,153 @@ const BENTO_ITEMS = [
     Icon: IconOrbit,
   },
 ];
+
+const SLIDE_WIDTH_CLASS =
+  "w-[min(94vw,400px)] sm:w-[min(90vw,440px)] md:w-[460px] lg:w-[500px]";
+
+/** Carrusel horizontal: tarjetas anchas, autoplay, flechas y puntos. */
+function LandingGalleryCarousel({
+  items,
+  reduced,
+}: {
+  items: GallerySlot[];
+  reduced: boolean;
+}) {
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const n = items.length;
+
+  const centerSlide = useCallback(
+    (i: number) => {
+      const root = scrollerRef.current;
+      if (!root) return;
+      const target = root.children[i] as HTMLElement | undefined;
+      if (!target) return;
+      const nextLeft = target.offsetLeft - (root.clientWidth - target.offsetWidth) / 2;
+      root.scrollTo({
+        left: Math.max(0, nextLeft),
+        behavior: reduced ? "auto" : "smooth",
+      });
+    },
+    [reduced],
+  );
+
+  useLayoutEffect(() => {
+    centerSlide(active);
+  }, [active, centerSlide]);
+
+  useEffect(() => {
+    if (n <= 1 || reduced || paused) return;
+    const id = window.setInterval(() => {
+      setActive((a) => (a + 1) % n);
+    }, 5200);
+    return () => window.clearInterval(id);
+  }, [n, reduced, paused]);
+
+  const go = (dir: -1 | 1) => {
+    setActive((a) => (a + dir + n) % n);
+  };
+
+  if (n === 0) return null;
+
+  return (
+    <div
+      className="relative mx-auto w-full max-w-[min(100%,1180px)]"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      role="region"
+      aria-roledescription="carrusel"
+      aria-label="Capturas de la aplicación SmartGuest"
+    >
+      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 bg-gradient-to-r from-[#050A1A] to-transparent sm:w-14" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-[#050A1A] to-transparent sm:w-14" />
+
+      <button
+        type="button"
+        onClick={() => go(-1)}
+        className="absolute left-1 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white/90 backdrop-blur-md transition hover:border-[#00FF88]/50 hover:bg-white/15 sm:left-2 md:left-0 md:h-11 md:w-11"
+        aria-label="Imagen anterior"
+      >
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        onClick={() => go(1)}
+        className="absolute right-1 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white/90 backdrop-blur-md transition hover:border-[#00FF88]/50 hover:bg-white/15 sm:right-2 md:right-0 md:h-11 md:w-11"
+        aria-label="Imagen siguiente"
+      >
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+
+      <div
+        ref={scrollerRef}
+        className={
+          "flex scroll-snap-x snap-mandatory gap-6 overflow-x-auto overflow-y-hidden scroll-smooth pb-2 pt-1 " +
+          "[scrollbar-width:thin] [scrollbar-color:rgba(0,255,136,0.35)_transparent] hover:[scrollbar-color:rgba(0,255,136,0.55)_transparent] " +
+          "[&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#00FF88]/40"
+        }
+        style={{ scrollPaddingInline: "max(1rem, calc(50% - min(47vw, 250px)))" }}
+      >
+        {items.map((item, idx) => (
+          <div
+            key={idx}
+            className={`${glassStrong} shrink-0 snap-center scroll-ml-4 p-3 first:ml-[max(1rem,calc(50%-min(47vw,250px)))] last:mr-[max(1rem,calc(50%-min(47vw,250px)))] sm:p-3.5 md:first:ml-[max(1rem,calc(50%-230px))] md:last:mr-[max(1rem,calc(50%-230px))] ${SLIDE_WIDTH_CLASS}`}
+          >
+            <div className="relative overflow-hidden rounded-[1.25rem] bg-[#0b1020] ring-1 ring-white/10">
+              <div className="absolute left-1/2 top-2 z-10 h-1 w-12 -translate-x-1/2 rounded-full bg-black/50 ring-1 ring-white/10" />
+              {"placeholder" in item ? (
+                <div className="flex aspect-[9/16] w-full flex-col items-center justify-center gap-3 px-4 text-center">
+                  <span className="text-3xl opacity-35" aria-hidden>
+                    📱
+                  </span>
+                  <p className="text-[11px] leading-relaxed text-white/45">
+                    Guardá imágenes en <span className="text-[#00FF88]/90">public/landing/</span> y listalas en{" "}
+                    <code className="rounded bg-white/10 px-1 text-[10px]">LANDING_GALLERY</code>
+                  </p>
+                </div>
+              ) : (
+                <div className="relative aspect-[9/16] w-full min-h-[min(78dvh,520px)] sm:min-h-[500px] md:min-h-[520px]">
+                  <Image
+                    src={item.src}
+                    alt={item.alt}
+                    fill
+                    className="object-contain object-center"
+                    sizes="(max-width:640px) 94vw, (max-width:1024px) 440px, 500px"
+                    priority={idx === 0}
+                  />
+                  <div
+                    className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#050A1A]/35 via-transparent to-transparent"
+                    aria-hidden
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-4 flex justify-center gap-2">
+        {items.map((_, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => setActive(i)}
+            className={`h-2 rounded-full transition-all ${
+              i === active ? "w-8 bg-[#00FF88]" : "w-2 bg-white/25 hover:bg-white/40"
+            }`}
+            aria-label={`Ir a la imagen ${i + 1} de ${n}`}
+            aria-current={i === active ? true : undefined}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function LogoMark({ className = "" }: { className?: string }) {
   return (
@@ -280,60 +428,7 @@ export default function SmartGuestLanding() {
               aria-hidden
             />
           </div>
-          <div className="flex gap-5 overflow-x-auto overflow-y-hidden px-1 pb-6 pt-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:justify-center sm:overflow-visible">
-            {galleryItems.map((item, idx) => (
-              <motion.div
-                key={idx}
-                className={`relative flex-shrink-0 ${glassStrong} p-2.5 sm:w-[248px]`}
-                initial={reduce ? undefined : { opacity: 0, scale: 0.94 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.08, type: "spring", stiffness: 260, damping: 26 }}
-                whileHover={reduce ? undefined : { scale: 1.02, transition: { duration: 0.2 } }}
-              >
-                {/* “Notch” / marco móvil */}
-                <div className="relative overflow-hidden rounded-[1.25rem] bg-[#0b1020] ring-1 ring-white/10">
-                  <div className="absolute left-1/2 top-1.5 z-10 h-1 w-10 -translate-x-1/2 rounded-full bg-black/60 ring-1 ring-white/10" />
-                  {"placeholder" in item ? (
-                    <div className="flex aspect-[9/19] w-full flex-col items-center justify-center gap-3 px-4 text-center">
-                      <span className="text-2xl opacity-35" aria-hidden>
-                        📱
-                      </span>
-                      <p className="text-[11px] leading-relaxed text-white/45">
-                        Guardá imágenes en <span className="text-[#00FF88]/90">public/landing/</span> y listalas en{" "}
-                        <code className="rounded bg-white/10 px-1 text-[10px]">LANDING_GALLERY</code>
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="relative aspect-[9/19] w-full">
-                      <Image
-                        src={item.src}
-                        alt={item.alt}
-                        fill
-                        className="object-cover object-top"
-                        sizes="(max-width:640px) 72vw, 248px"
-                        priority={idx === 0}
-                      />
-                      {/* Viñeta + scan line sutil */}
-                      <div
-                        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#050A1A]/50 via-transparent to-transparent"
-                        aria-hidden
-                      />
-                      {!reduce ? (
-                        <div
-                          className="pointer-events-none absolute inset-0 opacity-[0.06]"
-                          style={{
-                            background:
-                              "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,136,0.15) 2px, rgba(0,255,136,0.15) 4px)",
-                          }}
-                        />
-                      ) : null}
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            ))}
-          </div>
+          <LandingGalleryCarousel items={galleryItems} reduced={!!reduce} />
         </motion.div>
       </main>
 
