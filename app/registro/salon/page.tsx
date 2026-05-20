@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { LeyendaObligatorios } from "@/components/FormRequired";
 import { MENUS_ESPECIALES_CATALOGO } from "@/lib/grupoFamiliar";
@@ -61,7 +62,11 @@ function NotchedField({
   );
 }
 
-export default function RegistroSalonPage() {
+function RegistroSalonContent() {
+  const searchParams = useSearchParams();
+  const from = searchParams.get("from")?.toLowerCase() ?? "";
+  const volverAtrasHref = from === "landing" ? "/" : "/login";
+
   const [nombre, setNombre] = useState("");
   const [apellido, setApellido] = useState("");
   const [dni, setDni] = useState("");
@@ -188,8 +193,14 @@ export default function RegistroSalonPage() {
 
   return (
     <div className="flex min-h-[100dvh] flex-col text-foreground">
-      <header className="flex justify-end px-5 pt-6 sm:px-10 sm:pt-8">
-        <span className="text-2xl font-extrabold tracking-tight text-brand sm:text-3xl">
+      <header className="flex items-start justify-between gap-4 px-5 pt-6 sm:px-10 sm:pt-8">
+        <Link
+          href={volverAtrasHref}
+          className="shrink-0 pt-1 text-sm font-medium text-foreground underline decoration-brand underline-offset-4 hover:text-brand"
+        >
+          Volver atrás
+        </Link>
+        <span className="shrink-0 text-2xl font-extrabold tracking-tight text-brand sm:text-3xl">
           SMART
           <span className="ml-1 font-normal text-brand" style={{ fontFamily: "var(--font-poppins)" }}>
             GUEST
@@ -211,7 +222,7 @@ export default function RegistroSalonPage() {
               Ya podés iniciar sesión con tu email y contraseña.
             </p>
             <Link
-              href="/"
+              href="/login"
               className="mt-6 inline-block rounded-lg bg-brand px-6 py-3 text-sm font-semibold text-white transition-colors hover:brightness-95 dark:text-zinc-950"
             >
               Ir al login
@@ -418,13 +429,30 @@ export default function RegistroSalonPage() {
             </button>
           </form>
         )}
-
-        <p className="mt-8 text-center text-sm">
-          <Link href="/" className="font-medium text-brand underline underline-offset-4">
-            Volver al login
-          </Link>
-        </p>
       </main>
     </div>
+  );
+}
+
+export default function RegistroSalonPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-[100dvh] flex-col text-foreground">
+          <header className="flex items-start justify-between gap-4 px-5 pt-6 sm:px-10 sm:pt-8">
+            <div className="h-5 w-24 animate-pulse rounded bg-muted" aria-hidden />
+            <span className="text-2xl font-extrabold tracking-tight text-brand opacity-40 sm:text-3xl">
+              SMART
+              <span className="ml-1 font-normal text-brand" style={{ fontFamily: "var(--font-poppins)" }}>
+                GUEST
+              </span>
+            </span>
+          </header>
+          <div className="mx-auto mt-12 w-full max-w-lg flex-1 px-4 text-center text-sm text-muted">Cargando…</div>
+        </div>
+      }
+    >
+      <RegistroSalonContent />
+    </Suspense>
   );
 }

@@ -301,7 +301,7 @@ export default function LoginScreen({ signOutOnMount = false }: LoginScreenProps
 
           <p className="mt-8 text-center text-sm">
             <Link
-              href="/registro/salon"
+              href="/registro/salon?from=login"
               className="font-medium text-brand underline underline-offset-4"
             >
               Registre aquí su salón de eventos

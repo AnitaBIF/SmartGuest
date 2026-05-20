@@ -446,7 +446,7 @@ export default function SmartGuestLanding() {
             Iniciar sesión
           </Link>
           <Link
-            href="/registro/salon"
+            href="/registro/salon?from=landing"
             className="rounded-xl border border-[#00FF88]/50 bg-[#00FF88]/12 py-3.5 text-center text-[15px] font-semibold text-[#00FF88] shadow-[0_0_24px_rgba(0,255,136,0.15)] transition hover:bg-[#00FF88]/22 sm:min-w-[200px] sm:px-8"
           >
             Registrá tu salón
