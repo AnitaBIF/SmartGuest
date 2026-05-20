@@ -1,9 +1,7 @@
 /**
- * Ordena pasajeros con modelo de lenguaje (sin GPS): Tucumán, AMBA/CABA u otras zonas según el texto.
+ * Ordena pasajeros con modelo de lenguaje (sin GPS): región de Tucumán.
  * Requiere OPENAI_API_KEY o SMARTGUEST_OPENAI_API_KEY en el servidor.
  */
-
-import { inferRegionSmartpoolIa } from "@/lib/smartpoolSugerencias";
 
 export type PasajeroIaInput = {
   id: string;
@@ -46,28 +44,20 @@ function parseOrdenJson(raw: string): OpenAiOrden[] | null {
 const JSON_SCHEMA_HINT =
   '{"orden":[{"id":"<uuid del pasajero>","motivo":"frase corta en español, máx. 120 caracteres, explicando por qué conviene el viaje compartido"}]}';
 
-function systemPromptSmartpool(region: ReturnType<typeof inferRegionSmartpoolIa>): string {
-  const baseRules = `Recibís direcciones en texto tal como las cargaron los invitados (sin coordenadas GPS).
+const SYSTEM_PROMPT_SMARTPOOL_TUCUMAN = `Sos experto en geografía de la región de Tucumán, Argentina. Trabajá pensando en localidades distintas con trayectos reales entre ellas: San Miguel de Tucumán (capital), Yerba Buena, Tafí Viejo, Lules, Banda del Río Salí, Alderetes, El Manantial, Cevil Redondo, etc. Entre capital, Yerba Buena y Tafí Viejo las distancias suelen ser largas para ir y volver: quien viva claramente más lejos del conductor debe ir abajo en el ranking salvo que el texto indique que quedan muy cerca (misma calle, mismo barrio de la capital, referencias casi iguales).
+Conocés la ciudad capital por zonas (Centro, Norte, Sur, Este, Oeste) y avenidas típicas (Av. Mate de Luna, Av. Sarmiento, Av. Roca, Av. Alem, Circunvalación, etc.).
+
+Recibís direcciones en texto tal como las cargaron los invitados (sin coordenadas GPS).
 Ordená los pasajeros del que probablemente quede MÁS CERCA o más conveniente para compartir viaje con el conductor, al MENOS conveniente.
-Reglas estrictas: (1) No inventes tiempos en minutos, kilómetros ni rutas: no tenés GPS ni mapa. En el "motivo" no uses “a 5 min”, “10 minutos”, etc. (2) Misma localidad o mismo municipio/clúster del texto debe ir claramente antes que otra localidad distinta cuando el texto lo deje en evidencia. (3) Si dos direcciones son de zonas o localidades claramente lejanas (en la misma ciudad grande o entre capital, Yerba Buena, Tafí Viejo, etc.), el más lejano debe ir abajo.
-Si dos direcciones están en barrios o zonas claramente lejanas dentro de la misma ciudad grande (por ejemplo Belgrano vs zona muy al sur de CABA, o extremos opuestos del conurbano), el más lejano debe ir abajo del ranking.
+
+Reglas estrictas:
+(1) No inventes tiempos en minutos, kilómetros ni rutas: no tenés GPS ni mapa. En el "motivo" no uses “a 5 min”, “10 minutos”, etc.
+(2) Misma localidad o mismo municipio/clúster del texto debe ir claramente antes que otra localidad distinta cuando el texto lo deje en evidencia.
+(3) Si dos direcciones son de zonas claramente lejanas dentro de la misma ciudad (Centro vs extremos, norte vs sur de la capital) o entre capital, Yerba Buena y municipios del Gran Tucumán, el más lejano debe ir abajo.
+
 Respondé SOLO un JSON válido con esta forma exacta:
 ${JSON_SCHEMA_HINT}
 Incluí cada id de pasajero exactamente una vez. No inventes ids.`;
-
-  if (region === "amba") {
-    return `Sos experto en geografía del AMBA y Ciudad Autónoma de Buenos Aires (CABA), Argentina.
-Conocés barrios y referencias: Belgrano, Nuñez, Colegiales, Palermo, Recoleta, Retiro, Almagro, Caballito, Villa Crespo, Flores, Barracas, San Telmo, Monserrat, Microcentro, calle España y otras vías céntricas, Av. Cabildo, Av. Rivadavia, Lomas de Zamora, Banfield, Lanús, Avellaneda, Quilmes, Vicente López, San Isidro, Tigre, Morón, Hurlingham, etc.
-${baseRules}`;
-  }
-  if (region === "tucuman") {
-    return `Sos experto en geografía de la región de Tucumán, Argentina. Trabajá pensando en localidades distintas con trayectos reales entre ellas, no como un solo barrio: por ejemplo San Miguel de Tucumán (capital), Yerba Buena, Tafí Viejo, y también Lules, Banda del Río Salí, Alderetes, El Manantial, Cevil Redondo, etc. Entre capital, Yerba Buena y Tafí Viejo las distancias suelen ser largas para ir y volver: quien viva claramente más lejos del conductor debe ir abajo en el ranking salvo que el texto indique que quedan muy cerca (misma calle, mismo barrio de la capital, referencias casi iguales).
-Conocés la ciudad capital por barrios (Centro, Norte, Sur, Este, Oeste) y avenidas típicas (Av. Mate de Luna, Av. Sarmiento, Av. Roca, Av. Alem, Circunvalación, etc.).
-${baseRules}`;
-  }
-  return `Sos experto en geografía urbana de Argentina. Ordená pasajeros para compartir viaje según cercanía estimada por localidad y dirección en texto. Si los datos sugieren Gran Buenos Aires o la región de Tucumán (capital, Yerba Buena, Tafí Viejo, etc.), aplicá criterio de distancia realista; no asumas que toda el área es “corta”.
-${baseRules}`;
-}
 
 /**
  * Devuelve sugerencias ordenadas o `null` si falla la API / el parseo (usar heurística).
@@ -97,9 +87,6 @@ export async function rankPasajerosConIaTucuman(
     })),
   };
 
-  const region = inferRegionSmartpoolIa(conductor.localidad, conductor.direccion);
-  const system = systemPromptSmartpool(region);
-
   const user = `Datos (JSON):\n${JSON.stringify(payload, null, 0)}`;
 
   const controller = new AbortController();
@@ -118,7 +105,7 @@ export async function rankPasajerosConIaTucuman(
         max_tokens: 2500,
         response_format: { type: "json_object" },
         messages: [
-          { role: "system", content: system },
+          { role: "system", content: SYSTEM_PROMPT_SMARTPOOL_TUCUMAN },
           { role: "user", content: user },
         ],
       }),
@@ -139,6 +126,7 @@ export async function rankPasajerosConIaTucuman(
     const byId = new Map(pasajeros.map((p) => [p.id.trim().toLowerCase(), p]));
     const seen = new Set<string>();
     const out: SugerenciaIa[] = [];
+    const motivoDefault = "Cercanía en la región (capital, Yerba Buena, Tafí Viejo, etc.) según direcciones";
 
     for (const row of orden) {
       const key = row.id.trim().toLowerCase();
@@ -149,13 +137,7 @@ export async function rankPasajerosConIaTucuman(
         invitadoId: p.id.trim().toLowerCase(),
         nombre: p.nombre,
         localidad: p.localidad,
-        motivo:
-          row.motivo ||
-          (region === "amba"
-            ? "Cercanía aproximada en AMBA/CABA según direcciones"
-            : region === "tucuman"
-              ? "Cercanía en la región (capital, Yerba Buena, Tafí Viejo, etc.) según direcciones"
-              : "Cercanía aproximada según direcciones"),
+        motivo: row.motivo || motivoDefault,
         distanciaKm: null,
       });
     }
