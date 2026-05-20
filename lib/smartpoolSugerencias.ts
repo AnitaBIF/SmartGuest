@@ -162,13 +162,30 @@ export type SmartpoolMatchSignals = {
   mismoBarrioAMBA: boolean;
   mismoMetro: boolean;
   localidadMatchFuerte: boolean;
+  /** El conductor cargó calle/dirección (sirve para penalizar pasajeros sin dirección). */
+  conductorDireccionCargada: boolean;
+  pasajeroDireccionCargada: boolean;
   addrOverlap: number;
 };
+
+function localidadConfianzaTier(s: SmartpoolMatchSignals): number {
+  if (s.localidadMatchFuerte) {
+    /* Tier 2: misma localidad y dato útil (pasajero con dirección, o conductor sin dirección). */
+    if (!s.conductorDireccionCargada || s.pasajeroDireccionCargada) return 2;
+    /* Tier 1: misma localidad pero pasajero sin calle (conductor sí). */
+    return 1;
+  }
+  /* Sin coincidencia clara de localidad: si el pasajero no cargó nada de calle, abajo del todo. */
+  if (s.conductorDireccionCargada && !s.pasajeroDireccionCargada) return -1;
+  return 0;
+}
 
 export function matchSignalsParaPasajero(
   conductor: ConductorCtx,
   p: { localidad: string | null; direccion: string | null },
 ): SmartpoolMatchSignals {
+  const conductorDireccionCargada = Boolean(conductor.direccion?.trim());
+  const pasajeroDireccionCargada = Boolean(p.direccion?.trim());
   const cLoc = normalizeLocalidad(conductor.localidad);
   const cMetro = inferMetroTucuman(conductor.localidad, conductor.direccion);
   const cZona = inferZonaUrbana(conductor.localidad, conductor.direccion);
@@ -204,6 +221,8 @@ export function matchSignalsParaPasajero(
     mismoBarrioAMBA,
     mismoMetro,
     localidadMatchFuerte,
+    conductorDireccionCargada,
+    pasajeroDireccionCargada,
     addrOverlap,
   };
 }
@@ -218,10 +237,17 @@ export function compareHeuristicMatchSignals(a: SmartpoolMatchSignals, b: Smartp
   if (!a.mismaZonaUrbana && b.mismaZonaUrbana) return 1;
   if (a.mismoBarrioAMBA && !b.mismoBarrioAMBA) return -1;
   if (!a.mismoBarrioAMBA && b.mismoBarrioAMBA) return 1;
-  if (a.mismoMetro && !b.mismoMetro) return -1;
-  if (!a.mismoMetro && b.mismoMetro) return 1;
+  const tierA = localidadConfianzaTier(a);
+  const tierB = localidadConfianzaTier(b);
+  if (tierB !== tierA) return tierB - tierA;
   if (a.localidadMatchFuerte && !b.localidadMatchFuerte) return -1;
   if (!a.localidadMatchFuerte && b.localidadMatchFuerte) return 1;
+  if (a.conductorDireccionCargada && b.conductorDireccionCargada) {
+    if (a.pasajeroDireccionCargada && !b.pasajeroDireccionCargada) return -1;
+    if (!a.pasajeroDireccionCargada && b.pasajeroDireccionCargada) return 1;
+  }
+  if (a.mismoMetro && !b.mismoMetro) return -1;
+  if (!a.mismoMetro && b.mismoMetro) return 1;
   if (b.addrOverlap !== a.addrOverlap) return b.addrOverlap - a.addrOverlap;
   return 0;
 }
