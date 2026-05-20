@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { LeyendaObligatorios, Req } from "@/components/FormRequired";
 import { MENUS_ESPECIALES_CATALOGO } from "@/lib/grupoFamiliar";
+import { SALON_CAPACIDAD_MAX_ABS } from "@/lib/salonCapacidad";
 import { parseSalonMenuStandardToOpciones } from "@/lib/salonMenuStandardOpciones";
 import { supabase } from "@/lib/supabase";
 import ClockPicker from "./components/ClockPicker";
@@ -281,12 +282,15 @@ function EventDetailModal({
   onClose,
   onUpdated,
   menuStandardOpciones = [],
+  salonCapacidadMax = null,
 }: {
   event: CalendarEvent;
   onClose: () => void;
   onUpdated: () => void;
   /** Opciones definidas en la cuenta del salón (mismo criterio que el alta de evento). */
   menuStandardOpciones?: string[];
+  /** Capacidad máxima del salón (personas); cada evento no puede superarla. */
+  salonCapacidadMax?: number | null;
 }) {
   const isEvento = event.tipo === "evento";
   const [editing, setEditing] = useState(false);
@@ -331,6 +335,13 @@ function EventDetailModal({
       alert("Elegí una opción de menú estándar o escribí el texto en “Otro”.");
       return;
     }
+    const cantInvSave = parseInt(eInv, 10) || 0;
+    if (salonCapacidadMax != null && cantInvSave > salonCapacidadMax) {
+      alert(
+        `La cantidad de invitados no puede superar la capacidad máxima del salón (${salonCapacidadMax} personas). Actualizala en Configuración si corresponde.`,
+      );
+      return;
+    }
     setSaving(true);
     const tipoFinal = eTipo;
     const nombre = tipoFinal
@@ -350,7 +361,7 @@ function EventDetailModal({
         anfitrion2_nombre: eAnf2 || null,
         salon: eSalon.trim(),
         direccion: eDireccion.trim(),
-        cant_invitados: parseInt(eInv) || 0,
+        cant_invitados: cantInvSave,
         cant_mesas: parseInt(eMesas) || 0,
         menu_standard: eMenu || null,
         dress_code: eDress || null,
@@ -564,7 +575,21 @@ function EventDetailModal({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="mb-1 block text-[12px] font-semibold text-foreground">Invitados</label>
-                  <input type="number" min={0} value={eInv} onChange={(e) => setEInv(e.target.value)} className={editInp} />
+                  <input
+                    type="number"
+                    min={0}
+                    max={salonCapacidadMax ?? SALON_CAPACIDAD_MAX_ABS}
+                    value={eInv}
+                    onChange={(e) => setEInv(e.target.value)}
+                    className={editInp}
+                  />
+                  {salonCapacidadMax != null ? (
+                    <p className="mt-1 text-[11px] text-muted">Máximo permitido por el salón: {salonCapacidadMax} personas.</p>
+                  ) : (
+                    <p className="mt-1 text-[11px] text-amber-700 dark:text-amber-300">
+                      Configurá la capacidad del salón para aplicar un tope al editar invitados.
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="mb-1 block text-[12px] font-semibold text-foreground">Mesas</label>
@@ -711,6 +736,7 @@ export default function AdminDashboard() {
     /** Desde Configuración del administrador / salón (`usuarios.salon_*`). */
     salonNombre: "",
     salonDireccion: "",
+    salonCapacidadMax: null as number | null,
   });
   const toggleMenu = (opcion: string) =>
     setEvento((p) => ({
@@ -826,6 +852,8 @@ export default function AdminDashboard() {
         menuStandard: typeof c.salonMenuStandard === "string" ? c.salonMenuStandard : "",
         salonNombre: typeof c.salonNombre === "string" ? c.salonNombre.trim() : "",
         salonDireccion: typeof c.salonDireccion === "string" ? c.salonDireccion.trim() : "",
+        salonCapacidadMax:
+          typeof c.salonCapacidadMax === "number" && c.salonCapacidadMax >= 1 ? c.salonCapacidadMax : null,
       });
     }
 
@@ -964,6 +992,15 @@ export default function AdminDashboard() {
     const direccion = evento.direccionSalon.trim();
     if (!salon || !direccion) {
       setEventoFormError("El nombre del salón y la dirección completa son obligatorios para crear el evento y mostrar el mapa a los invitados.");
+      return;
+    }
+
+    const cantInv = parseInt(evento.cantInvitados, 10) || 0;
+    const cap = salonEventoDefaults.salonCapacidadMax;
+    if (cap != null && cantInv > cap) {
+      setEventoFormError(
+        `La cantidad de invitados (${cantInv}) supera la capacidad máxima configurada para el salón (${cap} personas). Ajustá el número o la capacidad en Configuración.`,
+      );
       return;
     }
 
@@ -1503,11 +1540,21 @@ export default function AdminDashboard() {
                   <input
                     type="number"
                     min={0}
+                    max={salonEventoDefaults.salonCapacidadMax ?? SALON_CAPACIDAD_MAX_ABS}
                     placeholder="Ej: 120"
                     value={evento.cantInvitados}
                     onChange={(e) => setEvento((p) => ({ ...p, cantInvitados: e.target.value }))}
                     className={inp}
                   />
+                  {salonEventoDefaults.salonCapacidadMax != null ? (
+                    <p className="mt-1 text-[11px] text-muted">
+                      Capacidad máxima del salón: <strong>{salonEventoDefaults.salonCapacidadMax}</strong> personas por evento.
+                    </p>
+                  ) : (
+                    <p className="mt-1 text-[11px] text-amber-700 dark:text-amber-300">
+                      Definí la capacidad máxima del salón en <strong>Configuración</strong> para que los eventos no puedan superarla.
+                    </p>
+                  )}
                 </Field>
                 <Field label="Cantidad de mesas">
                   <input
@@ -1586,6 +1633,7 @@ export default function AdminDashboard() {
           onClose={() => setSelectedEvent(null)}
           onUpdated={fetchData}
           menuStandardOpciones={salonMenuStdOpciones}
+          salonCapacidadMax={salonEventoDefaults.salonCapacidadMax}
         />
       )}
 

@@ -467,9 +467,8 @@ export default function InvitacionPage({ params }: { params: Promise<{ id: strin
 
             {!ecoGuestPermitidoPorCuposInvitacion(evento.grupoCuposMax) && (
               <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-[12px] leading-relaxed text-amber-950 sm:ml-[calc(11rem+1rem)]">
-                Esta invitación supera las <strong>{ECOGUEST_MAX_PERSONAS_INVITACION}</strong> personas permitidas para
-                EcoGuest: <strong>no vas a poder usar la insignia ni el SmartPool</strong>. El catering y la confirmación
-                siguen igual.
+                Si tu invitación tiene <strong>más de {ECOGUEST_MAX_PERSONAS_INVITACION}</strong> personas en cupos, no
+                vas a poder usar la insignia EcoGuest ni el SmartPool. El catering y la confirmación siguen igual.
               </div>
             )}
 

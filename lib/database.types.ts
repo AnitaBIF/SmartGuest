@@ -30,6 +30,8 @@ export interface Database {
           salon_menus_especiales: string[];
           salon_menus_especiales_otro: string | null;
           salon_menu_standard: string | null;
+          /** Máximo de personas del salón; cada evento `cant_invitados` no debe superarlo. */
+          salon_capacidad_max: number | null;
           created_at: string;
         };
         Insert: Omit<Database["public"]["Tables"]["usuarios"]["Row"], "id" | "created_at">;

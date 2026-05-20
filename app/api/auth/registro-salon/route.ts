@@ -8,6 +8,7 @@ import {
   parseSalonMenuStandardToOpciones,
   validateSalonMenuStandardOpciones,
 } from "@/lib/salonMenuStandardOpciones";
+import { parseSalonCapacidadMax } from "@/lib/salonCapacidad";
 
 function adminClient() {
   return createClient<Database>(
@@ -38,6 +39,7 @@ export async function POST(req: NextRequest) {
   const password = typeof body.password === "string" ? body.password : "";
   const salonNombre = str(body.salon_nombre);
   const salonDireccion = str(body.salon_direccion);
+  const salonCapacidadMax = parseSalonCapacidadMax(body.salon_capacidad_max ?? body.salonCapacidadMax);
   const menusRaw = body.menus_especiales;
   const menusEspeciales = Array.isArray(menusRaw)
     ? normalizarMenusEspecialesEvento(menusRaw.map((x) => String(x)))
@@ -62,6 +64,15 @@ export async function POST(req: NextRequest) {
   }
   if (salonDireccion.length < 8) {
     return NextResponse.json({ error: "Indicá la dirección completa del local (calle, número, ciudad)." }, { status: 400 });
+  }
+  if (salonCapacidadMax === null) {
+    return NextResponse.json(
+      {
+        error:
+          "Indicá la capacidad máxima del salón (personas), un número entre 1 y 500.000. Es el tope que podrá tener cada evento en cantidad de invitados.",
+      },
+      { status: 400 }
+    );
   }
   const menuStdOpciones = parseSalonMenuStandardToOpciones(menuStandard);
   const menuStdErr = validateSalonMenuStandardOpciones(menuStdOpciones);
@@ -94,6 +105,7 @@ export async function POST(req: NextRequest) {
       salon_nombre: salonNombre,
       salon_direccion: salonDireccion,
       salon_menu_standard: menuStandardNorm,
+      salon_capacidad_max: salonCapacidadMax,
     },
   });
 
@@ -116,6 +128,7 @@ export async function POST(req: NextRequest) {
       salon_menus_especiales: menusEspeciales,
       salon_menus_especiales_otro: menusEspeciales.includes("Otro") ? menusOtro : null,
       salon_menu_standard: menuStandardNorm,
+      salon_capacidad_max: salonCapacidadMax,
     })
     .eq("id", authData.user.id);
 

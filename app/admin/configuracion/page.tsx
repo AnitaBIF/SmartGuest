@@ -47,6 +47,7 @@ export default function AdminConfiguracionPage() {
 
   const [salonNombre, setSalonNombre] = useState("");
   const [salonDireccion, setSalonDireccion] = useState("");
+  const [salonCapacidadMax, setSalonCapacidadMax] = useState("");
   const [salonMenusEspeciales, setSalonMenusEspeciales] = useState<string[]>([]);
   const [salonMenusOtro, setSalonMenusOtro] = useState("");
   const [nOpcionesMenuStandard, setNOpcionesMenuStandard] = useState(1);
@@ -74,6 +75,8 @@ export default function AdminConfiguracionPage() {
       setEmailInicial(em.trim().toLowerCase());
       setSalonNombre(typeof data.salonNombre === "string" ? data.salonNombre : "");
       setSalonDireccion(typeof data.salonDireccion === "string" ? data.salonDireccion : "");
+      const cap = data.salonCapacidadMax;
+      setSalonCapacidadMax(typeof cap === "number" && cap >= 1 ? String(cap) : "");
       setSalonMenusEspeciales(Array.isArray(data.salonMenusEspeciales) ? data.salonMenusEspeciales : []);
       setSalonMenusOtro(typeof data.salonMenusEspecialesOtro === "string" ? data.salonMenusEspecialesOtro : "");
       const rawMenuStd = typeof data.salonMenuStandard === "string" ? data.salonMenuStandard : "";
@@ -126,6 +129,7 @@ export default function AdminConfiguracionPage() {
           email: email.trim().toLowerCase(),
           salonNombre: salonNombre.trim(),
           salonDireccion: salonDireccion.trim(),
+          salonCapacidadMax: salonCapacidadMax.trim() === "" ? undefined : Number(salonCapacidadMax.trim()),
           salonMenusEspeciales,
           salonMenusEspecialesOtro: salonMenusOtro.trim(),
           salonMenuStandard: salonMenuStandardFormatted,
@@ -220,6 +224,20 @@ export default function AdminConfiguracionPage() {
                   <Field label="Dirección del local" required>
                     <input className={inp} type="text" value={salonDireccion} onChange={(e) => setSalonDireccion(e.target.value)} />
                   </Field>
+                  <Field label="Capacidad máxima (personas)" required>
+                    <input
+                      className={inp}
+                      type="number"
+                      min={1}
+                      inputMode="numeric"
+                      placeholder="Ej: 200"
+                      value={salonCapacidadMax}
+                      onChange={(e) => setSalonCapacidadMax(e.target.value)}
+                    />
+                  </Field>
+                  <p className="text-[12px] text-[#6b7280] sm:pl-[13.25rem]">
+                    Máximo de invitados permitidos por evento en este salón. Podés cambiarlo si ampliás el espacio.
+                  </p>
                 </div>
               </div>
 

@@ -13,9 +13,11 @@ import {
 import { rankPasajerosConIaTucuman } from "@/lib/smartpoolTucumanIa";
 import {
   clampCuposMax,
+  ECOGUEST_MAX_PERSONAS_INVITACION,
   ecoGuestPermitidoPorCuposInvitacion,
   plazasPersonasPasajeroPool,
   plazasSmartpoolPasajeros,
+  smartpoolInvitacionApareceEnSugerenciasConductores,
 } from "@/lib/grupoFamiliar";
 
 function adminClient() {
@@ -157,7 +159,11 @@ async function buildSugerenciasConductor(
   }
   if (!rowList?.length) return [];
 
-  const rows = rowList as InvitadoSugerenciaRow[];
+  const rows = (rowList as InvitadoSugerenciaRow[]).filter((r) =>
+    smartpoolInvitacionApareceEnSugerenciasConductores(r.grupo_cupos_max),
+  );
+  if (!rows.length) return [];
+
   const byRowId = new Map(rows.map((r) => [r.id.trim().toLowerCase(), r]));
   const userIds = [...new Set(rows.map((x) => x.usuario_id))];
   const { data: usrs } = await supabase.from("usuarios").select("id, nombre, apellido").in("id", userIds);
@@ -518,8 +524,7 @@ export async function PUT(req: NextRequest) {
   if (!ecoGuestPermitidoPorCuposInvitacion(nInv) && (rol === "conductor" || rol === "pasajero")) {
     return NextResponse.json(
       {
-        error:
-          "Las invitaciones de más de 5 personas no tienen acceso a EcoGuest ni al SmartPool. Pedile al anfitrión que ajuste los cupos de tu invitación si corresponde.",
+        error: `Las invitaciones de más de ${ECOGUEST_MAX_PERSONAS_INVITACION} personas no tienen acceso a EcoGuest ni al SmartPool. Pedile al anfitrión que ajuste los cupos de tu invitación si corresponde.`,
       },
       { status: 403 }
     );

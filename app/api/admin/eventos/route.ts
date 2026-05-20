@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { Database } from "@/lib/database.types";
 import { eventoPerteneceAlSalon, requireSalonAdmin } from "@/lib/adminSalonAuth";
+import { eventoExcedeCapacidadSalon } from "@/lib/salonCapacidad";
 
 export async function GET(req: NextRequest) {
   const auth = await requireSalonAdmin(req);
@@ -53,6 +54,17 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const cantInv = Math.max(0, Math.floor(Number(body.cant_invitados ?? 0)));
+  const { salonCapacidadMax } = auth.ctx;
+  if (eventoExcedeCapacidadSalon(cantInv, salonCapacidadMax)) {
+    return NextResponse.json(
+      {
+        error: `La cantidad de invitados (${cantInv}) supera la capacidad máxima del salón (${salonCapacidadMax} personas). Ajustá el cupo del evento o la capacidad en Configuración.`,
+      },
+      { status: 400 }
+    );
+  }
+
   const { data, error } = await db
     .from("eventos")
     .insert({
@@ -64,7 +76,7 @@ export async function POST(req: NextRequest) {
       direccion,
       anfitrion1_nombre: body.anfitrion1_nombre ?? "",
       anfitrion2_nombre: body.anfitrion2_nombre ?? null,
-      cant_invitados: body.cant_invitados ?? 0,
+      cant_invitados: cantInv,
       cant_mesas: body.cant_mesas ?? 0,
       menu_standard: body.menu_standard ?? null,
       monto_total: body.monto_total ?? 0,
@@ -128,7 +140,18 @@ export async function PUT(req: NextRequest) {
   if (body.horario !== undefined)             update.horario = body.horario;
   if (body.anfitrion1_nombre !== undefined)   update.anfitrion1_nombre = body.anfitrion1_nombre;
   if (body.anfitrion2_nombre !== undefined)   update.anfitrion2_nombre = body.anfitrion2_nombre;
-  if (body.cant_invitados !== undefined)      update.cant_invitados = body.cant_invitados;
+  if (body.cant_invitados !== undefined) {
+    const cantInv = Math.max(0, Math.floor(Number(body.cant_invitados)));
+    if (eventoExcedeCapacidadSalon(cantInv, auth.ctx.salonCapacidadMax)) {
+      return NextResponse.json(
+        {
+          error: `La cantidad de invitados (${cantInv}) supera la capacidad máxima del salón (${auth.ctx.salonCapacidadMax} personas). Ajustá el cupo o la capacidad en Configuración.`,
+        },
+        { status: 400 }
+      );
+    }
+    update.cant_invitados = cantInv;
+  }
   if (body.cant_mesas !== undefined)          update.cant_mesas = body.cant_mesas;
   if (body.menu_standard !== undefined)       update.menu_standard = body.menu_standard;
   if (body.monto_total !== undefined)         update.monto_total = body.monto_total;

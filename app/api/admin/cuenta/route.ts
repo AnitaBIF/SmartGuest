@@ -10,6 +10,7 @@ import {
   parseSalonMenuStandardToOpciones,
   validateSalonMenuStandardOpciones,
 } from "@/lib/salonMenuStandardOpciones";
+import { parseSalonCapacidadMax } from "@/lib/salonCapacidad";
 
 type CuentaUsuario = Pick<
   Database["public"]["Tables"]["usuarios"]["Row"],
@@ -23,6 +24,7 @@ type CuentaUsuario = Pick<
   | "salon_menus_especiales"
   | "salon_menus_especiales_otro"
   | "salon_menu_standard"
+  | "salon_capacidad_max"
 >;
 
 function adminClient() {
@@ -71,7 +73,7 @@ export async function GET(req: NextRequest) {
   const { data: profileRow, error } = await supabase
     .from("usuarios")
     .select(
-      "nombre, apellido, dni, email, tipo, salon_nombre, salon_direccion, salon_menus_especiales, salon_menus_especiales_otro, salon_menu_standard"
+      "nombre, apellido, dni, email, tipo, salon_nombre, salon_direccion, salon_menus_especiales, salon_menus_especiales_otro, salon_menu_standard, salon_capacidad_max"
     )
     .eq("id", user.id)
     .single();
@@ -94,6 +96,10 @@ export async function GET(req: NextRequest) {
     email,
     salonNombre: profile.salon_nombre ?? "",
     salonDireccion: profile.salon_direccion ?? "",
+    salonCapacidadMax:
+      typeof profile.salon_capacidad_max === "number" && profile.salon_capacidad_max >= 1
+        ? profile.salon_capacidad_max
+        : null,
     salonMenusEspeciales: profile.salon_menus_especiales ?? [],
     salonMenusEspecialesOtro: profile.salon_menus_especiales_otro ?? "",
     salonMenuStandard: profile.salon_menu_standard ?? "",
@@ -108,7 +114,7 @@ export async function PUT(req: NextRequest) {
   const { data: profileRow, error: pErr } = await supabase
     .from("usuarios")
     .select(
-      "nombre, apellido, dni, email, tipo, salon_nombre, salon_direccion, salon_menus_especiales, salon_menus_especiales_otro, salon_menu_standard"
+      "nombre, apellido, dni, email, tipo, salon_nombre, salon_direccion, salon_menus_especiales, salon_menus_especiales_otro, salon_menu_standard, salon_capacidad_max"
     )
     .eq("id", user.id)
     .single();
@@ -134,6 +140,13 @@ export async function PUT(req: NextRequest) {
   const salonMenuStandard =
     typeof body.salonMenuStandard === "string" ? body.salonMenuStandard.trim() : "";
 
+  const salonCapacidadGuardada =
+    typeof profile.salon_capacidad_max === "number" && profile.salon_capacidad_max >= 1
+      ? profile.salon_capacidad_max
+      : null;
+  const salonCapacidadParsed =
+    parseSalonCapacidadMax(body.salonCapacidadMax ?? body.salon_capacidad_max) ?? salonCapacidadGuardada;
+
   const emailNew = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
   const currentPassword = typeof body.currentPassword === "string" ? body.currentPassword : "";
   const newPassword = typeof body.newPassword === "string" ? body.newPassword : "";
@@ -144,6 +157,15 @@ export async function PUT(req: NextRequest) {
   }
   if (!salonNombre || !salonDireccion) {
     return NextResponse.json({ error: "Nombre del salón y dirección del local son obligatorios." }, { status: 400 });
+  }
+  if (salonCapacidadParsed === null) {
+    return NextResponse.json(
+      {
+        error:
+          "Indicá la capacidad máxima del salón (personas), un número entre 1 y 500.000. Define cuántos invitados puede tener como máximo cada evento.",
+      },
+      { status: 400 }
+    );
   }
   const menuStdOpciones = parseSalonMenuStandardToOpciones(salonMenuStandard);
   const menuStdErr = validateSalonMenuStandardOpciones(menuStdOpciones);
@@ -210,6 +232,7 @@ export async function PUT(req: NextRequest) {
       salon_nombre: salonNombre || null,
       salon_direccion: salonDireccion || null,
       salon_menu_standard: salonMenuStandardNorm,
+      salon_capacidad_max: salonCapacidadParsed,
     },
   };
   if (quiereCambiarEmail) authUpdate.email = emailNew;
@@ -234,6 +257,7 @@ export async function PUT(req: NextRequest) {
     salon_menus_especiales: salonMenusEspeciales,
     salon_menus_especiales_otro: salonMenusEspeciales.includes("Otro") ? salonMenusEspecialesOtro : null,
     salon_menu_standard: salonMenuStandardNorm,
+    salon_capacidad_max: salonCapacidadParsed,
   };
 
   const { error: uErr } = await supabase.from("usuarios").update(usuarioPatch).eq("id", user.id);

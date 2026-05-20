@@ -67,6 +67,7 @@ export default function RegistroSalonPage() {
   const [dni, setDni] = useState("");
   const [salonNombre, setSalonNombre] = useState("");
   const [salonDireccion, setSalonDireccion] = useState("");
+  const [salonCapacidadMax, setSalonCapacidadMax] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
@@ -126,6 +127,11 @@ export default function RegistroSalonPage() {
       setError("Indicá la dirección completa del local (calle, número, ciudad).");
       return;
     }
+    const capN = Math.floor(Number(salonCapacidadMax.trim()));
+    if (!Number.isFinite(capN) || capN < 1) {
+      setError("Indicá la capacidad máxima del salón (personas), al menos 1.");
+      return;
+    }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       setError("Email inválido. Lo usaremos para iniciar sesión y recuperar la contraseña.");
       return;
@@ -159,6 +165,7 @@ export default function RegistroSalonPage() {
           dni: dni.trim(),
           salon_nombre: salonNombre.trim(),
           salon_direccion: salonDireccion.trim(),
+          salon_capacidad_max: capN,
           email: email.trim().toLowerCase(),
           password,
           menus_especiales: menusEspeciales,
@@ -255,6 +262,18 @@ export default function RegistroSalonPage() {
               onChange={setSalonDireccion}
               required
             />
+            <NotchedField
+              id="salon_capacidad_max"
+              label="Capacidad máxima del salón (personas)"
+              autoComplete="off"
+              placeholder="Ej: 180"
+              value={salonCapacidadMax}
+              onChange={setSalonCapacidadMax}
+              required
+            />
+            <p className="text-[12px] text-muted">
+              Es el tope de invitados que puede tener <strong>cada evento</strong> en este salón. No vas a poder cargar un evento con más personas que este número.
+            </p>
 
             <div className="relative rounded-lg border-2 border-brand bg-card px-4 pb-4 pt-6 ring-1 ring-[var(--ring-soft)]">
               <p className="absolute left-4 top-0 z-10 -translate-y-1/2 rounded bg-brand px-3 py-1 text-xs font-semibold tracking-wide text-white dark:text-zinc-950">

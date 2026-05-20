@@ -1,8 +1,8 @@
 /** Plazas totales consideradas en el auto (tu grupo + pool) para EcoGuest. */
 export const ECOGUEST_PLAZAS_AUTO_TOTAL = 5;
 
-/** Más de este número de personas en la invitación ⇒ sin acceso a EcoGuest / SmartPool. */
-export const ECOGUEST_MAX_PERSONAS_INVITACION = 5;
+/** Cupos máximos por invitación para poder usar EcoGuest y SmartPool (5 o más personas ⇒ sin acceso). */
+export const ECOGUEST_MAX_PERSONAS_INVITACION = 4;
 
 /**
  * Opciones que el admin marca al crear/editar el evento (`eventos.menus_especiales`), sin "Ninguna".
@@ -60,7 +60,7 @@ export type MenuPersonaPersisted = {
   restriccionOtro: string | null;
 };
 
-/** Invitación con N personas (1..5): plazas que el conductor puede ofrecer a pasajeros del pool (5 - N). */
+/** Invitación con N personas (1..4): plazas que el conductor puede ofrecer a pasajeros del pool (5 - N). */
 export function plazasSmartpoolPasajeros(grupoCuposInvitacion: number): number {
   const n = Math.floor(Number(grupoCuposInvitacion));
   if (!Number.isFinite(n) || n < 1) return 0;
@@ -71,6 +71,15 @@ export function plazasSmartpoolPasajeros(grupoCuposInvitacion: number): number {
 export function ecoGuestPermitidoPorCuposInvitacion(grupoCuposInvitacion: number): boolean {
   const n = Math.floor(Number(grupoCuposInvitacion));
   return Number.isFinite(n) && n >= 1 && n <= ECOGUEST_MAX_PERSONAS_INVITACION;
+}
+
+/**
+ * Invitaciones dentro del cupo EcoGuest ({@link ECOGUEST_MAX_PERSONAS_INVITACION} personas como máximo)
+ * pueden aparecer como pasajeros sugeridos; desde 5 personas la invitación no entra en el pool.
+ */
+export function smartpoolInvitacionApareceEnSugerenciasConductores(grupoCuposMax: unknown): boolean {
+  const n = clampCuposMax(grupoCuposMax, 1);
+  return n <= ECOGUEST_MAX_PERSONAS_INVITACION;
 }
 
 /** Misma semántica que el registro histórico en `invitados.restriccion_*` (primera persona del grupo). */

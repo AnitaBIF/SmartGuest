@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { InvitadoShell } from "@/components/InvitadoShell";
+import { ECOGUEST_MAX_PERSONAS_INVITACION, ECOGUEST_PLAZAS_AUTO_TOTAL } from "@/lib/grupoFamiliar";
 
 type Rol = "conductor" | "pasajero" | "no" | null;
 
@@ -36,7 +37,7 @@ type SmartpoolEstado = {
   cuposMax: number | null;
   cuposOcupados: number | null;
   sugerencias: SugerenciaPasajero[];
-  /** Invitación > 5 personas: sin EcoGuest / SmartPool. */
+  /** Invitación con 5 o más personas (cupos): sin EcoGuest ni SmartPool. */
   ecoInvitacionSinCarpooling: boolean;
   grupoCuposInvitacion: number | null;
 };
@@ -358,18 +359,22 @@ export default function SmartpoolPage() {
               <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.18em] text-amber-900/80 dark:text-amber-200/90">EcoGuest</p>
               <h2 className="mb-3 text-xl font-extrabold text-amber-950 dark:text-amber-100">No disponible para tu invitación</h2>
               <p className="text-left text-[13px] leading-relaxed text-muted dark:text-amber-50/90">
+                <strong>SmartPool</strong> (viajes compartidos con otras invitaciones del evento) solo está disponible para{" "}
+                <strong>grupos familiares de hasta 4 personas</strong>.
+              </p>
+              <p className="mt-3 text-left text-[13px] leading-relaxed text-muted dark:text-amber-50/90">
                 Tu invitación está cargada con{" "}
                 <strong>
                   {typeof n === "number" && n > 0
                     ? `${n} persona${n === 1 ? "" : "s"}`
-                    : "más de 5 personas"}
+                    : `más de ${ECOGUEST_MAX_PERSONAS_INVITACION} personas`}
                 </strong>
-                . Las invitaciones de <strong>más de 5 personas</strong> no tienen acceso a la insignia EcoGuest ni al
-                SmartPool (límite del carpooling en la app).
+                . Las invitaciones de <strong>{ECOGUEST_MAX_PERSONAS_INVITACION + 1} o más personas</strong> no tienen
+                acceso a la insignia EcoGuest ni al SmartPool.
               </p>
               <p className="mt-4 text-left text-[12px] leading-relaxed text-muted dark:text-amber-100/85">
                 Si el número no es correcto, pedile al anfitrión que ajuste la columna <strong>Cupos</strong> en tu fila
-                (máximo 5 para poder usar EcoGuest).
+                (como máximo {ECOGUEST_MAX_PERSONAS_INVITACION} personas para poder usar EcoGuest).
               </p>
               <Link
                 href="/invitado"
@@ -410,16 +415,16 @@ export default function SmartpoolPage() {
                     {rol === "conductor" ? (
                       cuposMax === 0 ? (
                         <>
-                          Tu invitación contempla <strong>5 personas</strong>: no quedan plazas para sumar pasajeros del
-                          pool, pero <strong>seguís siendo EcoGuest</strong> como conductor. El teléfono se comparte con
-                          quienes ya vinculaste.
+                          No tenés plazas libres en el pool para sumar pasajeros de otras invitaciones, pero{" "}
+                          <strong>seguís siendo EcoGuest</strong> como conductor. El teléfono se comparte con quienes ya
+                          vinculaste.
                         </>
                       ) : (
                         <>
                           Tenés <strong>hasta {cuposMax} plaza{cuposMax === 1 ? "" : "s"}</strong> en el pool para
-                          sumar gente de otras invitaciones (hasta 5 personas en total entre tu grupo y quienes van con
-                          vos). Si una invitación confirmó varias personas, ocupa esa cantidad de plazas. El teléfono se
-                          comparte cuando aceptan en la app.
+                          sumar gente de otras invitaciones (hasta {ECOGUEST_PLAZAS_AUTO_TOTAL} personas en total entre tu
+                          grupo y quienes van con vos). Si una invitación confirmó varias personas, ocupa esa cantidad de
+                          plazas. El teléfono se comparte cuando aceptan en la app.
                         </>
                       )
                     ) : (
@@ -433,7 +438,7 @@ export default function SmartpoolPage() {
                     <p className="mb-4 rounded-xl bg-white/90 px-3 py-2 text-left text-[12px] leading-snug text-[#374151] ring-1 ring-[#c5dece]">
                       <strong className="text-[#2d5a41]">Plazas en el pool:</strong>{" "}
                       {cuposMax === 0
-                        ? "ninguna (tu invitación ya usa las 5 plazas del modelo de auto)."
+                        ? `ninguna (tu invitación ya usa las ${ECOGUEST_PLAZAS_AUTO_TOTAL} plazas del modelo de auto).`
                         : `${cuposOcupados} de ${cuposMax} ocupadas · te quedan ${plazasLibres}.`}
                       {cuposMax > 0 &&
                         (hayCuposLibres
@@ -579,8 +584,11 @@ export default function SmartpoolPage() {
                           <p className="text-[13px] font-medium text-[#374151]">Sugerencias de pasajeros</p>
                           <p className="text-[12px] text-[#6b7280]">
                             Solo invitados con <strong>asistencia confirmada</strong>. Se indica cuántas plazas ocupa
-                            cada invitación (personas confirmadas del grupo). Te quedan{" "}
-                            <strong>{plazasLibres}</strong> plaza{plazasLibres === 1 ? "" : "s"} libre
+                            cada invitación (personas confirmadas del grupo). Las invitaciones de{" "}
+                            <strong>más de {ECOGUEST_MAX_PERSONAS_INVITACION} personas</strong> en el grupo familiar no
+                            aparecen: no entran en el pool como pasajeros de otros conductores. Te quedan{" "}
+                            <strong>{plazasLibres}</strong> plaza
+                            {plazasLibres === 1 ? "" : "s"} libre
                             {plazasLibres === 1 ? "" : "s"}.
                           </p>
                           {!estado.tieneTelefono && (
@@ -664,8 +672,7 @@ export default function SmartpoolPage() {
                       ) : cuposMax === 0 ? (
                         <div className="rounded-2xl bg-white px-3 py-4 text-left ring-1 ring-[#c5dece] sm:px-5">
                           <p className="text-[13px] text-[#4b5563]">
-                            No hay plazas en el pool para tu invitación (5 personas en total). Seguís como EcoGuest
-                            conductor; no se muestran sugerencias nuevas.
+                            No hay plazas disponibles en el pool para mostrar sugerencias nuevas.
                           </p>
                         </div>
                       ) : null}

@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import type { NextRequest } from "next/server";
 import type { Database } from "@/lib/database.types";
+import { SALON_CAPACIDAD_MAX_ABS } from "@/lib/salonCapacidad";
 
 export function adminServiceClient() {
   return createClient<Database>(
@@ -16,6 +17,8 @@ export type SalonAdminContext = {
   db: ReturnType<typeof adminServiceClient>;
   salonNombre: string;
   salonDireccion: string;
+  /** Máximo de personas del salón (null = sin tope cargado / datos viejos). */
+  salonCapacidadMax: number | null;
 };
 
 type AuthedSalonProfile =
@@ -26,6 +29,7 @@ type AuthedSalonProfile =
       tipo: string;
       salonNombre: string;
       salonDireccion: string;
+      salonCapacidadMax: number | null;
     }
   | { ok: false; status: number; error: string };
 
@@ -53,7 +57,7 @@ async function authenticateSalonUsuarioProfile(req: NextRequest): Promise<Authed
   const db = adminServiceClient();
   const { data: profile, error } = await db
     .from("usuarios")
-    .select("tipo, salon_nombre, salon_direccion")
+    .select("tipo, salon_nombre, salon_direccion, salon_capacidad_max")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -64,6 +68,11 @@ async function authenticateSalonUsuarioProfile(req: NextRequest): Promise<Authed
   const tipo = profile.tipo ?? "";
   const salonNombre = (profile.salon_nombre ?? "").trim();
   const salonDireccion = (profile.salon_direccion ?? "").trim();
+  const rawCap = profile.salon_capacidad_max;
+  const salonCapacidadMax =
+    typeof rawCap === "number" && Number.isFinite(rawCap) && rawCap >= 1
+      ? Math.min(Math.floor(rawCap), SALON_CAPACIDAD_MAX_ABS)
+      : null;
 
   return {
     ok: true,
@@ -72,6 +81,7 @@ async function authenticateSalonUsuarioProfile(req: NextRequest): Promise<Authed
     tipo,
     salonNombre,
     salonDireccion,
+    salonCapacidadMax,
   };
 }
 
@@ -89,7 +99,13 @@ export async function requireSalonAdmin(
   }
   return {
     ok: true,
-    ctx: { userId: r.userId, db: r.db, salonNombre: r.salonNombre, salonDireccion: r.salonDireccion },
+    ctx: {
+      userId: r.userId,
+      db: r.db,
+      salonNombre: r.salonNombre,
+      salonDireccion: r.salonDireccion,
+      salonCapacidadMax: r.salonCapacidadMax,
+    },
   };
 }
 
@@ -104,7 +120,13 @@ export async function requireSalonCocinaAccess(
   }
   return {
     ok: true,
-    ctx: { userId: r.userId, db: r.db, salonNombre: r.salonNombre, salonDireccion: r.salonDireccion },
+    ctx: {
+      userId: r.userId,
+      db: r.db,
+      salonNombre: r.salonNombre,
+      salonDireccion: r.salonDireccion,
+      salonCapacidadMax: r.salonCapacidadMax,
+    },
   };
 }
 
@@ -151,6 +173,12 @@ export async function requireSalonSeguridad(
   }
   return {
     ok: true,
-    ctx: { userId: r.userId, db: r.db, salonNombre: r.salonNombre, salonDireccion: r.salonDireccion },
+    ctx: {
+      userId: r.userId,
+      db: r.db,
+      salonNombre: r.salonNombre,
+      salonDireccion: r.salonDireccion,
+      salonCapacidadMax: r.salonCapacidadMax,
+    },
   };
 }

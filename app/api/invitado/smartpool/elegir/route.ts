@@ -2,7 +2,12 @@ import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 import type { Database } from "@/lib/database.types";
-import { clampCuposMax, plazasPersonasPasajeroPool, plazasSmartpoolPasajeros } from "@/lib/grupoFamiliar";
+import {
+  clampCuposMax,
+  plazasPersonasPasajeroPool,
+  plazasSmartpoolPasajeros,
+  smartpoolInvitacionApareceEnSugerenciasConductores,
+} from "@/lib/grupoFamiliar";
 import { fetchInvitacionPriorizada } from "@/lib/invitacionUsuarioPriorizada";
 
 function adminClient() {
@@ -174,6 +179,16 @@ export async function POST(req: NextRequest) {
   if (pas.asistencia !== "confirmado") {
     return NextResponse.json(
       { error: "Solo podés proponer viaje a invitados que confirmaron asistencia al evento." },
+      { status: 400 }
+    );
+  }
+
+  if (!smartpoolInvitacionApareceEnSugerenciasConductores(pas.grupo_cupos_max)) {
+    return NextResponse.json(
+      {
+        error:
+          "Las invitaciones de 5 o más personas en el grupo familiar no entran en el pool como pasajeros de otros conductores.",
+      },
       { status: 400 }
     );
   }
