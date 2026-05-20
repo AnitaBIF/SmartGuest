@@ -8,9 +8,61 @@ export function normalizeLocalidad(s: string | null | undefined): string {
     .trim();
 }
 
-/** Agrupa localidades del Gran Tucumán para comparar “misma zona metropolitana”. */
+/** Texto localidad/dirección sugiere Ciudad / AMBA (no confundir con “capital” de Tucumán). */
+function blobPareceAMBA(localidad: string | null | undefined, direccion: string | null | undefined): boolean {
+  const blob = `${localidad ?? ""} ${direccion ?? ""}`.toLowerCase();
+  return (
+    /buenos\s*aires|caba|ciudad\s*aut[oó]noma|capital\s*federal|gran\s*buenos|gba|amba|conurbano|zona\s*norte|zona\s*oeste|zona\s*sur/.test(blob) ||
+    /vicente\s*lopez|san\s*isidro|tigre|san\s*fernando|malvinas|tres?\s*de\s*febrero|mor[oó]n|hurlingham|ituzaing[oó]|merlo|moreno|pilar|escobar|maschwitz|ezeiza|lan[uú]s|avellaneda|quilmes|berazategui|lomas\s*de\s*zamora|almirante\s*brown|esteban\s*echeverr[ií]a|la\s*matanza|general\s*san\s*mart[ií]n|san\s*miguel|jos[eé]\s*c\.\s*paz|don\s*torcuato|wilde|banfield|adrogu[eé]|temperley|avellaneda/i.test(
+      blob,
+    ) ||
+    inferBarrioAMBA(localidad, direccion) != null
+  );
+}
+
+/**
+ * Barrios / zonas CABA + palabras típicas del AMBA para ordenar SmartPool sin GPS.
+ * Orden: más específico primero.
+ */
+function inferBarrioAMBA(localidad: string | null | undefined, direccion: string | null | undefined): string | null {
+  const blob = `${direccion ?? ""} ${localidad ?? ""}`;
+  const rules: [RegExp, string][] = [
+    [/\b(belgrano|av\.?\s*(cabildo|congreso|cr[aá]mer|cramer|virrey\s*olaguer|monroe))\b/i, "belgrano"],
+    [/\b(nuñez|n[uú]nez|saavedra|coghlan)\b/i, "nunez_saavedra"],
+    [/\b(colegiales)\b/i, "colegiales"],
+    [/\b(palermo|las\s*cañitas|cañitas|hip[oó]dromo)\b/i, "palermo"],
+    [/\b(recoleta|retiro|barrio\s*norte)\b/i, "recoleta_retiro"],
+    [/\b(monserrat|san\s*nicol[aá]s|microcentro|congreso\s*\(caba\)|\bespaña\b|\bespana\b)\b/i, "centro_monserrat"],
+    [/\b(san\s*telmo|la\s*boca|barracas|constituci[oó]n)\b/i, "sur_caba"],
+    [/\b(almagro|boedo|caballito|paternal|velez\s*sarfield)\b/i, "centro_oeste_caba"],
+    [/\b(villa\s*crespo|chacarita|agronom|parque\s*chas)\b/i, "villa_crespo_chacarita"],
+    [/\b(flores|parque\s*chacabuco|floresta|villa\s*lugano|soldati)\b/i, "flores_sur"],
+    [/\b(mataderos|liniers|villa\s*raffo)\b/i, "oeste_caba"],
+    [/\b(villa\s*urquiza|parque\s*patricios|nueva\s*pompeya|pompeya)\b/i, "varios_caba"],
+  ];
+  for (const [re, code] of rules) {
+    if (re.test(blob)) return code;
+  }
+  return null;
+}
+
+function esLocalidadGenericaCABA(normLoc: string): boolean {
+  if (!normLoc) return false;
+  const n = normLoc.trim();
+  if (n === "caba" || n === "gba" || n === "bs as" || n === "bsas") return true;
+  if (n === "capital federal") return true;
+  if (/^buenos\s*aires$/.test(n)) return true;
+  if (/^ciudad\s*autonoma/.test(n)) return true;
+  if (n === "gran buenos aires") return true;
+  return false;
+}
+
+/** Agrupa localidades de la región de Tucumán. No clasifica CABA/AMBA como “capital_metro” tucumano. */
 function inferMetroTucuman(localidad: string | null | undefined, direccion: string | null | undefined): string {
   const blob = `${localidad ?? ""} ${direccion ?? ""}`.toLowerCase();
+  if (blobPareceAMBA(localidad, direccion)) {
+    return "desconocido";
+  }
   if (/yerba\s*buena/.test(blob)) return "yerba_buena";
   if (/taf[ií]\s*viejo/.test(blob)) return "tafi_viejo";
   if (/lules/.test(blob)) return "lules";
@@ -18,7 +70,10 @@ function inferMetroTucuman(localidad: string | null | undefined, direccion: stri
   if (/alderetes/.test(blob)) return "alderetes";
   if (/el\s*manantial|manantial\s*tuc/.test(blob)) return "manantial";
   if (/cevil/.test(blob)) return "cevil";
-  if (/gran\s*san\s*miguel|tucum[aá]n|tucuman|san\s*miguel(\s+de)?|capital|s\.?\s*m\.?\s*t\.?/.test(blob)) {
+  // Importante: no usar la palabra suelta "capital" (matchea "Capital Federal", CABA).
+  if (
+    /gran\s*san\s*miguel|tucum[aá]n|tucuman|^san\s*miguel(\s+de\s+tucum|\s+tucum)?\b|s\.?\s*m\.?\s*t\.?\s*\(?tucum/i.test(blob)
+  ) {
     return "capital_metro";
   }
   return normalizeLocalidad(localidad) || "desconocido";
@@ -26,12 +81,13 @@ function inferMetroTucuman(localidad: string | null | undefined, direccion: stri
 
 /** Heurística de barrio/zona dentro del ámbito urbano (texto libre). */
 function inferZonaUrbana(localidad: string | null | undefined, direccion: string | null | undefined): string | null {
+  if (blobPareceAMBA(localidad, direccion)) return null;
   const blob = `${direccion ?? ""} ${localidad ?? ""}`.toLowerCase();
   const rules: [RegExp, string][] = [
     [/\b(centro|microcentro|plaza\s*independencia|peatonal|9\s*de\s*julio)\b/i, "centro"],
     [/\b(barrio\s*norte|av\.?\s*mate\s*de\s*luna|mate\s*de\s*luna)\b/i, "norte_mate"],
     [/\b(av\.?\s*sarmiento|sarmiento)\b/i, "sarmiento"],
-    [/\b(av\.?\s*roca|mitre|congreso)\b/i, "este_centro"],
+    [/\b(av\.?\s*mitre|congreso)\b/i, "este_centro"],
     [/\b(sur|lastenia|san\s*mart[ií]n)\b/i, "sur"],
     [/\b(oeste|lola\s*mora|municipalidad)\b/i, "oeste"],
     [/\b(yerba\s*buena|ipona|lola\s*mora\s*yb)\b/i, "yerba_buena_z"],
@@ -101,15 +157,19 @@ export function nombreListaDesdeUsuario(nombre: string, apellido: string): strin
 
 type Scored = PasajeroRow & {
   distanciaKm: null;
-  mismaLocalidad: boolean;
+  /** “Misma localidad” útil: evita tratar todo CABA como idéntico si los barrios difieren. */
+  localidadMatchFuerte: boolean;
   addrOverlap: number;
   mismoMetro: boolean;
   mismaZonaUrbana: boolean;
+  mismoBarrioAMBA: boolean;
+  /** Belgrano vs Palermo, etc.: bajan al final de la lista. */
+  barrioMuyDistintoAMBA: boolean;
 };
 
 /**
- * Orden solo con datos de BD (localidad + dirección), optimizado para Gran Tucumán.
- * No usa GPS.
+ * Orden solo con datos de BD (localidad + dirección).
+ * Incluye región de Tucumán (capital, Yerba Buena, Tafí Viejo, etc.) y heurísticas AMBA/CABA (sin GPS).
  */
 export function rankPasajerosParaConductor(
   conductor: ConductorCtx,
@@ -122,19 +182,38 @@ export function rankPasajerosParaConductor(
     nombre: string;
     apellido: string;
   }>,
-  max = 12
+  max = 12,
 ): SugerenciaSmartpool[] {
   const cLoc = normalizeLocalidad(conductor.localidad);
   const cMetro = inferMetroTucuman(conductor.localidad, conductor.direccion);
   const cZona = inferZonaUrbana(conductor.localidad, conductor.direccion);
+  const cBarrioA = inferBarrioAMBA(conductor.localidad, conductor.direccion);
+  const cAmba = blobPareceAMBA(conductor.localidad, conductor.direccion);
 
   const scored: Scored[] = pasajeros.map((p) => {
+    const pLoc = normalizeLocalidad(p.localidad);
     const pMetro = inferMetroTucuman(p.localidad, p.direccion);
     const pZona = inferZonaUrbana(p.localidad, p.direccion);
-    const mismaLocalidad = Boolean(cLoc && normalizeLocalidad(p.localidad) === cLoc);
+    const pBarrioA = inferBarrioAMBA(p.localidad, p.direccion);
+    const pAmba = blobPareceAMBA(p.localidad, p.direccion);
+
+    const rawMismaLocalidad = Boolean(cLoc && pLoc === cLoc);
+    const mismoBarrioAMBA = Boolean(cBarrioA && pBarrioA && cBarrioA === pBarrioA);
+    const ambosEtiquetaGenericaBa = rawMismaLocalidad && esLocalidadGenericaCABA(cLoc) && esLocalidadGenericaCABA(pLoc);
+    const barrioMuyDistintoAMBA = Boolean(
+      cAmba && pAmba && cBarrioA && pBarrioA && cBarrioA !== pBarrioA,
+    );
+
+    let localidadMatchFuerte = rawMismaLocalidad;
+    if (ambosEtiquetaGenericaBa) {
+      if (barrioMuyDistintoAMBA) localidadMatchFuerte = false;
+      else if (!mismoBarrioAMBA) localidadMatchFuerte = false;
+    }
+
     const mismoMetro = cMetro === pMetro && cMetro !== "desconocido";
     const mismaZonaUrbana = Boolean(cZona && pZona && cZona === pZona);
     const addrOverlap = overlapDireccion(conductor.direccion, p.direccion);
+
     return {
       id: p.id,
       nombre: nombreLista(p.nombre, p.apellido),
@@ -143,20 +222,26 @@ export function rankPasajerosParaConductor(
       lat: null,
       lng: null,
       distanciaKm: null,
-      mismaLocalidad,
+      localidadMatchFuerte,
       addrOverlap,
       mismoMetro,
       mismaZonaUrbana,
+      mismoBarrioAMBA,
+      barrioMuyDistintoAMBA,
     };
   });
 
   scored.sort((a, b) => {
+    if (a.barrioMuyDistintoAMBA && !b.barrioMuyDistintoAMBA) return 1;
+    if (!a.barrioMuyDistintoAMBA && b.barrioMuyDistintoAMBA) return -1;
     if (a.mismaZonaUrbana && !b.mismaZonaUrbana) return -1;
     if (!a.mismaZonaUrbana && b.mismaZonaUrbana) return 1;
+    if (a.mismoBarrioAMBA && !b.mismoBarrioAMBA) return -1;
+    if (!a.mismoBarrioAMBA && b.mismoBarrioAMBA) return 1;
     if (a.mismoMetro && !b.mismoMetro) return -1;
     if (!a.mismoMetro && b.mismoMetro) return 1;
-    if (a.mismaLocalidad && !b.mismaLocalidad) return -1;
-    if (!a.mismaLocalidad && b.mismaLocalidad) return 1;
+    if (a.localidadMatchFuerte && !b.localidadMatchFuerte) return -1;
+    if (!a.localidadMatchFuerte && b.localidadMatchFuerte) return 1;
     if (b.addrOverlap !== a.addrOverlap) return b.addrOverlap - a.addrOverlap;
     return a.nombre.localeCompare(b.nombre, "es");
   });
@@ -167,19 +252,24 @@ export function rankPasajerosParaConductor(
       motivo =
         r.addrOverlap > 0
           ? "Misma zona de la ciudad · calle o referencia parecida"
-          : "Misma zona urbana aproximada que vos (Tucumán)";
+          : "Misma zona en la capital (San Miguel de Tucumán)";
+    } else if (r.mismoBarrioAMBA) {
+      motivo =
+        r.addrOverlap > 0
+          ? "Misma zona/barrio aproximado (AMBA/CABA) · referencia parecida"
+          : "Misma zona/barrio aproximado en Ciudad o AMBA";
     } else if (r.mismoMetro) {
       motivo =
         r.addrOverlap > 0
-          ? "Gran Tucumán · dirección con palabras en común"
-          : "Misma área metropolitana (Gran Tucumán)";
-    } else if (r.mismaLocalidad) {
+          ? "Misma región (capital, Yerba Buena, Tafí Viejo…) · texto de dirección parecido"
+          : "Misma región alrededor de Tucumán (ej. capital, Yerba Buena, Tafí Viejo)";
+    } else if (r.localidadMatchFuerte) {
       motivo =
         r.addrOverlap > 0
           ? "Misma localidad · dirección parecida a la tuya"
           : "Misma localidad que vos";
     } else {
-      motivo = "Mismo evento · disponible como pasajero";
+      motivo = "Mismo evento · orden aproximado por texto de dirección";
     }
     return {
       invitadoId: r.id,
@@ -189,4 +279,16 @@ export function rankPasajerosParaConductor(
       distanciaKm: null,
     };
   });
+}
+
+/** Región para el modelo de ordenamiento por IA (texto libre). */
+export type SmartpoolRegionIa = "amba" | "tucuman" | "otro";
+
+export function inferRegionSmartpoolIa(localidad: string | null, direccion: string | null): SmartpoolRegionIa {
+  if (blobPareceAMBA(localidad, direccion)) return "amba";
+  const blob = `${localidad ?? ""} ${direccion ?? ""}`.toLowerCase();
+  if (/tucum[aá]n|tucuman|yerba\s*buena|taf[ií]\s*viejo|lules|alderetes|banda\s*del|san\s*miguel\s+de|gran\s*san\s*miguel/.test(blob)) {
+    return "tucuman";
+  }
+  return "otro";
 }

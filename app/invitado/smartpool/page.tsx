@@ -870,7 +870,8 @@ export default function SmartpoolPage() {
             <p className="mb-6 text-center text-[13px] leading-relaxed text-[#4b5563]">
               Ahorrá, conocé gente y cuidá el planeta.
               <br />
-              Los conductores eligen pasajeros sugeridos según dirección y localidad (Gran Tucumán); el pasajero acepta
+              Los conductores eligen pasajeros sugeridos según dirección y localidad (ej. San Miguel de Tucumán, Yerba Buena,
+              Tafí Viejo); el pasajero acepta
               en la app. El contacto se muestra solo con match mutuo.
             </p>
 

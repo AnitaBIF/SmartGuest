@@ -1,7 +1,9 @@
 /**
- * Ordena pasajeros con un modelo de lenguaje que conoce el Gran Tucumán (sin GPS).
+ * Ordena pasajeros con modelo de lenguaje (sin GPS): Tucumán, AMBA/CABA u otras zonas según el texto.
  * Requiere OPENAI_API_KEY o SMARTGUEST_OPENAI_API_KEY en el servidor.
  */
+
+import { inferRegionSmartpoolIa } from "@/lib/smartpoolSugerencias";
 
 export type PasajeroIaInput = {
   id: string;
@@ -41,6 +43,31 @@ function parseOrdenJson(raw: string): OpenAiOrden[] | null {
   }
 }
 
+const JSON_SCHEMA_HINT =
+  '{"orden":[{"id":"<uuid del pasajero>","motivo":"frase corta en español, máx. 120 caracteres, explicando por qué conviene el viaje compartido"}]}';
+
+function systemPromptSmartpool(region: ReturnType<typeof inferRegionSmartpoolIa>): string {
+  const baseRules = `Recibís direcciones en texto tal como las cargaron los invitados (sin coordenadas GPS).
+Ordená los pasajeros del que probablemente quede MÁS CERCA o más conveniente para compartir viaje con el conductor, al MENOS conveniente.
+Si dos direcciones están en barrios o zonas claramente lejanas dentro de la misma ciudad grande (por ejemplo Belgrano vs zona muy al sur de CABA, o extremos opuestos del conurbano), el más lejano debe ir abajo del ranking.
+Respondé SOLO un JSON válido con esta forma exacta:
+${JSON_SCHEMA_HINT}
+Incluí cada id de pasajero exactamente una vez. No inventes ids.`;
+
+  if (region === "amba") {
+    return `Sos experto en geografía del AMBA y Ciudad Autónoma de Buenos Aires (CABA), Argentina.
+Conocés barrios y referencias: Belgrano, Nuñez, Colegiales, Palermo, Recoleta, Retiro, Almagro, Caballito, Villa Crespo, Flores, Barracas, San Telmo, Monserrat, Microcentro, calle España y otras vías céntricas, Av. Cabildo, Av. Rivadavia, Lomas de Zamora, Banfield, Lanús, Avellaneda, Quilmes, Vicente López, San Isidro, Tigre, Morón, Hurlingham, etc.
+${baseRules}`;
+  }
+  if (region === "tucuman") {
+    return `Sos experto en geografía de la región de Tucumán, Argentina. Trabajá pensando en localidades distintas con trayectos reales entre ellas, no como un solo barrio: por ejemplo San Miguel de Tucumán (capital), Yerba Buena, Tafí Viejo, y también Lules, Banda del Río Salí, Alderetes, El Manantial, Cevil Redondo, etc. Entre capital, Yerba Buena y Tafí Viejo las distancias suelen ser largas para ir y volver: quien viva claramente más lejos del conductor debe ir abajo en el ranking salvo que el texto indique que quedan muy cerca (misma calle, mismo barrio de la capital, referencias casi iguales).
+Conocés la ciudad capital por barrios (Centro, Norte, Sur, Este, Oeste) y avenidas típicas (Av. Mate de Luna, Av. Sarmiento, Av. Roca, Av. Alem, Circunvalación, etc.).
+${baseRules}`;
+  }
+  return `Sos experto en geografía urbana de Argentina. Ordená pasajeros para compartir viaje según cercanía estimada por localidad y dirección en texto. Si los datos sugieren Gran Buenos Aires o la región de Tucumán (capital, Yerba Buena, Tafí Viejo, etc.), aplicá criterio de distancia realista; no asumas que toda el área es “corta”.
+${baseRules}`;
+}
+
 /**
  * Devuelve sugerencias ordenadas o `null` si falla la API / el parseo (usar heurística).
  */
@@ -69,12 +96,8 @@ export async function rankPasajerosConIaTucuman(
     })),
   };
 
-  const system = `Sos experto en geografía urbana del Gran San Miguel de Tucumán, Argentina: ciudad capital, Yerba Buena, Tafí Viejo, Lules, Banda del Río Salí, Alderetes, El Manantial, Cevil Redondo, barrios (Centro, Norte, Sur, Este, Oeste), avenidas típicas (Av. Mate de Luna, Av. Sarmiento, Av. Roca, Av. Alem, Circunvalación, etc.).
-Recibís direcciones en texto tal como las cargaron los invitados (sin coordenadas GPS).
-Ordená los pasajeros del que probablemente quede MÁS CERCA o más conveniente para compartir viaje con el conductor, al MENOS conveniente.
-Respondé SOLO un JSON válido con esta forma exacta:
-{"orden":[{"id":"<uuid del pasajero>","motivo":"frase corta en español, máx. 120 caracteres, explicando por qué conviene el viaje compartido"}]}
-Incluí cada id de pasajero exactamente una vez. No inventes ids.`;
+  const region = inferRegionSmartpoolIa(conductor.localidad, conductor.direccion);
+  const system = systemPromptSmartpool(region);
 
   const user = `Datos (JSON):\n${JSON.stringify(payload, null, 0)}`;
 
@@ -125,7 +148,13 @@ Incluí cada id de pasajero exactamente una vez. No inventes ids.`;
         invitadoId: p.id.trim().toLowerCase(),
         nombre: p.nombre,
         localidad: p.localidad,
-        motivo: row.motivo || "Cerca según direcciones en Tucumán",
+        motivo:
+          row.motivo ||
+          (region === "amba"
+            ? "Cercanía aproximada en AMBA/CABA según direcciones"
+            : region === "tucuman"
+              ? "Cercanía en la región (capital, Yerba Buena, Tafí Viejo, etc.) según direcciones"
+              : "Cercanía aproximada según direcciones"),
         distanciaKm: null,
       });
     }
