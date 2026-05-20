@@ -283,6 +283,8 @@ function EventDetailModal({
   onUpdated,
   menuStandardOpciones = [],
   salonCapacidadMax = null,
+  salonNombreCuenta = "",
+  salonDireccionCuenta = "",
 }: {
   event: CalendarEvent;
   onClose: () => void;
@@ -291,12 +293,21 @@ function EventDetailModal({
   menuStandardOpciones?: string[];
   /** Capacidad máxima del salón (personas); cada evento no puede superarla. */
   salonCapacidadMax?: number | null;
+  /** Nombre del local en la cuenta del administrador (autocompletar si el evento no lo tiene). */
+  salonNombreCuenta?: string;
+  /** Dirección del local en la cuenta (autocompletar si el evento no la tiene). */
+  salonDireccionCuenta?: string;
 }) {
   const isEvento = event.tipo === "evento";
   const [editing, setEditing] = useState(false);
   const [saving, setSaving]   = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [saved, setSaved]     = useState(false);
+
+  const salonDesdeEvento = (event.salon ?? "").trim();
+  const direccionDesdeEvento = (event.direccion ?? "").trim();
+  const salonDesdeCuenta = (salonNombreCuenta ?? "").trim();
+  const direccionDesdeCuenta = (salonDireccionCuenta ?? "").trim();
 
   // Estado editable para evento
   const [eAnf1, setEAnf1]       = useState(event.anfitrion1 ?? "");
@@ -308,8 +319,8 @@ function EventDetailModal({
   const [eMesas, setEMesas]      = useState(String(event.mesas ?? 0));
   const [eMenu, setEMenu]        = useState(event.menu ?? "");
   const [eDress, setEDress]      = useState(event.dressCode ?? "");
-  const [eSalon, setESalon]      = useState(event.salon ?? "");
-  const [eDireccion, setEDireccion] = useState(event.direccion ?? "");
+  const [eSalon, setESalon]      = useState(() => salonDesdeEvento || salonDesdeCuenta);
+  const [eDireccion, setEDireccion] = useState(() => direccionDesdeEvento || direccionDesdeCuenta);
   const [eMonto, setEMonto]      = useState(String(event.montoTotal ?? 0));
   const [eSena, setESena]        = useState(String(event.sena ?? 0));
 
@@ -791,20 +802,42 @@ export default function AdminDashboard() {
     setEventoFormError("");
     setEvento(emptyEventoForm());
   };
-  const openNuevoEventoModal = () => {
+  const openNuevoEventoModal = async () => {
     setEventoFormError("");
     setCrearAnfitrionOpen(false);
     setCrearAnfitrionError("");
     setNuevoAnfitrion(emptyNuevoAnfitrion());
-    const stdOpts = opcionesMenuStandardDesdeSalon(salonEventoDefaults.menuStandard);
+
+    let defaults = salonEventoDefaults;
+    try {
+      const cuRes = await fetch("/api/admin/cuenta", { cache: "no-store" });
+      if (cuRes.ok) {
+        const c = await cuRes.json();
+        const next = {
+          menusEspeciales: Array.isArray(c.salonMenusEspeciales) ? c.salonMenusEspeciales : [],
+          menusOtro: typeof c.salonMenusEspecialesOtro === "string" ? c.salonMenusEspecialesOtro : "",
+          menuStandard: typeof c.salonMenuStandard === "string" ? c.salonMenuStandard : "",
+          salonNombre: typeof c.salonNombre === "string" ? c.salonNombre.trim() : "",
+          salonDireccion: typeof c.salonDireccion === "string" ? c.salonDireccion.trim() : "",
+          salonCapacidadMax:
+            typeof c.salonCapacidadMax === "number" && c.salonCapacidadMax >= 1 ? c.salonCapacidadMax : null,
+        };
+        setSalonEventoDefaults(next);
+        defaults = next;
+      }
+    } catch {
+      /* usamos defaults en memoria */
+    }
+
+    const stdOpts = opcionesMenuStandardDesdeSalon(defaults.menuStandard);
     const menuStandardInicial = stdOpts.length === 1 ? stdOpts[0]! : "";
     setEvento({
       ...emptyEventoForm(),
-      menusEspeciales: [...salonEventoDefaults.menusEspeciales],
-      menusOtro: salonEventoDefaults.menusOtro,
+      menusEspeciales: [...defaults.menusEspeciales],
+      menusOtro: defaults.menusOtro,
       menuStandard: menuStandardInicial,
-      salon: salonEventoDefaults.salonNombre,
-      direccionSalon: salonEventoDefaults.salonDireccion,
+      salon: defaults.salonNombre,
+      direccionSalon: defaults.salonDireccion,
     });
     setShowMenusDropdown(false);
     setShowEventoModal(true);
@@ -1278,7 +1311,7 @@ export default function AdminDashboard() {
 
             <button
               type="button"
-              onClick={openNuevoEventoModal}
+              onClick={() => void openNuevoEventoModal()}
               className="w-full shrink-0 rounded-full bg-brand px-7 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:brightness-95 sm:w-auto"
             >
               Crear evento nuevo
@@ -1623,6 +1656,8 @@ export default function AdminDashboard() {
           onUpdated={fetchData}
           menuStandardOpciones={salonMenuStdOpciones}
           salonCapacidadMax={salonEventoDefaults.salonCapacidadMax}
+          salonNombreCuenta={salonEventoDefaults.salonNombre}
+          salonDireccionCuenta={salonEventoDefaults.salonDireccion}
         />
       )}
 
