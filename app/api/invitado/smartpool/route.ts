@@ -177,16 +177,9 @@ async function buildSugerenciasConductor(
   const max = 12;
   const inCommitted = rowsToPasajerosInput(committed, byUser);
   const inPending = rowsToPasajerosInput(pending, byUser);
+  /** Un solo pool: antes se listaban todos los “pasajero” y después los demás, y el orden geográfico quedaba mal. */
   const allPoolPasajeros = [...inCommitted, ...inPending];
 
-  const rankedCommitted = rankPasajerosParaConductor(conductor, inCommitted, max);
-  const rest = max - rankedCommitted.length;
-  const rankedPending =
-    rest > 0 ? rankPasajerosParaConductor(conductor, inPending, rest) : [];
-
-  const heuristicRaw = [...rankedCommitted, ...rankedPending];
-
-  /** Orden heurístico completo del pool (para desempatar y corregir el ranking de la IA). */
   const heuristicFullOrder = rankPasajerosParaConductor(
     conductor,
     allPoolPasajeros,
@@ -195,10 +188,15 @@ async function buildSugerenciasConductor(
   const heuristicRankById = new Map(
     heuristicFullOrder.map((s, idx) => [s.invitadoId.trim().toLowerCase(), idx]),
   );
+  const heuristicRaw = heuristicFullOrder.slice(0, max);
 
+  const smartpoolOpenAiWanted =
+    process.env.SMARTPOOL_USE_OPENAI?.trim().toLowerCase() !== "0" &&
+    process.env.SMARTPOOL_USE_OPENAI?.trim().toLowerCase() !== "false" &&
+    process.env.SMARTPOOL_USE_OPENAI?.trim().toLowerCase() !== "no";
   const apiKey =
     process.env.SMARTGUEST_OPENAI_API_KEY?.trim() || process.env.OPENAI_API_KEY?.trim();
-  if (apiKey && heuristicRaw.length > 0) {
+  if (smartpoolOpenAiWanted && apiKey && heuristicRaw.length > 0) {
     const iaIn = allPoolPasajeros.map((p) => ({
       id: p.id,
       localidad: p.localidad,
