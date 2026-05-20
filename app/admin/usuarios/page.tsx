@@ -56,11 +56,11 @@ const inp =
 
 type FormState = {
   nombre: string; apellido: string; dni: string;
-  email: string; password: string; tipo: TipoDB; max_invitados: string;
+  email: string; password: string; tipo: TipoDB;
 };
 const emptyForm: FormState = {
   nombre: "", apellido: "", dni: "", email: "",
-  password: "", tipo: "anfitrion", max_invitados: "",
+  password: "", tipo: "anfitrion",
 };
 
 /* ─── Página ─── */
@@ -102,8 +102,7 @@ export default function UsuariosPage() {
   const openEdit = (u: Usuario) => {
     setEditTarget(u);
     setForm({ nombre: u.nombre, apellido: u.apellido, dni: u.dni,
-              email: u.email, password: "", tipo: u.tipo,
-              max_invitados: u.max_invitados > 0 ? String(u.max_invitados) : "" });
+              email: u.email, password: "", tipo: u.tipo });
     setShowPass(false);
     setShowModal(true);
   };
@@ -117,7 +116,7 @@ export default function UsuariosPage() {
 
     const payload = {
       ...form,
-      max_invitados: form.max_invitados ? parseInt(form.max_invitados) : 0,
+      max_invitados: 0,
       ...(editTarget ? { id: editTarget.id } : {}),
     };
 
@@ -338,19 +337,6 @@ export default function UsuariosPage() {
                 </div>
               </div>
 
-              {form.tipo === "anfitrion" && (
-                <div>
-                  <label className="mb-1 block text-[11px] font-medium text-muted">Máx. invitados permitidos</label>
-                  <input
-                    className={inp}
-                    type="number"
-                    min="0"
-                    placeholder="Ej: 150"
-                    value={form.max_invitados}
-                    onChange={(e) => f("max_invitados", e.target.value)}
-                  />
-                </div>
-              )}
             </div>
 
             <div className="flex justify-end gap-3 border-t border-border bg-card-muted px-7 py-4">
