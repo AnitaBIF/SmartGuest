@@ -155,16 +155,79 @@ export function nombreListaDesdeUsuario(nombre: string, apellido: string): strin
   return nombreLista(nombre, apellido);
 }
 
-type Scored = PasajeroRow & {
-  distanciaKm: null;
-  /** “Misma localidad” útil: evita tratar todo CABA como idéntico si los barrios difieren. */
-  localidadMatchFuerte: boolean;
-  addrOverlap: number;
-  mismoMetro: boolean;
+/** Señales comparables conductor ↔ pasajero (sin GPS). */
+export type SmartpoolMatchSignals = {
+  barrioMuyDistintoAMBA: boolean;
   mismaZonaUrbana: boolean;
   mismoBarrioAMBA: boolean;
-  /** Belgrano vs Palermo, etc.: bajan al final de la lista. */
-  barrioMuyDistintoAMBA: boolean;
+  mismoMetro: boolean;
+  localidadMatchFuerte: boolean;
+  addrOverlap: number;
+};
+
+export function matchSignalsParaPasajero(
+  conductor: ConductorCtx,
+  p: { localidad: string | null; direccion: string | null },
+): SmartpoolMatchSignals {
+  const cLoc = normalizeLocalidad(conductor.localidad);
+  const cMetro = inferMetroTucuman(conductor.localidad, conductor.direccion);
+  const cZona = inferZonaUrbana(conductor.localidad, conductor.direccion);
+  const cBarrioA = inferBarrioAMBA(conductor.localidad, conductor.direccion);
+  const cAmba = blobPareceAMBA(conductor.localidad, conductor.direccion);
+
+  const pLoc = normalizeLocalidad(p.localidad);
+  const pMetro = inferMetroTucuman(p.localidad, p.direccion);
+  const pZona = inferZonaUrbana(p.localidad, p.direccion);
+  const pBarrioA = inferBarrioAMBA(p.localidad, p.direccion);
+  const pAmba = blobPareceAMBA(p.localidad, p.direccion);
+
+  const rawMismaLocalidad = Boolean(cLoc && pLoc === cLoc);
+  const mismoBarrioAMBA = Boolean(cBarrioA && pBarrioA && cBarrioA === pBarrioA);
+  const ambosEtiquetaGenericaBa = rawMismaLocalidad && esLocalidadGenericaCABA(cLoc) && esLocalidadGenericaCABA(pLoc);
+  const barrioMuyDistintoAMBA = Boolean(
+    cAmba && pAmba && cBarrioA && pBarrioA && cBarrioA !== pBarrioA,
+  );
+
+  let localidadMatchFuerte = rawMismaLocalidad;
+  if (ambosEtiquetaGenericaBa) {
+    if (barrioMuyDistintoAMBA) localidadMatchFuerte = false;
+    else if (!mismoBarrioAMBA) localidadMatchFuerte = false;
+  }
+
+  const mismoMetro = cMetro === pMetro && cMetro !== "desconocido";
+  const mismaZonaUrbana = Boolean(cZona && pZona && cZona === pZona);
+  const addrOverlap = overlapDireccion(conductor.direccion, p.direccion);
+
+  return {
+    barrioMuyDistintoAMBA,
+    mismaZonaUrbana,
+    mismoBarrioAMBA,
+    mismoMetro,
+    localidadMatchFuerte,
+    addrOverlap,
+  };
+}
+
+/**
+ * Negative → `a` va antes que `b` en la lista. Misma lógica que {@link rankPasajerosParaConductor}.
+ */
+export function compareHeuristicMatchSignals(a: SmartpoolMatchSignals, b: SmartpoolMatchSignals): number {
+  if (a.barrioMuyDistintoAMBA && !b.barrioMuyDistintoAMBA) return 1;
+  if (!a.barrioMuyDistintoAMBA && b.barrioMuyDistintoAMBA) return -1;
+  if (a.mismaZonaUrbana && !b.mismaZonaUrbana) return -1;
+  if (!a.mismaZonaUrbana && b.mismaZonaUrbana) return 1;
+  if (a.mismoBarrioAMBA && !b.mismoBarrioAMBA) return -1;
+  if (!a.mismoBarrioAMBA && b.mismoBarrioAMBA) return 1;
+  if (a.mismoMetro && !b.mismoMetro) return -1;
+  if (!a.mismoMetro && b.mismoMetro) return 1;
+  if (a.localidadMatchFuerte && !b.localidadMatchFuerte) return -1;
+  if (!a.localidadMatchFuerte && b.localidadMatchFuerte) return 1;
+  if (b.addrOverlap !== a.addrOverlap) return b.addrOverlap - a.addrOverlap;
+  return 0;
+}
+
+type Scored = PasajeroRow & SmartpoolMatchSignals & {
+  distanciaKm: null;
 };
 
 /**
@@ -184,36 +247,8 @@ export function rankPasajerosParaConductor(
   }>,
   max = 12,
 ): SugerenciaSmartpool[] {
-  const cLoc = normalizeLocalidad(conductor.localidad);
-  const cMetro = inferMetroTucuman(conductor.localidad, conductor.direccion);
-  const cZona = inferZonaUrbana(conductor.localidad, conductor.direccion);
-  const cBarrioA = inferBarrioAMBA(conductor.localidad, conductor.direccion);
-  const cAmba = blobPareceAMBA(conductor.localidad, conductor.direccion);
-
   const scored: Scored[] = pasajeros.map((p) => {
-    const pLoc = normalizeLocalidad(p.localidad);
-    const pMetro = inferMetroTucuman(p.localidad, p.direccion);
-    const pZona = inferZonaUrbana(p.localidad, p.direccion);
-    const pBarrioA = inferBarrioAMBA(p.localidad, p.direccion);
-    const pAmba = blobPareceAMBA(p.localidad, p.direccion);
-
-    const rawMismaLocalidad = Boolean(cLoc && pLoc === cLoc);
-    const mismoBarrioAMBA = Boolean(cBarrioA && pBarrioA && cBarrioA === pBarrioA);
-    const ambosEtiquetaGenericaBa = rawMismaLocalidad && esLocalidadGenericaCABA(cLoc) && esLocalidadGenericaCABA(pLoc);
-    const barrioMuyDistintoAMBA = Boolean(
-      cAmba && pAmba && cBarrioA && pBarrioA && cBarrioA !== pBarrioA,
-    );
-
-    let localidadMatchFuerte = rawMismaLocalidad;
-    if (ambosEtiquetaGenericaBa) {
-      if (barrioMuyDistintoAMBA) localidadMatchFuerte = false;
-      else if (!mismoBarrioAMBA) localidadMatchFuerte = false;
-    }
-
-    const mismoMetro = cMetro === pMetro && cMetro !== "desconocido";
-    const mismaZonaUrbana = Boolean(cZona && pZona && cZona === pZona);
-    const addrOverlap = overlapDireccion(conductor.direccion, p.direccion);
-
+    const sig = matchSignalsParaPasajero(conductor, p);
     return {
       id: p.id,
       nombre: nombreLista(p.nombre, p.apellido),
@@ -222,27 +257,13 @@ export function rankPasajerosParaConductor(
       lat: null,
       lng: null,
       distanciaKm: null,
-      localidadMatchFuerte,
-      addrOverlap,
-      mismoMetro,
-      mismaZonaUrbana,
-      mismoBarrioAMBA,
-      barrioMuyDistintoAMBA,
+      ...sig,
     };
   });
 
   scored.sort((a, b) => {
-    if (a.barrioMuyDistintoAMBA && !b.barrioMuyDistintoAMBA) return 1;
-    if (!a.barrioMuyDistintoAMBA && b.barrioMuyDistintoAMBA) return -1;
-    if (a.mismaZonaUrbana && !b.mismaZonaUrbana) return -1;
-    if (!a.mismaZonaUrbana && b.mismaZonaUrbana) return 1;
-    if (a.mismoBarrioAMBA && !b.mismoBarrioAMBA) return -1;
-    if (!a.mismoBarrioAMBA && b.mismoBarrioAMBA) return 1;
-    if (a.mismoMetro && !b.mismoMetro) return -1;
-    if (!a.mismoMetro && b.mismoMetro) return 1;
-    if (a.localidadMatchFuerte && !b.localidadMatchFuerte) return -1;
-    if (!a.localidadMatchFuerte && b.localidadMatchFuerte) return 1;
-    if (b.addrOverlap !== a.addrOverlap) return b.addrOverlap - a.addrOverlap;
+    const c = compareHeuristicMatchSignals(a, b);
+    if (c !== 0) return c;
     return a.nombre.localeCompare(b.nombre, "es");
   });
 

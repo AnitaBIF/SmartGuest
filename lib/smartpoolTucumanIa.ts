@@ -49,6 +49,7 @@ const JSON_SCHEMA_HINT =
 function systemPromptSmartpool(region: ReturnType<typeof inferRegionSmartpoolIa>): string {
   const baseRules = `Recibís direcciones en texto tal como las cargaron los invitados (sin coordenadas GPS).
 Ordená los pasajeros del que probablemente quede MÁS CERCA o más conveniente para compartir viaje con el conductor, al MENOS conveniente.
+Reglas estrictas: (1) No inventes tiempos en minutos, kilómetros ni rutas: no tenés GPS ni mapa. En el "motivo" no uses “a 5 min”, “10 minutos”, etc. (2) Misma localidad o mismo municipio/clúster del texto debe ir claramente antes que otra localidad distinta cuando el texto lo deje en evidencia. (3) Si dos direcciones son de zonas o localidades claramente lejanas (en la misma ciudad grande o entre capital, Yerba Buena, Tafí Viejo, etc.), el más lejano debe ir abajo.
 Si dos direcciones están en barrios o zonas claramente lejanas dentro de la misma ciudad grande (por ejemplo Belgrano vs zona muy al sur de CABA, o extremos opuestos del conurbano), el más lejano debe ir abajo del ranking.
 Respondé SOLO un JSON válido con esta forma exacta:
 ${JSON_SCHEMA_HINT}

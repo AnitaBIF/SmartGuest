@@ -7,6 +7,8 @@ import {
   type InvitadoSmartpoolRow,
 } from "@/lib/invitacionUsuarioPriorizada";
 import {
+  compareHeuristicMatchSignals,
+  matchSignalsParaPasajero,
   rankPasajerosParaConductor,
   type ConductorCtx,
 } from "@/lib/smartpoolSugerencias";
@@ -175,6 +177,7 @@ async function buildSugerenciasConductor(
   const max = 12;
   const inCommitted = rowsToPasajerosInput(committed, byUser);
   const inPending = rowsToPasajerosInput(pending, byUser);
+  const allPoolPasajeros = [...inCommitted, ...inPending];
 
   const rankedCommitted = rankPasajerosParaConductor(conductor, inCommitted, max);
   const rest = max - rankedCommitted.length;
@@ -183,10 +186,20 @@ async function buildSugerenciasConductor(
 
   const heuristicRaw = [...rankedCommitted, ...rankedPending];
 
+  /** Orden heurístico completo del pool (para desempatar y corregir el ranking de la IA). */
+  const heuristicFullOrder = rankPasajerosParaConductor(
+    conductor,
+    allPoolPasajeros,
+    Math.max(max, allPoolPasajeros.length),
+  );
+  const heuristicRankById = new Map(
+    heuristicFullOrder.map((s, idx) => [s.invitadoId.trim().toLowerCase(), idx]),
+  );
+
   const apiKey =
     process.env.SMARTGUEST_OPENAI_API_KEY?.trim() || process.env.OPENAI_API_KEY?.trim();
   if (apiKey && heuristicRaw.length > 0) {
-    const iaIn = [...inCommitted, ...inPending].map((p) => ({
+    const iaIn = allPoolPasajeros.map((p) => ({
       id: p.id,
       localidad: p.localidad,
       direccion: p.direccion,
@@ -198,7 +211,25 @@ async function buildSugerenciasConductor(
       apiKey
     );
     if (ia && ia.length > 0) {
-      const ordenIa = ia.slice(0, max).map((x) => ({
+      const iaSlice = ia.slice(0, max);
+      const iaOrderById = new Map(iaSlice.map((row, idx) => [row.invitadoId.trim().toLowerCase(), idx]));
+      const reordered = [...iaSlice].sort((rowA, rowB) => {
+        const idA = rowA.invitadoId.trim().toLowerCase();
+        const idB = rowB.invitadoId.trim().toLowerCase();
+        const inputA = allPoolPasajeros.find((x) => x.id.trim().toLowerCase() === idA);
+        const inputB = allPoolPasajeros.find((x) => x.id.trim().toLowerCase() === idB);
+        if (!inputA || !inputB) return 0;
+        const cmp = compareHeuristicMatchSignals(
+          matchSignalsParaPasajero(conductor, inputA),
+          matchSignalsParaPasajero(conductor, inputB),
+        );
+        if (cmp !== 0) return cmp;
+        const h =
+          (heuristicRankById.get(idA) ?? 9999) - (heuristicRankById.get(idB) ?? 9999);
+        if (h !== 0) return h;
+        return (iaOrderById.get(idA) ?? 9999) - (iaOrderById.get(idB) ?? 9999);
+      });
+      const ordenIa = reordered.map((x) => ({
         invitadoId: x.invitadoId,
         nombre: x.nombre,
         localidad: x.localidad,
