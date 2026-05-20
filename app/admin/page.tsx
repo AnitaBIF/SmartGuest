@@ -773,7 +773,6 @@ export default function AdminDashboard() {
     dni: "",
     email: "",
     password: "",
-    max_invitados: "",
   });
   const [crearAnfitrionOpen, setCrearAnfitrionOpen] = useState(false);
   const [nuevoAnfitrion, setNuevoAnfitrion] = useState(emptyNuevoAnfitrion);
@@ -948,7 +947,7 @@ export default function AdminDashboard() {
           email: em,
           password: nuevoAnfitrion.password,
           tipo: "anfitrion",
-          max_invitados: nuevoAnfitrion.max_invitados ? parseInt(nuevoAnfitrion.max_invitados, 10) : 0,
+          max_invitados: 0,
         }),
       });
       const j = (await res.json().catch(() => ({}))) as { id?: string; error?: string };
@@ -1362,7 +1361,7 @@ export default function AdminDashboard() {
                     {crearAnfitrionOpen && (
                       <div className="mt-3 space-y-3 rounded-2xl border border-border bg-card-muted/60 p-4 ring-1 ring-[var(--ring-soft)]">
                         <p className="text-[11px] leading-relaxed text-muted">
-                          Se crea la misma cuenta que en Gestión de usuarios (rol anfitrión). Al guardar, queda seleccionada arriba y podés seguir completando el evento.
+                          Se crea la misma cuenta que en Gestión de usuarios (rol anfitrión). Al guardar, queda seleccionada arriba y podés seguir completando el evento. La cantidad de invitados del evento la cargás más abajo en este formulario; no puede superar la capacidad máxima del salón (Configuración).
                         </p>
                         <div className="grid grid-cols-2 gap-3">
                           <Field label="Nombre" required>
@@ -1409,16 +1408,6 @@ export default function AdminDashboard() {
                             value={nuevoAnfitrion.password}
                             onChange={(e) => setNuevoAnfitrion((p) => ({ ...p, password: e.target.value }))}
                             autoComplete="new-password"
-                          />
-                        </Field>
-                        <Field label="Máx. invitados permitidos">
-                          <input
-                            className={inp}
-                            type="number"
-                            min={0}
-                            placeholder="Ej: 150"
-                            value={nuevoAnfitrion.max_invitados}
-                            onChange={(e) => setNuevoAnfitrion((p) => ({ ...p, max_invitados: e.target.value }))}
                           />
                         </Field>
                         {crearAnfitrionError && (
